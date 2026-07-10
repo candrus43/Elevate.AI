@@ -1,69 +1,110 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { getSession } from "~/utils/auth";
+import type { UserSession } from "~/utils/auth";
+import { getCompanyCalls, getCompanyMetrics, getRecentActivity, getCompanyUsers } from "~/utils/db";
 
 export const Route = createFileRoute("/dashboard/")({
   component: ManagerDashboard,
 });
 
 function ManagerDashboard() {
+  const navigate = useNavigate();
+  const [user, setUser] = useState<UserSession | null>(null);
+  const [calls, setCalls] = useState<any[]>([]);
+  const [metrics, setMetrics] = useState<any>(null);
+  const [activity, setActivity] = useState<any[]>([]);
+  const [team, setTeam] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getSession().then(async ({ user }) => {
+      if (!user) { navigate({ to: "/login" }); return; }
+      setUser(user);
+      try {
+        const [callsData, metricsData, activityData, teamData] = await Promise.all([
+          getCompanyCalls(user.companyId),
+          getCompanyMetrics(user.companyId),
+          getRecentActivity(user.companyId, 8),
+          getCompanyUsers(user.companyId),
+        ]);
+        setCalls(callsData);
+        setMetrics(metricsData);
+        setActivity(activityData);
+        setTeam(teamData.filter((u: any) => u.role === "rep"));
+      } catch (e) {
+        console.error("Failed to fetch dashboard data", e);
+      }
+      setLoading(false);
+    });
+  }, [navigate]);
+
+  if (loading) return <div className="flex items-center justify-center h-48"><div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" /></div>;
+
+  const avgScore = calls.length > 0 ? (calls.reduce((s, c) => s + (c.overall_score || 0), 0) / calls.length).toFixed(1) : "0";
+  const analyzedCalls = calls.filter(c => c.status === "analyzed").length;
+  const completionRate = metrics?.coaching_completion_rate ? `${(metrics.coaching_completion_rate * 100).toFixed(0)}%` : "-";
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Manager Dashboard</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Team performance overview</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Welcome back, {user?.name}</p>
         </div>
-        <div className="flex gap-3">
-          <button className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
-            + New Review
-          </button>
-          <button className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800">
-            Export Report
-          </button>
-        </div>
+        <Link to="/dashboard/calls" className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+          + New Review
+        </Link>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards from live data */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard title="Team Score" value="87.4" change="+2.1%" positive icon="📊" />
-        <KpiCard title="Calls Analyzed" value="1,247" change="+12.5%" positive icon="🎧" />
-        <KpiCard title="Coaching Completion" value="73%" change="+5.3%" positive icon="🎯" />
-        <KpiCard title="Conversion Rate" value="24.6%" change="-1.2%" positive={false} icon="📈" />
+        <KpiCard title="Team Avg Score" value={avgScore} subtitle="across all calls" icon="📊" />
+        <KpiCard title="Calls Analyzed" value={String(analyzedCalls)} subtitle="total" icon="🎧" />
+        <KpiCard title="Coaching Completion" value={completionRate} subtitle="rate" icon="🎯" />
+        <KpiCard title="Active Reps" value={String(team.length)} subtitle="team members" icon="👥" />
       </div>
 
-      {/* Charts row */}
+      {/* Activity + Recent Calls */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
-          <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Team Performance Trend</h3>
-          <div className="flex h-48 items-center justify-center rounded-lg bg-gray-50 dark:bg-gray-800">
-            <span className="text-sm text-gray-400">Chart: Team scores over time</span>
-          </div>
-        </div>
         <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
           <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
           <div className="space-y-3">
-            {[
-              { name: "Sarah Chen", action: "Completed coaching plan", time: "2h ago", score: "+15" },
-              { name: "Mike Rodriguez", action: "Call scored 92", time: "3h ago", score: "92" },
-              { name: "Emily Watson", action: "Started role-play session", time: "5h ago", score: "" },
-              { name: "James Kim", action: "Achieved 'Top Performer' badge", time: "1d ago", score: "" },
-            ].map((item, i) => (
+            {activity.length === 0 && <p className="text-sm text-gray-400">No recent activity</p>}
+            {activity.map((item, i) => (
               <div key={i} className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{item.name}</p>
-                  <p className="text-xs text-gray-500">{item.action} · {item.time}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{item.user_name || "System"}</p>
+                  <p className="text-xs text-gray-500">{item.event_type?.replace(/_/g, " ")} · {item.created_at ? new Date(item.created_at).toLocaleDateString() : ""}</p>
                 </div>
-                {item.score && (
-                  <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-300">
-                    {item.score}
-                  </span>
-                )}
               </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
+          <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Recent Calls</h3>
+          <div className="space-y-3">
+            {calls.slice(0, 5).map((call, i) => (
+              <Link key={i} to="/dashboard/calls/$callId" params={{ callId: call.id }} className="flex items-center justify-between rounded-lg bg-gray-50 p-3 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700">
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">{call.rep_name || "Unknown"}</p>
+                  <p className="text-xs text-gray-500">{call.started_at ? new Date(call.started_at).toLocaleDateString() : ""} · {call.duration_seconds ? `${Math.floor(call.duration_seconds / 60)}m` : ""}</p>
+                </div>
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                  call.overall_score >= 85 ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" :
+                  call.overall_score >= 70 ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300" :
+                  "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+                }`}>
+                  {call.overall_score ?? "-"}
+                </span>
+              </Link>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Team table */}
+      {/* Team Members */}
       <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
         <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Team Members</h3>
@@ -73,33 +114,23 @@ function ManagerDashboard() {
             <thead>
               <tr className="border-b border-gray-200 text-gray-500 dark:border-gray-700">
                 <th className="px-6 py-3 font-medium">Name</th>
-                <th className="px-6 py-3 font-medium">Calls</th>
-                <th className="px-6 py-3 font-medium">Avg Score</th>
-                <th className="px-6 py-3 font-medium">Coaching</th>
+                <th className="px-6 py-3 font-medium">Role</th>
+                <th className="px-6 py-3 font-medium">Team</th>
                 <th className="px-6 py-3 font-medium">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {[
-                { name: "Sarah Chen", calls: 142, score: 88, coaching: "75%", status: "On Track" },
-                { name: "Mike Rodriguez", calls: 98, score: 92, coaching: "90%", status: "Excellent" },
-                { name: "Emily Watson", calls: 156, score: 76, coaching: "45%", status: "Needs Review" },
-                { name: "James Kim", calls: 87, score: 84, coaching: "60%", status: "On Track" },
-              ].map((member, i) => (
+              {team.map((member, i) => (
                 <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                   <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{member.name}</td>
-                  <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{member.calls}</td>
-                  <td className="px-6 py-4">
-                    <span className="font-medium text-gray-900 dark:text-white">{member.score}</span>
-                  </td>
-                  <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{member.coaching}</td>
+                  <td className="px-6 py-4 capitalize text-gray-600 dark:text-gray-400">{member.role}</td>
+                  <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{member.team_name || "-"}</td>
                   <td className="px-6 py-4">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      member.status === "Excellent" ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" :
-                      member.status === "On Track" ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300" :
-                      "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
+                      member.is_active ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" :
+                      "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
                     }`}>
-                      {member.status}
+                      {member.is_active ? "Active" : "Inactive"}
                     </span>
                   </td>
                 </tr>
@@ -112,19 +143,15 @@ function ManagerDashboard() {
   );
 }
 
-function KpiCard({ title, value, change, positive, icon }: { title: string; value: string; change: string; positive: boolean; icon: string }) {
+function KpiCard({ title, value, subtitle, icon }: { title: string; value: string; subtitle: string; icon: string }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
       <div className="flex items-center justify-between">
         <span className="text-2xl">{icon}</span>
-        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-          positive ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" : "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
-        }`}>
-          {change}
-        </span>
       </div>
       <p className="mt-3 text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{title}</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
+      <p className="text-xs text-gray-400 dark:text-gray-500">{subtitle}</p>
     </div>
   );
 }

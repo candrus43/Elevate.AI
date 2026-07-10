@@ -1,10 +1,23 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { register, getSession } from "~/utils/auth";
 
 export const Route = createFileRoute("/register")({
   component: RegisterPage,
 });
+
+async function apiRegister(name: string, email: string, password: string, companyName: string) {
+  const res = await fetch("/api/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, password, companyName }),
+  });
+  return res.json();
+}
+
+async function apiGetSession() {
+  const res = await fetch("/api/session");
+  return res.json();
+}
 
 function RegisterPage() {
   const navigate = useNavigate();
@@ -16,7 +29,7 @@ function RegisterPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getSession().then(({ user }) => {
+    apiGetSession().then(({ user }) => {
       if (user) navigate({ to: "/dashboard" });
     });
   }, [navigate]);
@@ -26,11 +39,15 @@ function RegisterPage() {
     setError("");
     setLoading(true);
 
-    const result = await register({ data: { email, password, name, companyName } });
-    if (result.success && result.user) {
-      navigate({ to: "/dashboard" });
-    } else {
-      setError(result.error || "Registration failed");
+    try {
+      const result = await apiRegister(name, email, password, companyName);
+      if (result.success && result.user) {
+        navigate({ to: "/dashboard" });
+      } else {
+        setError(result.error || "Registration failed");
+      }
+    } catch (err) {
+      setError("Connection error. Please try again.");
     }
     setLoading(false);
   };

@@ -248,6 +248,7 @@ function PricingSection() {
       name: "Core",
       price: "29",
       description: "For teams getting started with AI coaching",
+      stripeLink: "https://buy.stripe.com/8x2fZh4pL2Tp1sY3kw1wY02",
       features: [
         "AI call analysis & transcription",
         "Basic scorecards",
@@ -256,13 +257,14 @@ function PricingSection() {
         "5 team members",
         "Email support",
       ],
-      cta: "Start free trial",
+      cta: "Subscribe now",
       popular: false,
     },
     {
       name: "Pro",
       price: "79",
       description: "For growing teams that want full AI coaching power",
+      stripeLink: "https://buy.stripe.com/28E00jbSd79F1sYaMY1wY01",
       features: [
         "Everything in Core, plus:",
         "Live AI coaching during calls",
@@ -273,13 +275,14 @@ function PricingSection() {
         "Advanced analytics & reports",
         "Priority support",
       ],
-      cta: "Start free trial",
+      cta: "Subscribe now",
       popular: true,
     },
     {
       name: "Enterprise",
       price: "199",
       description: "For large organizations with advanced needs",
+      stripeLink: "https://buy.stripe.com/dRmd9Rf4p65B2x23kw1wY00",
       features: [
         "Everything in Pro, plus:",
         "Multi-company admin",
@@ -291,7 +294,7 @@ function PricingSection() {
         "Custom integrations",
         "On-premise deployment option",
       ],
-      cta: "Contact sales",
+      cta: "Subscribe now",
       popular: false,
     },
   ];
@@ -347,7 +350,9 @@ function PricingSection() {
                 ))}
               </ul>
               <a
-                href={plan.popular ? "/register" : "#"}
+                href={plan.stripeLink}
+                target="_blank"
+                rel="noopener noreferrer"
                 className={`mt-8 flex w-full items-center justify-center rounded-xl py-3 text-sm font-semibold transition-all ${
                   plan.popular
                     ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/25 hover:shadow-xl hover:shadow-purple-500/30"
