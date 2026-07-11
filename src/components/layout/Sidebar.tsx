@@ -19,9 +19,11 @@ const navItems = {
     { label: "My Team", icon: "👥", href: "/dashboard/team" },
     { label: "Call Reviews", icon: "🎧", href: "/dashboard/calls" },
     { label: "Coaching", icon: "🎯", href: "/dashboard/coaching" },
+    { label: "Scorecards", icon: "📋", href: "/dashboard/scorecards" },
     { label: "Leaderboard", icon: "🏆", href: "/dashboard/leaderboard" },
     { label: "Learning", icon: "📚", href: "/dashboard/learning" },
     { label: "Analytics", icon: "📈", href: "/dashboard/analytics" },
+    { label: "Settings", icon: "⚙️", href: "/dashboard/settings" },
   ],
   rep: [
     { label: "My Dashboard", icon: "📊", href: "/dashboard/rep" },
@@ -30,6 +32,7 @@ const navItems = {
     { label: "Role Play", icon: "🎭", href: "/dashboard/rep/roleplay" },
     { label: "Leaderboard", icon: "🏆", href: "/dashboard/rep/leaderboard" },
     { label: "Learning", icon: "📚", href: "/dashboard/rep/learning" },
+    { label: "Settings", icon: "⚙️", href: "/dashboard/settings" },
   ],
 };
 
