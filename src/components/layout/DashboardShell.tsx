@@ -18,13 +18,14 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
+      {/* Desktop: ml matches sidebar width. Mobile: no ml, padding for bottom nav */}
       <div
-        className={`transition-all duration-300 ${
-          sidebarCollapsed ? "ml-16" : "ml-60"
+        className={`transition-all duration-300 md:ml-60 pb-16 md:pb-0 ${
+          sidebarCollapsed ? "md:!ml-16" : ""
         }`}
       >
         <Header user={user} />
-        <main className="p-6">{children}</main>
+        <main className="p-4 sm:p-6">{children}</main>
       </div>
     </div>
   );

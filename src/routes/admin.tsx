@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { getSession } from "~/utils/auth";
-import type { UserSession } from "~/utils/auth";
+import type { UserSession } from "~/components/layout/Header";
 import { DashboardShell } from "~/components/layout/DashboardShell";
 
 export const Route = createFileRoute("/admin")({
@@ -14,12 +13,17 @@ function AdminLayout() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getSession().then(({ user }) => {
-      if (!user) { navigate({ to: "/login" }); return; }
-      if (user.role !== "admin") { navigate({ to: "/dashboard" }); return; }
-      setUser(user);
-      setLoading(false);
-    });
+    fetch("/api/session")
+      .then((r) => r.json())
+      .then(({ user }) => {
+        if (!user) { navigate({ to: "/login" }); return; }
+        if (user.role !== "admin") { navigate({ to: "/dashboard" }); return; }
+        setUser(user);
+        setLoading(false);
+      })
+      .catch(() => {
+        navigate({ to: "/login" });
+      });
   }, [navigate]);
 
   if (loading) {
