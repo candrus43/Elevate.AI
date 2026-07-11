@@ -7,6 +7,10 @@ import handler from "./dist/server/server.js";
 import { sql } from "./src/utils/sql";
 import { startSession, processMessage, getScenarios, getScenarioById } from "./src/utils/roleplay-engine";
 import { generateCoachingPlan, analyzeWeaknesses } from "./src/utils/coaching-generator";
+import {
+  calculateScore, calculateSentiment, detectTopics,
+  detectObjections, generateSummary, calculatePoints,
+} from "./src/utils/call-analysis";
 
 async function db(query: string): Promise<any[]> {
   const result = await Bun.$`team-db ${query}`.text();
@@ -294,20 +298,104 @@ async function handleCallUpload(req: Request): Promise<Response> {
 }
 
 async function analyzeCallAsync(callId: string, companyId: string, userId: string): Promise<void> {
-  const delay = 3000 + Math.random() * 2000;
-  await new Promise((r) => setTimeout(r, delay));
-  const score = Math.floor(Math.random() * 30 + 65);
-  const sentiments = ["positive", "neutral", "negative"];
-  const sentiment = sentiments[Math.floor(Math.random() * (score > 80 ? 2 : 3))];
-  const fillerWords = Math.floor(Math.random() * 15);
-  const talkRatio = 0.35 + Math.random() * 0.3;
-  const topics = ["pricing", "discovery", "product demo", "objection handling", "closing", "follow-up", "competitor comparison"];
-  const selectedTopics = topics.sort(() => Math.random() - 0.5).slice(0, 2 + Math.floor(Math.random() * 3));
   try {
-    await db(sql`UPDATE calls SET status = ${"analyzed"}, updated_at = datetime('now') WHERE id = ${callId}`);
-    await db(sql`INSERT INTO call_analyses (id, call_id, overall_score, sentiment, talk_ratio_rep, talk_ratio_customer, avg_pace_wpm, filler_word_count, key_topics, summary, objections_detected) VALUES (${crypto.randomUUID()}, ${callId}, ${score}, ${sentiment}, ${talkRatio}, ${1 - talkRatio}, ${140 + Math.floor(Math.random() * 40)}, ${fillerWords}, ${JSON.stringify(selectedTopics)}, ${"AI-generated analysis for call recording."}, ${"[\"pricing concern\"]"})`);
-    await db(sql`INSERT INTO points_events (id, company_id, user_id, event_type, points, description) VALUES (${crypto.randomUUID()}, ${companyId}, ${userId}, ${"call_uploaded"}, 10, ${"Uploaded and analyzed a call recording"})`);
-    console.log("Call " + callId + " analyzed: score=" + score + ", sentiment=" + sentiment);
+    // Get call details
+    const calls = await db(sql`SELECT id, duration_seconds, direction, started_at FROM calls WHERE id = ${callId}`);
+    if (calls.length === 0) return;
+    const call = calls[0];
+    const duration = call.duration_seconds || 300;
+    const direction = call.direction || "outbound";
+
+    // Simulate analysis delay (1-3 seconds)
+    await new Promise((r) => setTimeout(r, 1000 + Math.random() * 2000));
+
+    // 1. Detect objections
+    const objections = detectObjections();
+
+    // 2. Calculate realistic score
+    const score = calculateScore(duration, direction, objections.length);
+
+    // 3. Calculate sentiment
+    const sentiment = calculateSentiment(score);
+
+    // 4. Generate topics
+    const topics = detectTopics(direction, duration);
+
+    // 5. Generate summary
+    const summary = generateSummary(score, sentiment, direction, duration, topics, objections);
+
+    // 6. Analyze for filler words (simulated)
+    const fillerWords = Math.floor(Math.random() * 20); // 0-20 filler words
+    const talkRatio = 0.35 + Math.random() * 0.3; // 35-65%
+    const paceWpm = 130 + Math.floor(Math.random() * 50); // 130-180 wpm
+
+    // 7. Check compliance rules
+    let complianceIssues: string[] = [];
+    try {
+      const rules = await db(sql`SELECT id, name, script_required_phrases, prohibited_phrases FROM compliance_rules WHERE company_id = ${companyId} AND is_active = 1`);
+
+      for (const rule of rules) {
+        const required: string[] = JSON.parse(rule.script_required_phrases || "[]");
+        const prohibited: string[] = JSON.parse(rule.prohibited_phrases || "[]");
+
+        // Check required phrases (random pass/fail with higher pass rate for good scores)
+        for (const phrase of required) {
+          const passed = score >= 70 ? Math.random() > 0.2 : Math.random() > 0.5;
+          if (!passed && !complianceIssues.includes("Missing: " + phrase)) {
+            complianceIssues.push("Missing: " + phrase);
+          }
+          await db(sql`INSERT INTO compliance_checks (id, call_id, rule_id, passed, details) VALUES (${crypto.randomUUID()}, ${callId}, ${rule.id}, ${passed ? 1 : 0}, ${passed ? "Required phrase found" : "Required phrase missing: " + phrase})`);
+        }
+
+        // Check prohibited phrases
+        for (const phrase of prohibited) {
+          const failed = score < 70 ? Math.random() > 0.5 : Math.random() > 0.8;
+          if (failed && !complianceIssues.includes("Prohibited: " + phrase)) {
+            complianceIssues.push("Prohibited: " + phrase);
+          }
+          await db(sql`INSERT INTO compliance_checks (id, call_id, rule_id, passed, details) VALUES (${crypto.randomUUID()}, ${callId}, ${rule.id}, ${failed ? 0 : 1}, ${failed ? "Prohibited phrase detected: " + phrase : "No prohibited phrases found"})`);
+        }
+      }
+    } catch { /* compliance check not critical */ }
+
+    // 8. Update call status
+    await db(sql`UPDATE calls SET status = ${"analyzed"}, duration_seconds = ${duration}, updated_at = datetime('now') WHERE id = ${callId}`);
+
+    // 9. Insert analysis
+    await db(sql`INSERT INTO call_analyses (id, call_id, overall_score, sentiment, talk_ratio_rep, talk_ratio_customer, avg_pace_wpm, filler_word_count, key_topics, summary, objections_detected, compliance_issues) VALUES (${crypto.randomUUID()}, ${callId}, ${score}, ${sentiment}, ${talkRatio}, ${1 - talkRatio}, ${paceWpm}, ${fillerWords}, ${JSON.stringify(topics)}, ${summary}, ${JSON.stringify(objections.map(o => o.objection))}, ${JSON.stringify(complianceIssues)})`);
+
+    // 10. Award points based on score
+    const points = calculatePoints(score);
+    await db(sql`INSERT INTO points_events (id, company_id, user_id, event_type, points, description) VALUES (${crypto.randomUUID()}, ${companyId}, ${userId}, ${"call_analyzed"}, ${points}, ${"Call analyzed: score " + score + " (" + sentiment + ")"})`);
+
+    // 11. Update user_metrics
+    try {
+      const existing = await db(sql`SELECT id, calls_analyzed, avg_score, coaching_completed FROM user_metrics WHERE user_id = ${userId} AND period = 'monthly' ORDER BY period_start DESC LIMIT 1`);
+      if (existing.length > 0) {
+        const m = existing[0];
+        const newCount = (m.calls_analyzed || 0) + 1;
+        const newAvg = ((m.avg_score || 0) * (m.calls_analyzed || 0) + score) / newCount;
+        await db(sql`UPDATE user_metrics SET calls_analyzed = ${newCount}, avg_score = ${Math.round(newAvg)}, updated_at = datetime('now') WHERE id = ${m.id}`);
+      } else {
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
+        await db(sql`INSERT INTO user_metrics (id, user_id, company_id, period, calls_analyzed, avg_score, period_start, period_end) VALUES (${crypto.randomUUID()}, ${userId}, ${companyId}, ${"monthly"}, 1, ${score}, ${monthStart}, ${monthEnd})`);
+      }
+    } catch { /* metrics update not critical */ }
+
+    // 12. Update company_metrics
+    try {
+      const existingCm = await db(sql`SELECT id, calls_analyzed, avg_team_score FROM company_metrics WHERE company_id = ${companyId} AND period = 'monthly' ORDER BY period_start DESC LIMIT 1`);
+      if (existingCm.length > 0) {
+        const cm = existingCm[0];
+        const newCount = (cm.calls_analyzed || 0) + 1;
+        const newAvg = ((cm.avg_team_score || 0) * (cm.calls_analyzed || 0) + score) / newCount;
+        await db(sql`UPDATE company_metrics SET calls_analyzed = ${newCount}, avg_team_score = ${Math.round(newAvg)}, updated_at = datetime('now') WHERE id = ${cm.id}`);
+      }
+    } catch { /* company metrics update not critical */ }
+
+    console.log("Call " + callId + " analyzed: score=" + score + ", sentiment=" + sentiment + ", objections=" + objections.length + ", topics=" + topics.join(", "));
   } catch (err) { console.error("Failed to analyze call " + callId + ":", err); }
 }
 

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { getSession } from "~/utils/auth";
-import type { UserSession } from "~/utils/auth";
+
 import { getCompanyCalls } from "~/utils/db";
+import type { UserSession } from "~/components/layout/Header";
 
 export const Route = createFileRoute("/dashboard/calls")({
   component: CallList,
@@ -16,7 +16,7 @@ function CallList() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    getSession().then(async ({ user }) => {
+    fetch("/api/session").then(r => r.json()).then(async ({ user }) => {
       if (!user) { navigate({ to: "/login" }); return; }
       setUser(user);
       const data = await getCompanyCalls(user.companyId);
@@ -25,7 +25,11 @@ function CallList() {
     });
   }, [navigate]);
 
-  if (loading) return <div className="flex items-center justify-center h-48"><div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" /></div>;
+  if (loading) return (
+    <div className="flex items-center justify-center h-48">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+    </div>
+  );
 
   const filtered = search
     ? calls.filter((c) =>

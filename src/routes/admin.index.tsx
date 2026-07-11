@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { getSession } from "~/utils/auth";
-import type { UserSession } from "~/utils/auth";
+
+
 import { db } from "~/utils/db";
 
 export const Route = createFileRoute("/admin/")({
@@ -16,7 +16,7 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getSession().then(async ({ user }) => {
+    fetch("/api/session").then(r => r.json()).then(async ({ user }) => {
       if (!user) { navigate({ to: "/login" }); return; }
       if (user.role !== "admin") { navigate({ to: "/dashboard" }); return; }
       setUser(user);

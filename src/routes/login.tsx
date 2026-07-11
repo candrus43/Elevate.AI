@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { login, getSession } from "~/utils/auth";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -14,12 +13,15 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getSession().then(({ user }) => {
-      if (user) {
-        const target = user.role === "admin" ? "/admin" : user.role === "manager" ? "/dashboard" : "/dashboard/rep";
-        navigate({ to: target });
-      }
-    }).catch(() => {});
+    fetch("/api/session")
+      .then((r) => r.json())
+      .then(({ user }) => {
+        if (user) {
+          const target = user.role === "admin" ? "/admin" : user.role === "manager" ? "/dashboard" : "/dashboard/rep";
+          navigate({ to: target });
+        }
+      })
+      .catch(() => {});
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,7 +30,12 @@ function LoginPage() {
     setLoading(true);
 
     try {
-      const result = await login({ data: { email, password } });
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const result = await res.json();
       if (result.success && result.user) {
         const target = result.user.role === "admin" ? "/admin" : result.user.role === "manager" ? "/dashboard" : "/dashboard/rep";
         navigate({ to: target });
@@ -89,7 +96,7 @@ function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 block w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                placeholder="password"
+                placeholder="••••••••"
                 required
               />
             </div>
@@ -104,7 +111,7 @@ function LoginPage() {
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-500">
-            No account?{" "}
+            Don't have an account?{" "}
             <Link to="/register" className="font-medium text-purple-400 hover:text-purple-300">
               Create one
             </Link>
