@@ -24,6 +24,7 @@ const navItems = {
     { label: "Leaderboard", icon: "🏆", href: "/dashboard/leaderboard" },
     { label: "Learning", icon: "📚", href: "/dashboard/learning" },
     { label: "Analytics", icon: "📈", href: "/dashboard/analytics" },
+    { label: "Billing", icon: "💳", href: "/dashboard/billing" },
     { label: "Settings", icon: "⚙️", href: "/dashboard/settings" },
   ],
   rep: [

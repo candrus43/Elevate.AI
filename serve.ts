@@ -6,6 +6,7 @@
 import handler from "./dist/server/server.js";
 import { sql } from "./src/utils/sql";
 import { startSession, processMessage, getScenarios, getScenarioById } from "./src/utils/roleplay-engine";
+import { generateCoachingPlan, analyzeWeaknesses } from "./src/utils/coaching-generator";
 
 async function db(query: string): Promise<any[]> {
   const result = await Bun.$`team-db ${query}`.text();
@@ -594,6 +595,59 @@ async function handleListComplianceChecks(req: Request): Promise<Response> {
   } catch (e) { console.error("list checks error:", e); return jsonResponse({ error: "Failed to load checks" }, 500); }
 }
 
+// Coaching Plan Generator API
+async function handleGenerateCoachingPlan(req: Request): Promise<Response> {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return jsonResponse({ error: "Not authenticated" }, 401);
+    const { user_id } = await req.json();
+    const targetUserId = user_id || user.id;
+    const callScores = await db(sql`SELECT cs.total_score, cs.criteria_scores, cs.scorecard_id, sc.name as scorecard_name FROM call_scores cs JOIN scorecards sc ON sc.id = cs.scorecard_id JOIN calls c ON c.id = cs.call_id WHERE c.user_id = ${targetUserId} ORDER BY cs.created_at DESC LIMIT 10`);
+    const criteriaWeaknesses: Array<{ criterionName: string; category: string; score: number; maxScore: number; weight: number }> = [];
+    for (const cs of callScores) {
+      const criteria = await db(sql`SELECT name, max_score, weight, category FROM scorecard_criteria WHERE scorecard_id = ${cs.scorecard_id} ORDER BY sort_order`);
+      const criteriaScores = (() => { try { return JSON.parse(cs.criteria_scores || "{}"); } catch { return {}; } })();
+      for (const c of criteria) {
+        const score = criteriaScores[c.name] ?? (cs.total_score / Math.max(1, criteria.length));
+        criteriaWeaknesses.push({ criterionName: c.name, category: c.category || "General", score, maxScore: c.max_score, weight: c.weight });
+      }
+    }
+    const analyses = await db(sql`SELECT overall_score FROM call_analyses ca JOIN calls c ON c.id = ca.call_id WHERE c.user_id = ${targetUserId} ORDER BY ca.created_at DESC LIMIT 5`);
+    const avgScore = analyses.length > 0 ? analyses.reduce((s: number, a: any) => s + (a.overall_score || 0), 0) / analyses.length : 0;
+    if (avgScore < 70 && criteriaWeaknesses.length === 0) {
+      criteriaWeaknesses.push({ criterionName: "Overall Call Performance", category: "General", score: avgScore, maxScore: 100, weight: 1.0 });
+    }
+    const rep = await db(sql`SELECT name FROM users WHERE id = ${targetUserId}`);
+    const repName = rep.length > 0 ? rep[0].name : undefined;
+    const weaknesses = analyzeWeaknesses(criteriaWeaknesses);
+    const plan = generateCoachingPlan(weaknesses, repName);
+    const planId = crypto.randomUUID();
+    await db(sql`INSERT INTO coaching_plans (id, company_id, user_id, manager_id, title, description, status, created_at) VALUES (${planId}, ${user.companyId}, ${targetUserId}, ${user.id}, ${plan.title}, ${plan.description}, ${"active"}, ${"datetime('now')"})`);
+    for (const item of plan.items) {
+      await db(sql`INSERT INTO coaching_plan_items (id, coaching_plan_id, title, description, resource_url, status, sort_order) VALUES (${crypto.randomUUID()}, ${planId}, ${item.title}, ${item.description}, ${item.resourceUrl || ""}, ${"pending"}, ${item.sortOrder})`);
+    }
+    return jsonResponse({ success: true, plan: { id: planId, title: plan.title, description: plan.description, items: plan.items, weaknesses: weaknesses.slice(0, 5) } });
+  } catch (e) { console.error("coaching generate error:", e); return jsonResponse({ error: "Failed to generate coaching plan" }, 500); }
+}
+
+// Billing API
+async function handleGetBillingPlan(req: Request): Promise<Response> {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return jsonResponse({ error: "Not authenticated" }, 401);
+    const rows = await db(sql`SELECT id, name, slug, tier, created_at FROM companies WHERE id = ${user.companyId}`);
+    if (rows.length === 0) return jsonResponse({ error: "Company not found" }, 404);
+    const company = rows[0];
+    const teamSize = (await db(sql`SELECT COUNT(*) as count FROM users WHERE company_id = ${user.companyId}`))[0]?.count || 0;
+    const plans = {
+      core: { name: "Core", price: "$29/mo", stripeLink: "https://buy.stripe.com/8x2fZh4pL2Tp1sY3kw1wY02", features: ["AI call analysis", "Basic scorecards", "Manager dashboard", "Up to 10 team members", "Email support"] },
+      pro: { name: "Pro", price: "$79/mo", stripeLink: "https://buy.stripe.com/28E00jbSd79F1sYaMY1wY01", features: ["Everything in Core", "Live AI coaching", "AI role-playing", "Custom scorecards", "Advanced analytics", "Up to 50 team members", "Priority support"] },
+      enterprise: { name: "Enterprise", price: "$199/mo", stripeLink: "https://buy.stripe.com/dRmd9Rf4p65B2x23kw1wY00", features: ["Everything in Pro", "Multi-company admin", "SSO / SAML", "Custom AI prompts", "Dedicated support", "SLA guarantees", "Unlimited team members", "Custom integrations"] },
+    };
+    return jsonResponse({ company: { ...company, teamSize }, currentPlan: plans[company.tier as keyof typeof plans] || plans.core, allPlans: plans });
+  } catch (e) { console.error("billing plan error:", e); return jsonResponse({ error: "Failed to load billing info" }, 500); }
+}
+
 // Server
 for (let attempt = 1; ; attempt++) {
   await Bun.$`sudo sh -c ${freePort}`.quiet().nothrow();
@@ -634,6 +688,12 @@ for (let attempt = 1; ; attempt++) {
         if (pathname.match(/^\/api\/scorecards\/[^\/]+\/criteria\/[^\/]+$/) && req.method === "DELETE") return handleDeleteCriteria(req);
         if (pathname.startsWith("/api/scorecards/") && pathname.split("/").length === 4 && req.method === "PUT") return handleUpdateScorecard(req);
         if (pathname.startsWith("/api/scorecards/") && pathname.split("/").length === 4 && req.method === "DELETE") return handleDeleteScorecard(req);
+
+        // Coaching Plan Generator API
+        if (pathname === "/api/coaching/generate" && req.method === "POST") return handleGenerateCoachingPlan(req);
+
+        // Billing API
+        if (pathname === "/api/billing/plan" && req.method === "GET") return handleGetBillingPlan(req);
 
         // Settings API
         if (pathname === "/api/settings/company" && req.method === "GET") return handleGetCompanySettings(req);
