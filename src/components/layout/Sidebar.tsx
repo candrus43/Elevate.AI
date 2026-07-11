@@ -18,6 +18,7 @@ const navItems = {
     { label: "Overview", icon: "📊", href: "/dashboard" },
     { label: "My Team", icon: "👥", href: "/dashboard/team" },
     { label: "Call Reviews", icon: "🎧", href: "/dashboard/calls" },
+    { label: "Compliance", icon: "🛡️", href: "/dashboard/compliance" },
     { label: "Coaching", icon: "🎯", href: "/dashboard/coaching" },
     { label: "Scorecards", icon: "📋", href: "/dashboard/scorecards" },
     { label: "Leaderboard", icon: "🏆", href: "/dashboard/leaderboard" },
