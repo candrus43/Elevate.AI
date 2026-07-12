@@ -144,6 +144,61 @@ async function salesforceApiCall(
   return response;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// HUBSPOT API HELPER
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const HS_API_BASE = "https://api.hubapi.com";
+
+interface HubspotCredentials {
+  api_key: string;
+  portal_id?: string;
+}
+
+/**
+ * Get HubSpot credentials from the integrations table.
+ */
+async function getHubspotCredentials(companyId: string): Promise<{ integrationId: string; credentials: HubspotCredentials } | null> {
+  const integration = await db(sql`
+    SELECT id, credentials FROM integrations
+    WHERE company_id = ${companyId} AND provider = 'hubspot' AND is_active = 1
+    LIMIT 1
+  `);
+  if (integration.length === 0) return null;
+
+  const creds = JSON.parse(integration[0].credentials || "{}");
+  return {
+    integrationId: integration[0].id,
+    credentials: {
+      api_key: creds.api_key || "",
+      portal_id: creds.portal_id || "",
+    },
+  };
+}
+
+/**
+ * Make an authenticated HubSpot REST API call.
+ * HubSpot uses API key as Bearer token in Authorization header.
+ */
+async function hubspotApiCall(
+  apiKey: string,
+  method: string,
+  path: string,
+  body?: unknown,
+): Promise<Response> {
+  const url = `${HS_API_BASE}/${path.replace(/^\//, "")}`;
+
+  return fetch(url, {
+    method,
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
 /**
  * Log a sync operation to the sync_logs table.
  */
@@ -343,6 +398,45 @@ async function syncContacts(companyId: string, userId: string, provider: string,
       }
 
       await updateLastSync(sf.integrationId, companyId);
+    } else if (isLive(mode) && provider === "hubspot") {
+      // ── LIVE MODE: Real HubSpot REST API ─────────────────────────────────
+      const hs = await getHubspotCredentials(companyId);
+      if (!hs) {
+        result.errors.push("HubSpot credentials not found");
+        result.success = false;
+        return result;
+      }
+
+      if (direction === "inbound" || direction === "bi-directional") {
+        try {
+          const response = await hubspotApiCall(
+            hs.credentials.api_key,
+            "GET",
+            "crm/v3/objects/contacts?limit=100&properties=firstname,lastname,email,phone",
+          );
+
+          if (!response.ok) {
+            const body = await response.text();
+            throw new Error(`HubSpot API error ${response.status}: ${body}`);
+          }
+
+          const data = await response.json() as any;
+          const records = data.results || [];
+          result.contactsSynced = records.length;
+
+          await logSync(hs.integrationId, "success", records.length, "");
+        } catch (e: any) {
+          const msg = `HubSpot contact sync failed: ${e.message}`;
+          result.errors.push(msg);
+          await logSync(hs.integrationId, "failed", 0, msg);
+        }
+      }
+
+      if (direction === "outbound" || direction === "bi-directional") {
+        // Push call data — handled in syncActivities
+      }
+
+      await updateLastSync(hs.integrationId, companyId);
     } else {
       // ── DEMO MODE: Simulated sync (existing behavior) ────────────────────
       if (direction === "inbound" || direction === "bi-directional") {
@@ -451,6 +545,39 @@ async function syncDeals(companyId: string, userId: string, provider: string): P
       }
 
       await updateLastSync(sf.integrationId, companyId);
+    } else if (isLive(mode) && provider === "hubspot") {
+      // ── LIVE MODE: Real HubSpot Deals API ─────────────────────────────────
+      const hs = await getHubspotCredentials(companyId);
+      if (!hs) {
+        result.errors.push("HubSpot credentials not found");
+        result.success = false;
+        return result;
+      }
+
+      try {
+        const response = await hubspotApiCall(
+          hs.credentials.api_key,
+          "GET",
+          "crm/v3/objects/deals?limit=100&properties=dealname,amount,dealstage,closedate",
+        );
+
+        if (!response.ok) {
+          const body = await response.text();
+          throw new Error(`HubSpot API error ${response.status}: ${body}`);
+        }
+
+        const data = await response.json() as any;
+        const records = data.results || [];
+        result.dealsSynced = records.length;
+
+        await logSync(hs.integrationId, "success", records.length, "");
+      } catch (e: any) {
+        const msg = `HubSpot deal sync failed: ${e.message}`;
+        result.errors.push(msg);
+        await logSync(hs.integrationId, "failed", 0, msg);
+      }
+
+      await updateLastSync(hs.integrationId, companyId);
     } else {
       // ── DEMO MODE: Simulated deal sync ──────────────────────────────────
       const dealsTotal = Math.floor(Math.random() * 10) + 3;
@@ -510,14 +637,11 @@ export async function handleSyncActivities(req: Request): Promise<Response> {
 
       for (const call of calls) {
         try {
-          // Create a Salesforce Task for each call
           const taskBody = {
             Subject: `Call: ${call.rep_name} - ${call.phone_number || "Unknown"}`,
             Description: `Call duration: ${call.duration_seconds || 0}s | Score: ${call.overall_score || "N/A"} | Sentiment: ${call.sentiment || "N/A"}`,
             Status: "Completed",
             ActivityDate: call.started_at ? call.started_at.split("T")[0] : new Date().toISOString().split("T")[0],
-            // WhoId can be set if a Contact Id is known — left empty for now
-            // If we had a contact lookup, set WhoId here
           };
 
           const response = await salesforceApiCall(
@@ -551,6 +675,67 @@ export async function handleSyncActivities(req: Request): Promise<Response> {
         activitiesLogged: logged,
         errors: errors.length > 0 ? errors : undefined,
         message: `${logged} activities logged to Salesforce${errors.length > 0 ? ` (${errors.length} errors)` : ""}`,
+      });
+    }
+
+    if (isLive(mode) && provider === "hubspot") {
+      // ── LIVE MODE: Push call data as HubSpot Notes ────────────────────────
+      const hs = await getHubspotCredentials(user.companyId);
+      if (!hs) return jsonResponse({ error: "HubSpot credentials not found" }, 400);
+
+      const calls = await db(sql`
+        SELECT c.id, c.duration_seconds, c.started_at, c.phone_number, ca.overall_score, ca.sentiment, u.name as rep_name
+        FROM calls c
+        LEFT JOIN call_analyses ca ON ca.call_id = c.id
+        JOIN users u ON u.id = c.user_id
+        WHERE c.company_id = ${user.companyId}
+        ORDER BY c.created_at DESC LIMIT 10
+      `);
+
+      let logged = 0;
+      const errors: string[] = [];
+
+      for (const call of calls) {
+        try {
+          // HubSpot Notes API: POST /crm/v3/objects/notes
+          const noteBody = {
+            properties: {
+              hs_timestamp: call.started_at ? new Date(call.started_at).getTime() : Date.now(),
+              hs_note_body: `Call: ${call.rep_name} - ${call.phone_number || "Unknown"}\nDuration: ${call.duration_seconds || 0}s\nScore: ${call.overall_score || "N/A"}\nSentiment: ${call.sentiment || "N/A"}`,
+            },
+          };
+
+          const response = await hubspotApiCall(
+            hs.credentials.api_key,
+            "POST",
+            "crm/v3/objects/notes",
+            noteBody,
+          );
+
+          if (response.ok) {
+            const result = await response.json() as any;
+            await logSync(hs.integrationId, "success", 1, `Created Note ${result.id} for call ${call.id}`);
+            logged++;
+          } else {
+            const body = await response.text();
+            const errMsg = `Failed to create Note for call ${call.id}: ${response.status} — ${body}`;
+            errors.push(errMsg);
+            await logSync(hs.integrationId, "failed", 0, errMsg);
+          }
+        } catch (e: any) {
+          const errMsg = `Error creating Note for call ${call.id}: ${e.message}`;
+          errors.push(errMsg);
+          await logSync(hs.integrationId, "failed", 0, errMsg);
+        }
+      }
+
+      await updateLastSync(hs.integrationId, user.companyId);
+
+      return jsonResponse({
+        success: errors.length === 0,
+        activitiesLogged: logged,
+        errors: errors.length > 0 ? errors : undefined,
+        message: `${logged} activities logged to HubSpot${errors.length > 0 ? ` (${errors.length} errors)` : ""}`,
       });
     }
 
