@@ -6,6 +6,8 @@
 
 import { jsonResponse, UPLOADS_DIR } from "./middleware";
 import { handleLogin, handleRegister, handleLogout, handleSession } from "./auth";
+import { handleDemoLogin } from "./demo-login";
+import { handleWizardGetStatus, handleCompleteOnboardingStep, handleSkipOnboardingStep } from "./onboarding";
 import { handleCallUpload, handleCallList, handleCallDelete } from "./calls";
 import {
   handleListScorecards,
@@ -78,7 +80,7 @@ import {
 } from "./integrations";
 // ── Security ────────────────────────────────────────────────────────────────────
 import { apiRateLimiter, logRequest, handleHealthCheck } from "./security";
-import { handleGetOpenAIConfig, handleSaveOpenAIConfig } from "./openai";
+import { handleGetOpenAIConfig, handleSaveOpenAIConfig, handleTestOpenAIConnection } from "./openai";
 
 // ── SSO / SAML Authentication ───────────────────────────────────────────────────
 import {
@@ -251,6 +253,7 @@ export async function routeApi(req: Request): Promise<Response | null> {
     // ── Auth ──────────────────────────────────────────────────────────────────────
     if (pathname === "/api/login" && req.method === "POST") return handleLogin(req);
     if (pathname === "/api/register" && req.method === "POST") return handleRegister(req);
+    if (pathname === "/api/demo-login" && req.method === "POST") return handleDemoLogin(req);
     if (pathname === "/api/logout" && req.method === "POST") return handleLogout(req);
     if (pathname === "/api/session" && req.method === "GET") return handleSession(req);
 
@@ -318,6 +321,11 @@ export async function routeApi(req: Request): Promise<Response | null> {
     if (pathname === "/api/settings/demo-mode" && req.method === "PUT") return handleSetDemoMode(req);
     if (pathname === "/api/settings/onboarding-status" && req.method === "GET") return handleGetOnboardingStatus(req);
     if (pathname === "/api/settings/complete-onboarding" && req.method === "POST") return handleCompleteOnboarding(req);
+
+    // ── Onboarding Wizard ─────────────────────────────────────────────────────────
+    if (pathname === "/api/onboarding/status" && req.method === "GET") return handleWizardGetStatus(req);
+    if (pathname.match(/^\/api\/onboarding\/step\/[a-z_]+$/) && req.method === "POST") return handleCompleteOnboardingStep(req);
+    if (pathname.match(/^\/api\/onboarding\/skip\/[a-z_]+$/) && req.method === "POST") return handleSkipOnboardingStep(req);
 
     // ── Notifications / Slack Webhooks ────────────────────────────────────────────
     if (pathname === "/api/notifications/preferences" && req.method === "GET") return handleGetNotificationPreferences(req);
@@ -566,6 +574,7 @@ export async function routeApi(req: Request): Promise<Response | null> {
     // ── OpenAI Configuration ──────────────────────────────────────────────────────
     if (pathname === "/api/openai/config" && req.method === "GET") return handleGetOpenAIConfig(req);
     if (pathname === "/api/openai/config" && req.method === "PUT") return handleSaveOpenAIConfig(req);
+    if (pathname === "/api/openai/test" && req.method === "POST") return handleTestOpenAIConnection(req);
 
     // Not an API route
     return null;

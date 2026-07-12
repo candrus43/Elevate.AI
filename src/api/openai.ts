@@ -206,3 +206,46 @@ export async function handleSaveOpenAIConfig(req: Request): Promise<Response> {
     return jsonResponse({ error: "Failed to save config" }, 500);
   }
 }
+
+// ─── POST /api/openai/test ────────────────────────────────────────────────────
+export async function handleTestOpenAIConnection(req: Request): Promise<Response> {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return jsonResponse({ error: "Not authenticated" }, 401);
+
+    const body = await req.json().catch(() => ({}));
+    const apiKey = body.apiKey || undefined;
+
+    // If no API key provided in request body, try the saved config
+    let config: OpenAIConfig | null = null;
+    if (apiKey) {
+      config = { apiKey, model: DEFAULT_MODEL, maxTokens: MAX_TOKENS };
+    } else {
+      config = await getOpenAIConfig(user.companyId);
+    }
+
+    if (!config || !config.apiKey) {
+      return jsonResponse({ success: false, error: "No API key configured. Please enter an API key first." });
+    }
+
+    // Make a simple test call to OpenAI
+    const result = await callOpenAI(config, {
+      model: config.model,
+      messages: [
+        { role: "system", content: "You are a helpful assistant." },
+        { role: "user", content: "Reply with exactly the word 'connected' if you receive this message." },
+      ],
+      max_tokens: 10,
+      temperature: 0,
+    });
+
+    if (result.success) {
+      return jsonResponse({ success: true, message: "Connection successful! OpenAI API is working correctly." });
+    } else {
+      return jsonResponse({ success: false, error: result.error || "Connection failed" });
+    }
+  } catch (e) {
+    console.error("test openai connection error:", e);
+    return jsonResponse({ success: false, error: "Failed to test connection" });
+  }
+}

@@ -29,6 +29,7 @@ const navItems = {
     { label: "Learning", icon: "📚", href: "/dashboard/learning" },
     { label: "Executive", icon: "📈", href: "/dashboard/executive" },
     { label: "Integrations", icon: "🔌", href: "/dashboard/integrations" },
+    { label: "OpenAI", icon: "🤖", href: "/dashboard/openai-integration" },
     { label: "CRM Sync", icon: "🔄", href: "/dashboard/crm-sync" },
     { label: "Slack", icon: "💬", href: "/dashboard/slack-notifications" },
     { label: "AI Coach", icon: "🤖", href: "/dashboard/ai-coach" },

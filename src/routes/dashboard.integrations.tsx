@@ -57,6 +57,7 @@ function Integrations() {
       { id: "microsoft-365", name: "Microsoft 365", icon: "M3", desc: "Calendar and email integration", status: "coming-soon", color: "bg-blue-700", category: "Productivity", mode: "demo" },
       { id: "webhook", name: "Webhook API", icon: "🔗", desc: "Custom webhooks for event-driven integrations", status: "disconnected", color: "bg-gray-600", category: "Developer", mode: "demo" },
       { id: "thoughtspot", name: "ThoughtSpot", icon: "TS", desc: "Pull analytics data to enrich coaching dashboards", status: "disconnected", color: "bg-indigo-600", category: "Analytics", mode: "demo" },
+      { id: "openai", name: "OpenAI", icon: "🤖", desc: "AI engine for call analysis, role-play, and coaching — powered by GPT-4o-mini", status: "disconnected", color: "bg-green-600", category: "AI", mode: "demo" },
     ]);
   }, [demoMode]);
 
@@ -219,10 +220,10 @@ function Integrations() {
             <p className="text-sm text-gray-400 mb-3">{int.desc}</p>
 
             {/* Action buttons */}
-            {int.status === "disconnected" && (int.name === "Hodu Phone" || int.name === "ThoughtSpot") && (
+            {int.status === "disconnected" && (int.name === "Hodu Phone" || int.name === "ThoughtSpot" || int.name === "OpenAI") && (
               <Link to={`/dashboard/${int.name.toLowerCase().replace(" ", "-")}-integration`} className="inline-block text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors">Connect</Link>
             )}
-            {int.status === "disconnected" && int.name !== "Hodu Phone" && int.name !== "ThoughtSpot" && (
+            {int.status === "disconnected" && int.name !== "Hodu Phone" && int.name !== "ThoughtSpot" && int.name !== "OpenAI" && (
               <button className="text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors">Connect</button>
             )}
             {int.status === "connected" && (
