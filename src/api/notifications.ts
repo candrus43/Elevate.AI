@@ -1,9 +1,76 @@
 /**
  * Notifications API — Slack webhooks, notification preferences, and event-triggered dispatch.
+ * Supports demo/live mode: demo mode logs to audit_logs, live mode sends real Slack webhooks.
  */
 
 import { sql } from "~/utils/sql";
 import { db, jsonResponse, getAuthUser } from "./middleware";
+import { getEffectiveMode, isLive } from "./integration-mode";
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SHARED — sendSlackWebhook (with rate-limit retry)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+interface SlackWebhookResult {
+  success: boolean;
+  status?: number;
+  error?: string;
+}
+
+/**
+ * Send a payload to a Slack webhook URL with rate-limit handling.
+ * Retries on HTTP 429 (Too Many Requests) with exponential backoff.
+ * Max 3 retries with delays: 1s, 2s, 4s.
+ */
+export async function sendSlackWebhook(
+  webhookUrl: string,
+  payload: Record<string, any>,
+): Promise<SlackWebhookResult> {
+  const maxRetries = 3;
+  let lastError: string | undefined;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        return { success: true, status: response.status };
+      }
+
+      if (response.status === 429 && attempt < maxRetries) {
+        // Rate limited — exponential backoff: 1s, 2s, 4s
+        const delayMs = Math.pow(2, attempt) * 1000;
+        console.warn(
+          `Slack webhook rate limited (429), retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries})`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        lastError = `Rate limited (HTTP 429)`;
+        continue;
+      }
+
+      return {
+        success: false,
+        status: response.status,
+        error: `Slack returned HTTP ${response.status}`,
+      };
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : "Connection error";
+      if (attempt < maxRetries) {
+        const delayMs = Math.pow(2, attempt) * 1000;
+        console.warn(
+          `Slack webhook connection error, retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries}): ${lastError}`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+
+  return { success: false, error: lastError || "Failed after retries" };
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SLACK WEBHOOKS
@@ -90,6 +157,11 @@ export async function handleDeleteSlackWebhook(req: Request): Promise<Response> 
 }
 
 // ─── POST /api/notifications/slack/:id/test ───────────────────────────────────
+/**
+ * Test a Slack webhook. In demo mode, logs the test event to audit_logs instead
+ * of sending a real message. In live mode, sends the actual Slack message with
+ * rate-limit retry handling.
+ */
 export async function handleTestSlackWebhook(req: Request): Promise<Response> {
   try {
     const user = await getAuthUser(req);
@@ -100,28 +172,49 @@ export async function handleTestSlackWebhook(req: Request): Promise<Response> {
     if (hooks.length === 0) return jsonResponse({ error: "Webhook not found" }, 404);
 
     const hook = hooks[0];
-    const payload = {
-      text: `🔔 *ElevateAI Test Notification*\n\nThis is a test from *ElevateAI* for *${user.companyName}*.\n\n✅ Webhook configured by: ${user.name}\n📡 Channel: ${hook.channel || "default"}\n🕐 Time: ${new Date().toISOString()}`,
-      username: "ElevateAI",
-      icon_emoji: ":rocket:",
-    };
 
-    try {
-      const response = await fetch(hook.webhook_url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+    // Resolve mode: company + user level, provider = "slack"
+    const mode = await getEffectiveMode(user.companyId, user.id, "slack");
+
+    if (isLive(mode)) {
+      // ── LIVE MODE: Send real Slack message ────────────────────────────────
+      const payload = {
+        text: `🔔 *ElevateAI Test Notification*\n\nThis is a test from *ElevateAI* for *${user.companyName}*.\n\n✅ Webhook configured by: ${user.name}\n📡 Channel: ${hook.channel || "default"}\n🕐 Time: ${new Date().toISOString()}`,
+        username: "ElevateAI",
+        icon_emoji: ":rocket:",
+      };
+
+      const result = await sendSlackWebhook(hook.webhook_url, payload);
 
       await db(sql`UPDATE slack_webhooks SET last_test_at = datetime('now') WHERE id = ${hookId}`);
 
-      if (response.ok) {
+      if (result.success) {
         return jsonResponse({ success: true, message: "Test notification sent successfully!" });
       } else {
-        return jsonResponse({ success: false, message: `Slack returned HTTP ${response.status}` }, 400);
+        return jsonResponse({ success: false, message: result.error || "Failed to send" }, 400);
       }
-    } catch (err) {
-      return jsonResponse({ success: false, message: "Failed to reach Slack: " + (err instanceof Error ? err.message : "Connection error") }, 400);
+    } else {
+      // ── DEMO MODE: Log to audit_logs and return simulated success ─────────
+      await db(sql`
+        INSERT INTO audit_logs (id, company_id, user_id, action, resource_type, resource_id, details, created_at)
+        VALUES (${crypto.randomUUID()}, ${user.companyId}, ${user.id}, 'test_slack_webhook', 'slack_webhook', ${hookId},
+          ${JSON.stringify({
+            mode: "demo",
+            webhook_name: hook.name,
+            channel: hook.channel || "default",
+            simulated: true,
+            message: "Test notification simulated (demo mode)",
+          })},
+          datetime('now'))
+      `);
+
+      await db(sql`UPDATE slack_webhooks SET last_test_at = datetime('now') WHERE id = ${hookId}`);
+
+      return jsonResponse({
+        success: true,
+        message: "Test notification logged (demo mode — no real message sent). Switch to live mode to send actual Slack notifications.",
+        demo: true,
+      });
     }
   } catch (e) {
     console.error("test slack webhook error:", e);
@@ -201,8 +294,92 @@ export type NotificationEvent =
   | "leaderboard_changes";
 
 /**
+ * Build a rich Slack Block Kit message for a notification event.
+ */
+function buildSlackBlocks(
+  event: NotificationEvent,
+  title: string,
+  message: string,
+  metadata: Record<string, any> = {},
+) {
+  const blocks: any[] = [
+    {
+      type: "header",
+      text: {
+        type: "plain_text",
+        text: `${getEventEmoji(event)} ${title}`,
+        emoji: true,
+      },
+    },
+    {
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: message,
+      },
+    },
+  ];
+
+  // Add metadata fields as a section with fields
+  const metaEntries = Object.entries(metadata).filter(([, v]) => v !== undefined && v !== null);
+  if (metaEntries.length > 0) {
+    const fields = metaEntries.map(([k, v]) => ({
+      type: "mrkdwn",
+      text: `*${formatFieldName(k)}:*\n${String(v)}`,
+    }));
+
+    // Slack allows up to 10 fields per section; chunk into groups of 10
+    for (let i = 0; i < fields.length; i += 10) {
+      blocks.push({
+        type: "section",
+        fields: fields.slice(i, i + 10),
+      });
+    }
+  }
+
+  // Add dashboard link if present
+  if (metadata.dashboardUrl) {
+    blocks.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `<${metadata.dashboardUrl}|📊 View in ElevateAI Dashboard>`,
+      },
+    });
+  }
+
+  // Footer with branding
+  blocks.push({
+    type: "context",
+    elements: [
+      {
+        type: "mrkdwn",
+        text: `🤖 *ElevateAI* — ${new Date().toLocaleString()}`,
+      },
+    ],
+  });
+
+  return blocks;
+}
+
+/**
+ * Format a camelCase/snake_case field name into a human-readable label.
+ */
+function formatFieldName(key: string): string {
+  return key
+    .replace(/([A-Z])/g, " $1")
+    .replace(/_/g, " ")
+    .replace(/^\w/, (c) => c.toUpperCase())
+    .trim();
+}
+
+/**
  * Dispatch a notification to all configured channels for the given event.
- * Currently supports Slack webhooks. Extensible for email/SMS/etc.
+ *
+ * In LIVE mode: sends real Slack messages via webhook with Block Kit formatting.
+ * In DEMO mode: logs the notification to audit_logs instead.
+ *
+ * Mode is resolved at the company level (no user context available for dispatch).
  */
 export async function dispatchNotification(
   companyId: string,
@@ -233,25 +410,58 @@ export async function dispatchNotification(
       return events.includes(event) || events.includes("*");
     });
 
-    // 3. Send to each matching webhook
-    for (const hook of matchingHooks) {
-      const slackPayload = {
-        text: `*${title}*\n\n${message}`,
-        username: "ElevateAI",
-        icon_emoji: getEventEmoji(event),
-        attachments: Object.keys(metadata).length > 0
-          ? [{ color: getEventColor(event), fields: Object.entries(metadata).map(([k, v]) => ({ title: k, value: String(v), short: true })) }]
-          : undefined,
-      };
+    if (matchingHooks.length === 0) return;
 
-      try {
-        await fetch(hook.webhook_url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(slackPayload),
-        });
-      } catch (err) {
-        console.error(`Failed to send Slack notification to ${hook.webhook_url}:`, err);
+    // 3. Resolve mode at company level (no user context in dispatch)
+    //    We use the first user in the company to check mode
+    const firstUser = await db(sql`
+      SELECT id FROM users WHERE company_id = ${companyId} LIMIT 1
+    `);
+
+    let isLiveMode = false;
+    if (firstUser.length > 0) {
+      const mode = await getEffectiveMode(companyId, firstUser[0].id, "slack");
+      isLiveMode = isLive(mode);
+    }
+
+    if (isLiveMode) {
+      // ── LIVE MODE: Send real Slack messages with Block Kit ────────────────
+      const blocks = buildSlackBlocks(event, title, message, metadata);
+
+      for (const hook of matchingHooks) {
+        const slackPayload = {
+          text: `*${title}*\n\n${message}`,
+          username: "ElevateAI",
+          icon_emoji: getEventEmoji(event),
+          blocks,
+        };
+
+        const result = await sendSlackWebhook(hook.webhook_url, slackPayload);
+        if (!result.success) {
+          console.error(
+            `Failed to send Slack notification to ${hook.webhook_url}:`,
+            result.error,
+          );
+        }
+      }
+    } else {
+      // ── DEMO MODE: Log notifications to audit_logs ────────────────────────
+      for (const hook of matchingHooks) {
+        await db(sql`
+          INSERT INTO audit_logs (id, company_id, user_id, action, resource_type, resource_id, details, created_at)
+          VALUES (${crypto.randomUUID()}, ${companyId}, NULL, 'notification_demo', 'slack_webhook', ${hook.id},
+            ${JSON.stringify({
+              mode: "demo",
+              event,
+              title,
+              message,
+              metadata,
+              webhook_name: hook.name,
+              channel: hook.channel || "default",
+              simulated: true,
+            })},
+            datetime('now'))
+        `);
       }
     }
   } catch (e) {
