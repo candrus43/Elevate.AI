@@ -17,7 +17,7 @@ import {
   handleDeleteCriteria,
 } from "./scorecards";
 import { handleRoleplayScenarios, handleRoleplayStart, handleRoleplayMessage, handleRoleplayEnd, handleGenerateCoachingPlan } from "./coaching";
-import { handleGetCompanySettings, handleUpdateCompanySettings, handleUpdateProfile, handleChangePassword, handleGetNotifications, handleUpdateNotifications } from "./settings";
+import { handleGetCompanySettings, handleUpdateCompanySettings, handleUpdateProfile, handleChangePassword, handleGetNotifications, handleUpdateNotifications, handleGetDemoMode, handleSetDemoMode, handleGetOnboardingStatus, handleCompleteOnboarding } from "./settings";
 import { handleListComplianceRules, handleCreateComplianceRule, handleUpdateComplianceRule, handleDeleteComplianceRule, handleListComplianceChecks } from "./compliance";
 import { handleGetBillingPlan } from "./billing";
 import { handleCreateInvite, handleListInvites, handleCancelInvite } from "./team";
@@ -69,6 +69,7 @@ import {
   handleDeleteIntegration,
   handleSyncIntegration,
   handleIntegrationLogs,
+  handleSetIntegrationMode,
   handleListWebhooks,
   handleRegisterWebhook,
   handleUpdateWebhook,
@@ -77,6 +78,7 @@ import {
 } from "./integrations";
 // ── Security ────────────────────────────────────────────────────────────────────
 import { apiRateLimiter, logRequest, handleHealthCheck } from "./security";
+import { handleGetOpenAIConfig, handleSaveOpenAIConfig } from "./openai";
 
 // ── SSO / SAML Authentication ───────────────────────────────────────────────────
 import {
@@ -304,6 +306,12 @@ export async function routeApi(req: Request): Promise<Response | null> {
     if (pathname === "/api/settings/notifications" && req.method === "GET") return handleGetNotifications(req);
     if (pathname === "/api/settings/notifications" && req.method === "PUT") return handleUpdateNotifications(req);
 
+    // ── Demo Mode (Master Toggle) ──────────────────────────────────────────────────
+    if (pathname === "/api/settings/demo-mode" && req.method === "GET") return handleGetDemoMode(req);
+    if (pathname === "/api/settings/demo-mode" && req.method === "PUT") return handleSetDemoMode(req);
+    if (pathname === "/api/settings/onboarding-status" && req.method === "GET") return handleGetOnboardingStatus(req);
+    if (pathname === "/api/settings/complete-onboarding" && req.method === "POST") return handleCompleteOnboarding(req);
+
     // ── Notifications / Slack Webhooks ────────────────────────────────────────────
     if (pathname === "/api/notifications/preferences" && req.method === "GET") return handleGetNotificationPreferences(req);
     if (pathname === "/api/notifications/preferences" && req.method === "PUT") return handleUpdateNotificationPreferences(req);
@@ -362,6 +370,7 @@ export async function routeApi(req: Request): Promise<Response | null> {
     if (pathname.match(/^\/api\/integrations\/[^/]+\/logs$/) && req.method === "GET") return handleIntegrationLogs(req);
     if (pathname.match(/^\/api\/integrations\/[^/]+$/) && req.method === "PUT") return handleUpdateIntegration(req);
     if (pathname.match(/^\/api\/integrations\/[^/]+$/) && req.method === "DELETE") return handleDeleteIntegration(req);
+    if (pathname.match(/^\/api\/integrations\/[^/]+\/mode$/) && req.method === "PUT") return handleSetIntegrationMode(req);
 
     // ── CRM Deep Sync ─────────────────────────────────────────────────────────────
     if (pathname === "/api/crm/connections" && req.method === "GET") return handleListCrmConnections(req);
@@ -535,6 +544,10 @@ export async function routeApi(req: Request): Promise<Response | null> {
     if (pathname === "/api/integrations/hodu/click-to-dial" && req.method === "POST") return handleHoduClickToDial(req);
     if (pathname === "/api/integrations/hodu/live-stream" && req.method === "POST") return handleHoduLiveStream(req);
     if (pathname === "/api/integrations/hodu/logs" && req.method === "GET") return handleHoduLogs(req);
+
+    // ── OpenAI Configuration ──────────────────────────────────────────────────────
+    if (pathname === "/api/openai/config" && req.method === "GET") return handleGetOpenAIConfig(req);
+    if (pathname === "/api/openai/config" && req.method === "PUT") return handleSaveOpenAIConfig(req);
 
     // Not an API route
     return null;
