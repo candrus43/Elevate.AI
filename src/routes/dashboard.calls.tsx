@@ -1,3 +1,4 @@
+import { LoadingSkeleton } from '~/components/GlassCard';
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 
@@ -27,7 +28,7 @@ function CallList() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-48">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      <LoadingSkeleton className="h-8 w-8 rounded-full" />
     </div>
   );
 

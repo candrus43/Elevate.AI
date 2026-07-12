@@ -12,7 +12,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+    <div className="min-h-screen bg-surface-950">
       <Sidebar
         user={user}
         collapsed={sidebarCollapsed}

@@ -235,7 +235,58 @@ async function main() {
   }
   console.log("✓ Analytics events created");
 
-  // ── 12. Metrics ─────────────────────────────────────────
+  // ── 12. Departments & Sub-Teams (Multi-Tenant) ──────────
+  const deptSales = uuid();
+  const deptSdr = uuid();
+  const deptAe = uuid();
+  try {
+    await db(sql`INSERT INTO departments (id, company_id, name, description, head_user_id) VALUES (${deptSales}, ${companyId}, ${'Sales'}, ${'Sales organization'}, ${users.manager?.id})`);
+    await db(sql`INSERT INTO departments (id, company_id, name, parent_department_id, description, head_user_id) VALUES (${deptSdr}, ${companyId}, ${'SDR'}, ${deptSales}, ${'Sales Development'}, ${users.rep1?.id})`);
+    await db(sql`INSERT INTO departments (id, company_id, name, parent_department_id, description, head_user_id) VALUES (${deptAe}, ${companyId}, ${'Account Executives'}, ${deptSales}, ${'Closing team'}, ${users.rep2?.id})`);
+    console.log("✓ 3 departments created");
+  } catch { console.log("⚠ Departments exist, skipping"); }
+
+  // Sub-teams
+  try {
+    await db(sql`INSERT INTO sub_teams (id, company_id, department_id, name, lead_user_id) VALUES (${uuid()}, ${companyId}, ${deptSdr}, ${'Outbound SDR'}, ${users.rep1?.id})`);
+    await db(sql`INSERT INTO sub_teams (id, company_id, department_id, name, lead_user_id) VALUES (${uuid()}, ${companyId}, ${deptSdr}, ${'Inbound SDR'}, ${users.rep3?.id})`);
+    await db(sql`INSERT INTO sub_teams (id, company_id, department_id, name, lead_user_id) VALUES (${uuid()}, ${companyId}, ${deptAe}, ${'Enterprise AE'}, ${users.rep2?.id})`);
+    console.log("✓ 3 sub-teams created");
+  } catch { console.log("⚠ Sub-teams exist, skipping"); }
+
+  // ── 13. Feature Flags ────────────────────────────────────
+  try {
+    await db(sql`INSERT INTO feature_flags (id, company_id, feature_key, is_enabled, config) VALUES (${uuid()}, ${companyId}, ${'live_coaching'}, 1, ${'{"max_sessions":10}'})`);
+    await db(sql`INSERT INTO feature_flags (id, company_id, feature_key, is_enabled, config) VALUES (${uuid()}, ${companyId}, ${'ai_roleplay'}, 1, ${'{"max_daily":5}'})`);
+    await db(sql`INSERT INTO feature_flags (id, company_id, feature_key, is_enabled, config) VALUES (${uuid()}, ${companyId}, ${'analytics_export'}, 1, ${'{"formats":["json","csv"]}'})`);
+    await db(sql`INSERT INTO feature_flags (id, company_id, feature_key, is_enabled, config) VALUES (${uuid()}, ${companyId}, ${'custom_scorecards'}, 1, ${'{"max_custom":20}'})`);
+    await db(sql`INSERT INTO feature_flags (id, company_id, feature_key, is_enabled, config) VALUES (${uuid()}, ${companyId}, ${'white_labeling'}, 0, ${'{}'})`);
+    console.log("✓ 5 feature flags created");
+  } catch { console.log("⚠ Feature flags exist, skipping"); }
+
+  // ── 14. Audit Logs ──────────────────────────────────────
+  const auditActions = ["login", "dashboard_viewed", "call_uploaded", "report_exported", "settings_updated", "user_invited"];
+  for (const u of [users.admin, users.manager, users.rep1, users.rep2, users.rep3]) {
+    if (!u) continue;
+    for (let i = 0; i < 3; i++) {
+      await db(sql`INSERT INTO audit_logs (id, company_id, user_id, action, resource_type, resource_id, details, ip_address, created_at) VALUES (${uuid()}, ${companyId}, ${u.id}, ${auditActions[i % auditActions.length]}, ${'system'}, ${companyId}, ${'{"description":"' + auditActions[i % auditActions.length] + ' action"}'}, ${'192.168.1.' + (i + 1)}, ${days(Math.floor(Math.random() * 7))})`);
+    }
+  }
+  console.log("✓ Audit log entries created");
+
+  // ── 15. Usage Metrics ───────────────────────────────────
+  const metricKeys = ["calls_recorded", "minutes_tracked", "coaching_sessions", "scorecards_used"];
+  for (const key of metricKeys) {
+    for (let i = 0; i < 7; i++) {
+      await db(sql`INSERT INTO usage_metrics (id, company_id, metric_key, metric_value, recorded_at) VALUES (${uuid()}, ${companyId}, ${key}, ${Math.floor(Math.random() * 50 + 5)}, ${days(i)})`);
+    }
+  }
+  console.log("✓ Usage metrics created (7 days x 4 keys)");
+
+  // ── 16. Update company white_label / max_users / features ──
+  await db(sql`UPDATE companies SET white_label = ${'{"logo_url":"","primary_color":"#1a73e8","secondary_color":"#34a853","company_tagline":"Elevate Your Sales"}'}, max_users = 50, features = ${'{"live_coaching":true,"ai_roleplay":true,"analytics_export":true,"custom_scorecards":true}'} WHERE id = ${companyId}`);
+
+  // ── 17. Metrics ─────────────────────────────────────────
   for (const u of [users.admin, users.manager, users.rep1, users.rep2, users.rep3]) {
     if (!u) continue;
     await db(sql`INSERT INTO user_metrics (id, user_id, company_id, period, calls_analyzed, avg_score, coaching_completed, conversion_rate, period_start, period_end) VALUES (${uuid()}, ${u.id}, ${companyId}, ${'monthly'}, ${Math.floor(Math.random() * 40 + 10)}, ${Math.floor(Math.random() * 25 + 70)}, ${Math.floor(Math.random() * 4 + 1)}, ${(Math.random() * 0.15 + 0.18).toFixed(2)}, ${days(30)}, ${days(0)})`);

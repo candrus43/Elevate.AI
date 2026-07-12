@@ -1,3 +1,4 @@
+import { LoadingSkeleton } from '~/components/GlassCard';
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 
@@ -39,7 +40,7 @@ function ManagerDashboard() {
     });
   }, [navigate]);
 
-  if (loading) return <div className="flex items-center justify-center h-48"><div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" /></div>;
+  if (loading) return <div className="flex items-center justify-center h-48"><LoadingSkeleton className="h-8 w-8 rounded-full" /></div>;
 
   const avgScore = calls.length > 0 ? (calls.reduce((s, c) => s + (c.overall_score || 0), 0) / calls.length).toFixed(1) : "0";
   const analyzedCalls = calls.filter(c => c.status === "analyzed").length;

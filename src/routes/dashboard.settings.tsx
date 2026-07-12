@@ -36,6 +36,16 @@ function SettingsPage() {
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
 
+  // Demo mode state
+  const [demoMode, setDemoMode] = useState(false);
+  const [demoModeLoading, setDemoModeLoading] = useState(false);
+  const [demoConfirmOpen, setDemoConfirmOpen] = useState(false);
+  const [demoPendingValue, setDemoPendingValue] = useState(false);
+  // Onboarding state
+  const [onboardingSteps, setOnboardingSteps] = useState(0);
+  const [onboardingTotal, setOnboardingTotal] = useState(5);
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
+
   // Notifications state
   const [notifCallAnalyzed, setNotifCallAnalyzed] = useState(true);
   const [notifCoaching, setNotifCoaching] = useState(true);
@@ -54,6 +64,8 @@ function SettingsPage() {
         setProfileEmail(user.email);
         loadCompany(user);
         loadNotifications();
+        loadDemoMode();
+        loadOnboarding();
         setLoading(false);
       })
       .catch(() => navigate({ to: "/login" }));
@@ -80,6 +92,47 @@ function SettingsPage() {
         setNotifLeaderboard(!!data.preferences.leaderboard_changes);
       }
     } catch {}
+  };
+
+  const loadDemoMode = async () => {
+    try {
+      const res = await fetch("/api/settings/demo-mode");
+      const data = await res.json();
+      if (data.demo_mode !== undefined) setDemoMode(data.demo_mode);
+    } catch {}
+  };
+
+  const loadOnboarding = async () => {
+    try {
+      const res = await fetch("/api/settings/onboarding-status");
+      const data = await res.json();
+      if (data.steps !== undefined) setOnboardingSteps(data.steps);
+      if (data.total !== undefined) setOnboardingTotal(data.total);
+      if (data.complete !== undefined) setOnboardingComplete(data.complete);
+    } catch {}
+  };
+
+  const handleToggleDemoMode = async () => {
+    const newValue = !demoMode;
+    setDemoConfirmOpen(true);
+    setDemoPendingValue(newValue);
+  };
+
+  const confirmDemoMode = async () => {
+    setDemoConfirmOpen(false);
+    setDemoModeLoading(true);
+    try {
+      const res = await fetch("/api/settings/demo-mode", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ demo_mode: demoPendingValue }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setDemoMode(demoPendingValue);
+      }
+    } catch {}
+    setDemoModeLoading(false);
   };
 
   const handleUpdateCompany = async (e: React.FormEvent) => {
@@ -269,6 +322,66 @@ function SettingsPage() {
             </form>
           </div>
 
+          {/* Demo Mode Card */}
+          <div className="glass-card rounded-xl p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Demo Mode</h2>
+                <p className="text-sm text-gray-400 mt-0.5">When enabled, all integrations use sample data instead of real connections</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`text-xs font-medium ${demoMode ? "text-amber-400" : "text-green-400"}`}>
+                  {demoMode ? "🔵 Demo Mode" : "🟢 Live Mode"}
+                </span>
+                {user?.role === "admin" ? (
+                  <button type="button" onClick={handleToggleDemoMode} disabled={demoModeLoading}
+                    className={`relative h-7 w-12 shrink-0 rounded-full transition-all ${demoMode ? "bg-amber-500" : "bg-purple-500"}`}>
+                    <span className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white transition-all shadow ${demoMode ? "translate-x-5" : "translate-x-0"}`} />
+                  </button>
+                ) : (
+                  <span className="text-xs text-gray-500 bg-white/5 px-2 py-1 rounded-lg">Admin only</span>
+                )}
+              </div>
+            </div>
+            {demoMode && (
+              <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3 text-sm text-amber-300">
+                ⚠️ Demo mode is active. All integrations are using sample data. Switch to Live Mode to connect real services.
+              </div>
+            )}
+            {(!user || user.role !== "admin") && (
+              <p className="text-xs text-gray-500 mt-2">Only admins can toggle the demo/live mode setting.</p>
+            )}
+          </div>
+
+          {/* Onboarding Card */}
+          <div className="glass-card rounded-xl p-5 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Onboarding Status</h2>
+                <p className="text-sm text-gray-400 mt-0.5">Complete onboarding to access live data</p>
+              </div>
+              {onboardingComplete ? (
+                <span className="text-xs font-medium text-green-400 bg-green-500/10 px-3 py-1 rounded-full">✓ Complete</span>
+              ) : (
+                <span className="text-xs font-medium text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full">In Progress</span>
+              )}
+            </div>
+            {!onboardingComplete ? (
+              <>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-300">You've completed {onboardingSteps} of {onboardingTotal} onboarding steps</span>
+                  <span className="text-sm font-medium text-white">{Math.round((onboardingSteps / onboardingTotal) * 100)}%</span>
+                </div>
+                <div className="h-2 rounded-full bg-white/5 mb-4">
+                  <div className="h-2 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all" style={{ width: `${(onboardingSteps / onboardingTotal) * 100}%` }} />
+                </div>
+                <button className="btn-primary text-sm">{onboardingSteps > 0 ? "Continue Onboarding →" : "Start Onboarding →"}</button>
+              </>
+            ) : (
+              <p className="text-sm text-gray-400">You've completed all onboarding steps. You're ready to use live data!</p>
+            )}
+          </div>
+
           <div className="glass-card rounded-xl p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-white mb-4">Usage & Team</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -416,6 +529,30 @@ function SettingsPage() {
             className="btn-primary mt-6 disabled:opacity-40 disabled:cursor-not-allowed">
             {notifLoading ? "Saving..." : "Save Preferences"}
           </button>
+        </div>
+      )}
+
+      {/* Demo Mode Confirm Dialog */}
+      {demoConfirmOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-fade-in">
+          <div className="glass-card rounded-2xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-white mb-2">Switch to {demoPendingValue ? "Demo" : "Live"} Mode?</h3>
+            <p className="text-sm text-gray-400 mb-4">
+              {demoPendingValue
+                ? "Are you sure? This will affect all integrations. They will use sample data instead of real connections."
+                : "Are you sure? This will activate all real integrations and connect to live services."}
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setDemoConfirmOpen(false)}
+                className="rounded-xl bg-white/5 px-4 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/10 transition-all">
+                Cancel
+              </button>
+              <button onClick={confirmDemoMode}
+                className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:from-purple-500 hover:to-indigo-500 transition-all">
+                {demoPendingValue ? "Enable Demo Mode" : "Enable Live Mode"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

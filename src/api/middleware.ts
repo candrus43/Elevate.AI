@@ -16,7 +16,7 @@ export const SESSION_COOKIE = "elevateai_session";
 export const SESSION_MAX_AGE = 7 * 24 * 60 * 60;
 export const PORT = 3000;
 export const HOST = "0.0.0.0";
-export const CLIENT_DIR = `${import.meta.dir}/../dist/client`;
+export const CLIENT_DIR = `${import.meta.dir}/../../dist/client`;
 export const UPLOADS_DIR = `${import.meta.dir}/../uploads`;
 
 // ─── Response helpers ──────────────────────────────────────────────────────────

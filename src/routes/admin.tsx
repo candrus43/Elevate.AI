@@ -1,3 +1,4 @@
+import { LoadingSkeleton } from '~/components/GlassCard';
 import { useEffect, useState } from "react";
 import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { UserSession } from "~/components/layout/Header";
@@ -29,7 +30,7 @@ function AdminLayout() {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+        <LoadingSkeleton className="h-8 w-8 rounded-full" />
       </div>
     );
   }

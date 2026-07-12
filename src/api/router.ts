@@ -223,6 +223,13 @@ import {
   handleHoduClickToDial, handleHoduLiveStream, handleHoduLogs,
 } from "./hodu";
 
+// ── Observe.ai Integration ─────────────────────────────────────────────────
+import {
+  handleObserveAIConnect, handleObserveAIDisconnect, handleObserveAISyncCalls,
+  handleObserveAICalls, handleObserveAITranscript, handleObserveAIScores,
+  handleObserveAICoaching, handleObserveAISkills, handleObserveAILogs,
+} from "./observeai";
+
 /**
  * Route all API requests to the appropriate handler.
  * Returns a Response or null if the path is not an API route.
@@ -544,6 +551,17 @@ export async function routeApi(req: Request): Promise<Response | null> {
     if (pathname === "/api/integrations/hodu/click-to-dial" && req.method === "POST") return handleHoduClickToDial(req);
     if (pathname === "/api/integrations/hodu/live-stream" && req.method === "POST") return handleHoduLiveStream(req);
     if (pathname === "/api/integrations/hodu/logs" && req.method === "GET") return handleHoduLogs(req);
+
+    // ── Observe.ai Integration ──────────────────────────────────────────────────
+    if (pathname === "/api/integrations/observeai/connect" && req.method === "POST") return handleObserveAIConnect(req);
+    if (pathname === "/api/integrations/observeai/disconnect" && req.method === "POST") return handleObserveAIDisconnect(req);
+    if (pathname === "/api/integrations/observeai/sync-calls" && req.method === "POST") return handleObserveAISyncCalls(req);
+    if (pathname === "/api/integrations/observeai/calls" && req.method === "GET") return handleObserveAICalls(req);
+    if (pathname === "/api/integrations/observeai/transcript" && req.method === "GET") return handleObserveAITranscript(req);
+    if (pathname === "/api/integrations/observeai/scores" && req.method === "GET") return handleObserveAIScores(req);
+    if (pathname === "/api/integrations/observeai/coaching" && req.method === "GET") return handleObserveAICoaching(req);
+    if (pathname === "/api/integrations/observeai/skills" && req.method === "GET") return handleObserveAISkills(req);
+    if (pathname === "/api/integrations/observeai/logs" && req.method === "GET") return handleObserveAILogs(req);
 
     // ── OpenAI Configuration ──────────────────────────────────────────────────────
     if (pathname === "/api/openai/config" && req.method === "GET") return handleGetOpenAIConfig(req);
