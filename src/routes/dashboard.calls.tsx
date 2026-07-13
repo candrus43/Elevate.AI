@@ -1,5 +1,4 @@
 import { LoadingSkeleton } from '~/components/GlassCard';
-import { EmptyState } from '~/components/GlassCard';
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 
@@ -178,199 +177,6 @@ function CallList() {
       setUploadError(null);
     }
   };
-
-  if (loading) return (
-    <div className="flex items-center justify-center h-48">
-      <LoadingSkeleton className="h-8 w-8 rounded-full" />
-    </div>
-  );
-
-  const filtered = search
-    ? calls.filter((c) =>
-        (c.rep_name || "").toLowerCase().includes(search.toLowerCase())
-      )
-    : calls;
-
-  // ─── Empty State ──────────────────────────────────────────────
-  if (calls.length === 0) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Call Reviews</h1>
-            <p className="text-sm text-gray-400">No calls yet</p>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <span className="text-4xl mb-4 opacity-50">📞</span>
-          <h3 className="text-lg font-semibold text-white mb-1">No calls yet</h3>
-          <p className="text-sm text-gray-400 max-w-sm mb-6">
-            Connect your phone system or upload a call recording to get started.
-            Your calls will appear here automatically once analyzed.
-          </p>
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setShowUpload(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-purple-500/25 transition-all hover:from-purple-500 hover:to-indigo-500 hover:shadow-xl"
-            >
-              <span>⬆️</span>
-              Upload Call Recording
-            </button>
-            <a
-              href="/dashboard/integrations"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-5 py-2.5 text-sm font-medium text-gray-300 transition-all hover:text-white hover:border-white/20"
-            >
-              <span>🔗</span>
-              Connect Phone System
-            </a>
-          </div>
-        </div>
-
-        {/* Upload Modal */}
-        {showUploadModal()}
-      </div>
-    );
-  }
-
-  // ─── Main View ────────────────────────────────────────────────
-  return (
-    <div className="space-y-6">
-      {/* Toast notification */}
-      {toastMsg && (
-        <div
-          className={`fixed top-4 right-4 z-50 rounded-xl px-5 py-3 text-sm font-medium shadow-xl backdrop-blur-xl transition-all ${
-            toastType === "success"
-              ? "bg-green-900/80 text-green-200 border border-green-500/20"
-              : "bg-red-900/80 text-red-200 border border-red-500/20"
-          }`}
-          style={{ animation: "slideIn 0.3s ease-out" }}
-        >
-          {toastType === "success" ? "✅ " : "❌ "}
-          {toastMsg}
-        </div>
-      )}
-
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Call Reviews</h1>
-          <p className="text-sm text-gray-400">{calls.length} total calls analyzed</p>
-        </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="relative flex-1 sm:flex-initial">
-            <input
-              type="text"
-              placeholder="Search by rep name..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full sm:w-64 rounded-lg border border-white/10 bg-white/5 px-4 py-2 pl-10 text-sm text-white placeholder-gray-500 backdrop-blur-xl"
-            />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
-          </div>
-          <button
-            onClick={() => setShowUpload(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-purple-500/25 transition-all hover:from-purple-500 hover:to-indigo-500 hover:shadow-xl active:scale-[0.97]"
-          >
-            <span>⬆️</span>
-            <span className="hidden sm:inline">Upload Call</span>
-          </button>
-        </div>
-      </div>
-
-      {filtered.length === 0 ? (
-        <div
-          className="rounded-xl border border-white/5 flex flex-col items-center justify-center py-16 text-center"
-          style={{
-            background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(139,92,246,0.04) 50%, rgba(255,255,255,0.02) 100%)",
-          }}
-        >
-          <span className="text-4xl mb-4 opacity-50">🔍</span>
-          <h3 className="text-lg font-semibold text-white mb-1">No results found</h3>
-          <p className="text-sm text-gray-400 max-w-sm">No calls match "{search}". Try a different search term.</p>
-        </div>
-      ) : (
-        <div className="rounded-xl border border-white/5" style={{
-          background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(139,92,246,0.04) 50%, rgba(255,255,255,0.02) 100%)",
-          backdropFilter: "blur(24px)",
-        }}>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-white/5 text-gray-400">
-                  <th className="px-6 py-3 font-medium">Rep</th>
-                  <th className="px-6 py-3 font-medium">Date</th>
-                  <th className="px-6 py-3 font-medium">Duration</th>
-                  <th className="px-6 py-3 font-medium">Score</th>
-                  <th className="px-6 py-3 font-medium">Sentiment</th>
-                  <th className="px-6 py-3 font-medium">Status</th>
-                  <th className="px-6 py-3 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {filtered.map((call) => (
-                  <tr key={call.id} className="transition-colors hover:bg-white/[0.02]">
-                    <td className="px-6 py-4 font-medium text-white">
-                      {call.rep_name || "Unknown"}
-                    </td>
-                    <td className="px-6 py-4 text-gray-400">
-                      {formatDate(call.started_at)}
-                    </td>
-                    <td className="px-6 py-4 text-gray-400">
-                      {formatDuration(call.duration_seconds)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`font-medium ${
-                        call.overall_score >= 85 ? "text-green-400" :
-                        call.overall_score >= 70 ? "text-yellow-400" :
-                        call.overall_score ? "text-red-400" : "text-gray-400"
-                      }`}>
-                        {call.overall_score ?? "-"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        call.sentiment === "positive" ? "bg-green-900/50 text-green-300" :
-                        call.sentiment === "negative" ? "bg-red-900/50 text-red-300" :
-                        "bg-white/5 text-gray-300"
-                      }`}>
-                        {call.sentiment || "neutral"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        call.status === "analyzed" ? "bg-green-900/50 text-green-300" :
-                        call.status === "processing" ? "bg-blue-900/50 text-blue-300 animate-pulse" :
-                        "bg-red-900/50 text-red-300"
-                      }`}>
-                        {call.status === "processing" ? (
-                          <span className="flex items-center gap-1.5">
-                            <span className="h-1.5 w-1.5 rounded-full bg-blue-300 animate-pulse" />
-                            Processing
-                          </span>
-                        ) : call.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Link
-                        to="/dashboard/calls/$callId"
-                        params={{ callId: call.id }}
-                        className="text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors"
-                      >
-                        View →
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Upload Modal */}
-      {showUploadModal()}
-    </div>
-  );
 
   // ─── Upload Modal Render ──────────────────────────────────────
   function showUploadModal() {
@@ -565,4 +371,197 @@ function CallList() {
       </div>
     );
   }
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-48">
+      <LoadingSkeleton className="h-8 w-8 rounded-full" />
+    </div>
+  );
+
+  const filtered = search
+    ? calls.filter((c) =>
+        (c.rep_name || "").toLowerCase().includes(search.toLowerCase())
+      )
+    : calls;
+
+  // ─── Empty State ──────────────────────────────────────────────
+  if (calls.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Call Reviews</h1>
+            <p className="text-sm text-gray-400">No calls yet</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <span className="text-4xl mb-4 opacity-50">📞</span>
+          <h3 className="text-lg font-semibold text-white mb-1">No calls yet</h3>
+          <p className="text-sm text-gray-400 max-w-sm mb-6">
+            Connect your phone system or upload a call recording to get started.
+            Your calls will appear here automatically once analyzed.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setShowUpload(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-purple-500/25 transition-all hover:from-purple-500 hover:to-indigo-500 hover:shadow-xl"
+            >
+              <span>⬆️</span>
+              Upload Call Recording
+            </button>
+            <a
+              href="/dashboard/integrations"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-5 py-2.5 text-sm font-medium text-gray-300 transition-all hover:text-white hover:border-white/20"
+            >
+              <span>🔗</span>
+              Connect Phone System
+            </a>
+          </div>
+        </div>
+
+        {/* Upload Modal */}
+        {showUploadModal()}
+      </div>
+    );
+  }
+
+  // ─── Main View ────────────────────────────────────────────────
+  return (
+    <div className="space-y-6">
+      {/* Toast notification */}
+      {toastMsg && (
+        <div
+          className={`fixed top-4 right-4 z-50 rounded-xl px-5 py-3 text-sm font-medium shadow-xl backdrop-blur-xl transition-all ${
+            toastType === "success"
+              ? "bg-green-900/80 text-green-200 border border-green-500/20"
+              : "bg-red-900/80 text-red-200 border border-red-500/20"
+          }`}
+          style={{ animation: "slideIn 0.3s ease-out" }}
+        >
+          {toastType === "success" ? "✅ " : "❌ "}
+          {toastMsg}
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Call Reviews</h1>
+          <p className="text-sm text-gray-400">{calls.length} total calls analyzed</p>
+        </div>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-initial">
+            <input
+              type="text"
+              placeholder="Search by rep name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full sm:w-64 rounded-lg border border-white/10 bg-white/5 px-4 py-2 pl-10 text-sm text-white placeholder-gray-500 backdrop-blur-xl"
+            />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+          </div>
+          <button
+            onClick={() => setShowUpload(true)}
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-purple-500/25 transition-all hover:from-purple-500 hover:to-indigo-500 hover:shadow-xl active:scale-[0.97]"
+          >
+            <span>⬆️</span>
+            <span className="hidden sm:inline">Upload Call</span>
+          </button>
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div
+          className="rounded-xl border border-white/5 flex flex-col items-center justify-center py-16 text-center"
+          style={{
+            background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(139,92,246,0.04) 50%, rgba(255,255,255,0.02) 100%)",
+          }}
+        >
+          <span className="text-4xl mb-4 opacity-50">🔍</span>
+          <h3 className="text-lg font-semibold text-white mb-1">No results found</h3>
+          <p className="text-sm text-gray-400 max-w-sm">No calls match "{search}". Try a different search term.</p>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-white/5" style={{
+          background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(139,92,246,0.04) 50%, rgba(255,255,255,0.02) 100%)",
+          backdropFilter: "blur(24px)",
+        }}>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-white/5 text-gray-400">
+                  <th className="px-6 py-3 font-medium">Rep</th>
+                  <th className="px-6 py-3 font-medium">Date</th>
+                  <th className="px-6 py-3 font-medium">Duration</th>
+                  <th className="px-6 py-3 font-medium">Score</th>
+                  <th className="px-6 py-3 font-medium">Sentiment</th>
+                  <th className="px-6 py-3 font-medium">Status</th>
+                  <th className="px-6 py-3 font-medium"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {filtered.map((call) => (
+                  <tr key={call.id} className="transition-colors hover:bg-white/[0.02]">
+                    <td className="px-6 py-4 font-medium text-white">
+                      {call.rep_name || "Unknown"}
+                    </td>
+                    <td className="px-6 py-4 text-gray-400">
+                      {formatDate(call.started_at)}
+                    </td>
+                    <td className="px-6 py-4 text-gray-400">
+                      {formatDuration(call.duration_seconds)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`font-medium ${
+                        call.overall_score >= 85 ? "text-green-400" :
+                        call.overall_score >= 70 ? "text-yellow-400" :
+                        call.overall_score ? "text-red-400" : "text-gray-400"
+                      }`}>
+                        {call.overall_score ?? "-"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        call.sentiment === "positive" ? "bg-green-900/50 text-green-300" :
+                        call.sentiment === "negative" ? "bg-red-900/50 text-red-300" :
+                        "bg-white/5 text-gray-300"
+                      }`}>
+                        {call.sentiment || "neutral"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        call.status === "analyzed" ? "bg-green-900/50 text-green-300" :
+                        call.status === "processing" ? "bg-blue-900/50 text-blue-300 animate-pulse" :
+                        "bg-red-900/50 text-red-300"
+                      }`}>
+                        {call.status === "processing" ? (
+                          <span className="flex items-center gap-1.5">
+                            <span className="h-1.5 w-1.5 rounded-full bg-blue-300 animate-pulse" />
+                            Processing
+                          </span>
+                        ) : call.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Link
+                        to="/dashboard/calls/$callId"
+                        params={{ callId: call.id }}
+                        className="text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors"
+                      >
+                        View →
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Upload Modal */}
+      {showUploadModal()}
+    </div>
+  );
 }
