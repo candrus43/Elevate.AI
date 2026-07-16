@@ -1,404 +1,298 @@
-import { useEffect, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import type { UserSession } from "~/utils/auth";
+import { useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/dashboard/scorecards")({
   component: ScorecardsPage,
 });
 
-interface Criterion {
-  id: string;
-  name: string;
-  max_score: number;
-  weight: number;
-  category: string;
-  sort_order: number;
-}
+// ── 3 existing generic scorecards ────────────────────────────
+const DEMO_SCORECARDS = [
+  {
+    id: "sc1", name: "Standard Sales Scorecard", description: "Core sales evaluation criteria for discovery and demo calls", type: "discovery", maxScore: 100,
+    criteria: [
+      { name: "Opening & Rapport", maxScore: 15, weight: 1.0, description: "Professional greeting, establishes rapport, sets agenda" },
+      { name: "Discovery Questions", maxScore: 20, weight: 1.2, description: "Quality of needs analysis, pain point identification" },
+      { name: "Value Proposition", maxScore: 20, weight: 1.2, description: "Clear articulation of value, alignment with customer needs" },
+      { name: "Objection Handling", maxScore: 15, weight: 1.0, description: "Effectiveness in addressing concerns and objections" },
+      { name: "Closing Technique", maxScore: 15, weight: 1.0, description: "Ability to move conversation forward, secure next steps" },
+      { name: "Communication", maxScore: 10, weight: 0.8, description: "Clarity, active listening, professional tone" },
+      { name: "Compliance", maxScore: 5, weight: 0.5, description: "Adherence to scripts, disclosures, and regulations" },
+    ],
+  },
+  {
+    id: "sc2", name: "Cold Call Scorecard", description: "Specialized criteria for outbound cold calling performance", type: "cold-call", maxScore: 100,
+    criteria: [
+      { name: "Opening Hook", maxScore: 20, weight: 1.2, description: "First 15 seconds — grabs attention, states purpose clearly" },
+      { name: "Value Statement", maxScore: 20, weight: 1.2, description: "Quick value articulation relevant to prospect's role" },
+      { name: "Objection Handling", maxScore: 20, weight: 1.2, description: "Handles gatekeepers, price pushback, and 'not interested'" },
+      { name: "Call Control", maxScore: 15, weight: 1.0, description: "Keeps conversation on track, avoids rambling" },
+      { name: "Next Steps", maxScore: 15, weight: 1.0, description: "Clear call-to-action, sets expectation for follow-up" },
+      { name: "Pacing & Tone", maxScore: 10, weight: 0.8, description: "Energy level, enthusiasm, conversational flow" },
+    ],
+  },
+  {
+    id: "sc3", name: "Discovery Scorecard", description: "In-depth evaluation for discovery and qualification calls", type: "discovery", maxScore: 100,
+    criteria: [
+      { name: "Needs Discovery", maxScore: 25, weight: 1.3, description: "Depth of questioning, uncovering pain points and goals" },
+      { name: "Budget Qualification", maxScore: 15, weight: 1.0, description: "Identifies budget range, decision-making authority" },
+      { name: "Timeline Assessment", maxScore: 10, weight: 0.8, description: "Understands purchase timeline and urgency" },
+      { name: "Competitor Awareness", maxScore: 10, weight: 0.8, description: "Identifies competitive landscape and differentiators" },
+      { name: "Solution Alignment", maxScore: 20, weight: 1.2, description: "Maps solution features to identified needs" },
+      { name: "Stakeholder Mapping", maxScore: 10, weight: 0.8, description: "Identifies all decision-makers and influencers" },
+      { name: "Next Steps", maxScore: 10, weight: 0.8, description: "Clear agreed-upon next steps and timeline" },
+    ],
+  },
+];
 
-interface Scorecard {
-  id: string;
-  name: string;
-  description: string;
-  is_default: number;
-  criteria_count: number;
-  criteria: Criterion[];
-}
+// ── 3 new agent-specific KPI scorecards ─────────────────────
+const AGENT_SCORECARDS = [
+  {
+    id: "agent-mr", name: "Mike Rodriguez", initials: "MR", type: "agent",
+    gradient: "from-blue-500 to-cyan-600",
+    kpis: { ATP: 1, Fulls: 2, Partials: 1, SPR: 4.0, Inbounds: 85, Manuals: 57, H2S: "12%", WH2S: "5%" },
+    description: "Individual KPI scorecard — SPR = total sales (ATP+Fulls+Partials)",
+  },
+  {
+    id: "agent-ew", name: "Emily Watson", initials: "EW", type: "agent",
+    gradient: "from-rose-500 to-pink-600",
+    kpis: { ATP: 1, Fulls: 3, Partials: 2, SPR: 6.0, Inbounds: 92, Manuals: 63, H2S: "15%", WH2S: "7%" },
+    description: "Individual KPI scorecard — SPR = total sales (ATP+Fulls+Partials)",
+  },
+  {
+    id: "agent-lp", name: "Lisa Park", initials: "LP", type: "agent",
+    gradient: "from-emerald-500 to-green-600",
+    kpis: { ATP: 0, Fulls: 1, Partials: 3, SPR: 4.0, Inbounds: 78, Manuals: 45, H2S: "8%", WH2S: "3%" },
+    description: "Individual KPI scorecard — SPR = total sales (ATP+Fulls+Partials)",
+  },
+];
+
+const ALL_SCORECARDS = [...DEMO_SCORECARDS, ...AGENT_SCORECARDS];
 
 function ScorecardsPage() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<UserSession | null>(null);
-  const [scorecards, setScorecards] = useState<Scorecard[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<string | null>(null); // scorecard id or "new"
-  const [editName, setEditName] = useState("");
-  const [editDesc, setEditDesc] = useState("");
-  const [editCriteria, setEditCriteria] = useState<Criterion[]>([]);
-  const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [editingCriteria, setEditingCriteria] = useState<string | null>(null);
+  const [period, setPeriod] = useState("30d");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
 
-  useEffect(() => {
-    fetch("/api/session")
-      .then((r) => r.json())
-      .then(({ user }) => {
-        if (!user) { navigate({ to: "/login" }); return; }
-        setUser(user);
-        loadScorecards();
-      })
-      .catch(() => navigate({ to: "/login" }));
-  }, [navigate]);
+  const periods = [
+    { value: "7d", label: "7 Days" },
+    { value: "30d", label: "30 Days" },
+    { value: "90d", label: "90 Days" },
+    { value: "custom", label: "Custom" },
+  ];
 
-  const loadScorecards = async () => {
-    try {
-      const res = await fetch("/api/scorecards");
-      const data = await res.json();
-      setScorecards(data.scorecards || []);
-    } catch (e) {
-      console.error("Failed to load scorecards", e);
-    }
-    setLoading(false);
-  };
+  const selected = ALL_SCORECARDS.find((s) => s.id === selectedId);
 
-  const startCreate = () => {
-    setEditing("new");
-    setEditName("");
-    setEditDesc("");
-    setEditCriteria([]);
-  };
-
-  const startEdit = (sc: Scorecard) => {
-    setEditing(sc.id);
-    setEditName(sc.name);
-    setEditDesc(sc.description || "");
-    setEditCriteria(sc.criteria || []);
-  };
-
-  const cancelEdit = () => {
-    setEditing(null);
-    setEditName("");
-    setEditDesc("");
-    setEditCriteria([]);
-  };
-
-  const saveScorecard = async () => {
-    if (!editName.trim()) return;
-    setSaving(true);
-    try {
-      if (editing === "new") {
-        const res = await fetch("/api/scorecards", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: editName.trim(), description: editDesc.trim() }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          // Save all criteria
-          for (let i = 0; i < editCriteria.length; i++) {
-            const c = editCriteria[i];
-            await fetch(`/api/scorecards/${data.scorecard.id}/criteria`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ name: c.name, max_score: c.max_score, weight: c.weight, category: c.category, sort_order: i }),
-            });
-          }
-        }
-      } else {
-        await fetch(`/api/scorecards/${editing}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: editName.trim(), description: editDesc.trim() }),
-        });
-        // Sync criteria: delete all and re-insert
-        for (const c of editCriteria) {
-          if (c.id.startsWith("new_")) {
-            await fetch(`/api/scorecards/${editing}/criteria`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ name: c.name, max_score: c.max_score, weight: c.weight, category: c.category, sort_order: c.sort_order }),
-            });
-          } else {
-            await fetch(`/api/scorecards/${editing}/criteria/${c.id}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ name: c.name, max_score: c.max_score, weight: c.weight, category: c.category, sort_order: c.sort_order }),
-            });
-          }
-        }
-      }
-      await loadScorecards();
-      cancelEdit();
-    } catch (e) {
-      console.error("Save error:", e);
-    }
-    setSaving(false);
-  };
-
-  const deleteScorecard = async (id: string) => {
-    setDeleting(id);
-    try {
-      await fetch(`/api/scorecards/${id}`, { method: "DELETE" });
-      await loadScorecards();
-    } catch (e) {
-      console.error("Delete error:", e);
-    }
-    setDeleting(null);
-  };
-
-  const addCriteria = () => {
-    setEditCriteria([...editCriteria, { id: "new_" + Date.now(), name: "", max_score: 10, weight: 1.0, category: "", sort_order: editCriteria.length }]);
-  };
-
-  const updateCriteria = (index: number, field: keyof Criterion, value: any) => {
-    const updated = [...editCriteria];
-    (updated[index] as any)[field] = field === "max_score" || field === "weight" || field === "sort_order" ? Number(value) : value;
-    setEditCriteria(updated);
-  };
-
-  const removeCriteria = (index: number) => {
-    setEditCriteria(editCriteria.filter((_, i) => i !== index));
-  };
-
-  const totalWeight = editCriteria.reduce((s, c) => s + c.weight, 0);
-
-  if (loading) return <ScorecardsSkeleton />;
+  const isGeneric = (sc: any) => "criteria" in sc;
+  const isAgent = (sc: any) => "kpis" in sc;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Scorecards</h1>
-          <p className="text-sm text-gray-400">{scorecards.length} scorecard{scorecards.length !== 1 ? "s" : ""}</p>
+          <p className="text-sm text-gray-400">{ALL_SCORECARDS.length} scorecards configured · 3 generic + 3 agent</p>
         </div>
-        {!editing && (
-          <button onClick={startCreate} className="btn-primary flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-xl border border-white/10 bg-white/5 p-1">
+            {periods.map((p) => (
+              <button
+                key={p.value}
+                onClick={() => setPeriod(p.value)}
+                className={`rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all ${
+                  period === p.value
+                    ? "bg-purple-500/20 text-purple-300"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+          {period === "custom" && (
+            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5">
+              <span className="text-xs text-gray-400">From</span>
+              <input
+                type="date"
+                value={customStart}
+                onChange={(e) => setCustomStart(e.target.value)}
+                className="w-32 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-white placeholder-gray-500 focus:border-purple-500/50 focus:outline-none"
+              />
+              <span className="text-xs text-gray-400">To</span>
+              <input
+                type="date"
+                value={customEnd}
+                onChange={(e) => setCustomEnd(e.target.value)}
+                className="w-32 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-white placeholder-gray-500 focus:border-purple-500/50 focus:outline-none"
+              />
+            </div>
+          )}
+          <button className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-purple-500/25 opacity-60 cursor-not-allowed">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            New Scorecard
+            Create Scorecard
           </button>
-        )}
+        </div>
       </div>
 
-      {/* Create/Edit Form */}
-      {editing && (
-        <div className="glass-card rounded-xl p-6 animate-fade-up space-y-5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">
-              {editing === "new" ? "Create Scorecard" : "Edit Scorecard"}
-            </h2>
-            <button onClick={cancelEdit} className="text-sm text-gray-400 hover:text-white">Cancel</button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Name *</label>
-              <input
-                type="text"
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                placeholder="e.g. Standard Sales Scorecard"
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Description</label>
-              <input
-                type="text"
-                value={editDesc}
-                onChange={(e) => setEditDesc(e.target.value)}
-                placeholder="Brief description of this scorecard"
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
-              />
-            </div>
-          </div>
-
-          {/* Criteria Builder */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-white">Scoring Criteria</h3>
-              <button onClick={addCriteria} className="text-xs text-purple-400 hover:text-purple-300 flex items-center gap-1">
-                <span>+</span> Add Criterion
-              </button>
+      {/* Scorecard Grid — 3 columns */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {ALL_SCORECARDS.map((sc, i) => (
+          <div
+            key={sc.id}
+            className={`glass-card rounded-xl p-5 cursor-pointer transition-all hover:border-purple-500/20 animate-fade-up ${selectedId === sc.id ? "ring-2 ring-purple-500" : ""}`}
+            style={{ animationDelay: `${i * 100}ms` }}
+            onClick={() => setSelectedId(selectedId === sc.id ? null : sc.id)}
+          >
+            {/* Avatar + Name */}
+            <div className="flex items-center gap-3 mb-3">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${isAgent(sc) ? sc.gradient : "from-purple-500 to-indigo-600"} text-sm font-bold text-white shadow-lg`}>
+                {isAgent(sc) ? sc.initials : sc.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-white">{sc.name}</p>
+                <p className="text-xs text-gray-500 capitalize">{isAgent(sc) ? "Agent KPI" : sc.type.replace("-", " ")}</p>
+              </div>
             </div>
 
-            {editCriteria.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-white/10 p-6 text-center">
-                <p className="text-sm text-gray-500">No criteria yet. Click "Add Criterion" to create one.</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {editCriteria.map((c, i) => (
-                  <div key={c.id} className="rounded-xl bg-white/5 border border-white/10 p-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-                      <div className="sm:col-span-2">
-                        <label className="block text-[10px] text-gray-500 mb-1">Name</label>
-                        <input
-                          type="text"
-                          value={c.name}
-                          onChange={(e) => updateCriteria(i, "name", e.target.value)}
-                          placeholder="e.g. Greeting, Discovery..."
-                          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-gray-500 focus:border-purple-500/50 focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">Max Score</label>
-                        <input
-                          type="number"
-                          value={c.max_score}
-                          onChange={(e) => updateCriteria(i, "max_score", e.target.value)}
-                          min="1" max="100"
-                          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-purple-500/50 focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-gray-500 mb-1">Weight</label>
-                        <input
-                          type="number"
-                          value={c.weight}
-                          onChange={(e) => updateCriteria(i, "weight", e.target.value)}
-                          step="0.1" min="0.1" max="10"
-                          className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-purple-500/50 focus:outline-none"
-                        />
-                      </div>
-                      <div className="flex items-end gap-1">
-                        <div className="flex-1">
-                          <label className="block text-[10px] text-gray-500 mb-1">Category</label>
-                          <select
-                            value={c.category}
-                            onChange={(e) => updateCriteria(i, "category", e.target.value)}
-                            className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-purple-500/50 focus:outline-none"
-                          >
-                            <option value="">General</option>
-                            <option value="Opening">Opening</option>
-                            <option value="Discovery">Discovery</option>
-                            <option value="Skills">Skills</option>
-                            <option value="Messaging">Messaging</option>
-                            <option value="Structure">Structure</option>
-                            <option value="Compliance">Compliance</option>
-                            <option value="Soft Skills">Soft Skills</option>
-                          </select>
-                        </div>
-                        <button
-                          onClick={() => removeCriteria(i)}
-                          className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
-                          title="Remove criterion"
-                        >
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            {/* Description */}
+            <p className="text-xs text-gray-400 mb-3">{sc.description}</p>
 
-                <div className="flex items-center justify-between text-xs text-gray-500 pt-2">
-                  <span>{editCriteria.length} criteria</span>
-                  <span>Total weight: <span className={totalWeight.toFixed(1) === "1.0" ? "text-emerald-400" : "text-amber-400"}>{totalWeight.toFixed(1)}</span></span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="flex justify-end gap-3 pt-2">
-            <button onClick={cancelEdit} className="btn-ghost text-gray-400">Cancel</button>
-            <button
-              onClick={saveScorecard}
-              disabled={!editName.trim() || saving}
-              className="btn-primary disabled:opacity-40"
-            >
-              {saving ? "Saving..." : editing === "new" ? "Create Scorecard" : "Save Changes"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Scorecards List */}
-      {scorecards.length === 0 && !editing ? (
-        <div className="glass-card rounded-xl p-12 text-center">
-          <span className="text-4xl">📋</span>
-          <h3 className="mt-4 text-lg font-medium text-white">No scorecards yet</h3>
-          <p className="mt-1 text-sm text-gray-400">Create your first scorecard to start evaluating calls.</p>
-          <button onClick={startCreate} className="btn-primary mt-4">Create Scorecard</button>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {scorecards.map((sc, i) => (
-            <div key={sc.id} className="glass-card rounded-xl p-5 animate-fade-up" style={{ animationDelay: `${i * 50}ms` }}>
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-semibold text-white">{sc.name}</h3>
-                    {sc.is_default ? (
-                      <span className="rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 text-[10px] font-medium">Default</span>
-                    ) : null}
-                  </div>
-                  {sc.description && (
-                    <p className="mt-1 text-sm text-gray-400">{sc.description}</p>
-                  )}
-                  <p className="mt-1 text-xs text-gray-500">{sc.criteria_count} criteria</p>
-                </div>
-                <div className="flex items-center gap-2 ml-4">
-                  <button
-                    onClick={() => startEdit(sc)}
-                    className="rounded-lg px-3 py-1.5 text-xs font-medium text-purple-400 hover:bg-purple-500/10 transition-colors"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => deleteScorecard(sc.id)}
-                    disabled={deleting === sc.id}
-                    className="rounded-lg px-3 py-1.5 text-xs font-medium text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-40"
-                  >
-                    {deleting === sc.id ? "..." : "Delete"}
-                  </button>
-                </div>
-              </div>
-
-              {/* Criteria Preview */}
-              {sc.criteria && sc.criteria.length > 0 && (
-                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                  {sc.criteria.map((c) => (
-                    <div key={c.id} className="rounded-lg bg-white/5 border border-white/5 px-3 py-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-gray-300">{c.name}</span>
-                        <span className="text-[10px] text-gray-500">{c.max_score}pts</span>
-                      </div>
-                      {c.category && (
-                        <span className="text-[10px] text-gray-600">{c.category}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
+            {/* Footer stats */}
+            <div className="flex items-center justify-between text-xs">
+              {isGeneric(sc) && (
+                <>
+                  <span className="text-gray-500">{sc.criteria.length} criteria</span>
+                  <span className="text-gray-500">{sc.maxScore} max score</span>
+                </>
+              )}
+              {isAgent(sc) && (
+                <>
+                  <span className="text-gray-500">{Object.keys(sc.kpis).length} KPIs</span>
+                  <span className="text-gray-500">SPR {sc.kpis.SPR}</span>
+                </>
               )}
             </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ScorecardsSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <div className="h-7 w-28 rounded-lg bg-white/5 animate-pulse" />
-          <div className="h-4 w-20 rounded-lg bg-white/5 animate-pulse" />
-        </div>
-        <div className="h-9 w-32 rounded-xl bg-white/5 animate-pulse" />
+          </div>
+        ))}
       </div>
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="glass-card rounded-xl p-5 space-y-3">
-          <div className="h-5 w-40 rounded bg-white/5 animate-pulse" />
-          <div className="h-3 w-24 rounded bg-white/5 animate-pulse" />
-          <div className="flex gap-2">
-            <div className="h-12 w-24 rounded-lg bg-white/5 animate-pulse" />
-            <div className="h-12 w-24 rounded-lg bg-white/5 animate-pulse" />
-            <div className="h-12 w-24 rounded-lg bg-white/5 animate-pulse" />
+
+      {/* Selected Scorecard Detail */}
+      {selected && isGeneric(selected) && (
+        <div className="glass-card rounded-xl animate-fade-in">
+          <div className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-white">{selected.name}</h3>
+              <p className="text-sm text-gray-400">{selected.description}</p>
+            </div>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-gray-300 capitalize">{selected.type.replace("-", " ")}</span>
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="grid grid-cols-12 gap-3 text-xs font-medium text-gray-500 uppercase tracking-wider px-4">
+              <div className="col-span-5">Criteria</div>
+              <div className="col-span-2 text-center">Max Score</div>
+              <div className="col-span-2 text-center">Weight</div>
+              <div className="col-span-3 text-center">Weighted</div>
+            </div>
+            {selected.criteria.map((c: any, i: number) => (
+              <div key={c.name} className="group">
+                <div className="grid grid-cols-12 gap-3 items-center rounded-xl bg-white/[0.03] px-4 py-3 hover:bg-white/[0.06] transition-all cursor-pointer" onClick={() => setEditingCriteria(editingCriteria === c.name ? null : c.name)}>
+                  <div className="col-span-5">
+                    <p className="text-sm font-medium text-white">{c.name}</p>
+                    {editingCriteria === c.name && <p className="text-xs text-gray-400 mt-0.5">{c.description}</p>}
+                  </div>
+                  <div className="col-span-2 text-center">
+                    <span className="text-sm font-semibold text-white">{c.maxScore}</span>
+                  </div>
+                  <div className="col-span-2 text-center">
+                    <span className="text-sm text-gray-300">{c.weight}x</span>
+                  </div>
+                  <div className="col-span-3 text-center">
+                    <span className="text-sm font-semibold text-purple-400">{Math.round(c.maxScore * c.weight)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div className="grid grid-cols-12 gap-3 items-center px-4 pt-3 border-t border-white/10">
+              <div className="col-span-5">
+                <p className="text-sm font-bold text-white">Total</p>
+              </div>
+              <div className="col-span-2 text-center">
+                <span className="text-sm font-bold text-white">{selected.criteria.reduce((s: number, c: any) => s + c.maxScore, 0)}</span>
+              </div>
+              <div className="col-span-2 text-center">
+                <span className="text-sm text-gray-300">—</span>
+              </div>
+              <div className="col-span-3 text-center">
+                <span className="text-sm font-bold text-purple-400">{selected.criteria.reduce((s: number, c: any) => s + Math.round(c.maxScore * c.weight), 0)}</span>
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-white/10 px-6 py-4 flex gap-2">
+            <button className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-gray-300 hover:bg-white/10 transition-all">Edit Scorecard</button>
+            <button className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-400 hover:bg-red-500/20 transition-all">Delete</button>
           </div>
         </div>
-      ))}
+      )}
+
+      {/* Selected Agent KPI Detail */}
+      {selected && isAgent(selected) && (
+        <div className="glass-card rounded-xl animate-fade-in">
+          <div className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br ${selected.gradient} text-sm font-bold text-white shadow-lg`}>
+                {selected.initials}
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">{selected.name}</h3>
+                <p className="text-sm text-gray-400">Agent KPI Scorecard</p>
+              </div>
+            </div>
+            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-gray-300">Agent</span>
+          </div>
+
+          {/* KPI Values Table */}
+          <div className="p-6">
+            <div className="grid grid-cols-2 gap-3 text-xs font-medium text-gray-500 uppercase tracking-wider px-4 mb-2">
+              <div className="col-span-1">KPI</div>
+              <div className="col-span-1 text-right">Value</div>
+            </div>
+            <div className="space-y-1">
+              {Object.entries(selected.kpis).map(([kpi, value], i) => {
+                const isHighlight = kpi === "SPR";
+                return (
+                  <div key={kpi} className="grid grid-cols-2 gap-3 items-center rounded-xl bg-white/[0.03] px-4 py-2.5 hover:bg-white/[0.06] transition-all">
+                    <div className="col-span-1">
+                      <p className={`text-sm ${isHighlight ? "font-bold text-purple-300" : "font-medium text-gray-300"}`}>{kpi}</p>
+                    </div>
+                    <div className="col-span-1 text-right">
+                      <span className={`text-sm font-semibold ${isHighlight ? "text-purple-400" : "text-white"}`}>{value}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* SPR explanation */}
+            <div className="mt-4 px-4 py-3 rounded-xl bg-white/[0.02] border border-white/5">
+              <p className="text-xs text-gray-500">SPR = Total Sales (ATP + Fulls + Partials)</p>
+              <div className="flex gap-4 mt-1 text-xs text-gray-400">
+                <span>ATP: {selected.kpis.ATP}</span>
+                <span>Fulls: {selected.kpis.Fulls}</span>
+                <span>Partials: {selected.kpis.Partials}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-white/10 px-6 py-4 flex gap-2">
+            <button className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-gray-300 hover:bg-white/10 transition-all">View History</button>
+            <button className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-gray-300 hover:bg-white/10 transition-all">Export</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

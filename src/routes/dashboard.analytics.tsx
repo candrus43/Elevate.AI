@@ -1,92 +1,102 @@
-import { useEffect, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import type { UserSession } from "~/utils/auth";
-import { getCompanyCalls, getCompanyUsers } from "~/utils/db";
+import { useState, useMemo } from "react";
+import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/dashboard/analytics")({
   component: AnalyticsPage,
 });
 
-function AnalyticsPage() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<UserSession | null>(null);
-  const [calls, setCalls] = useState<any[]>([]);
-  const [team, setTeam] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState("7d");
+interface RepKPI {
+  id: string;
+  name: string;
+  avatar: string;
+  team: string;
+  atp: number;
+  fulls: number;
+  partials: number;
+  salesWithATP: number;
+  spr: number;
+  inbounds: number;
+  manuals: number;
+  h2s: number;
+  wh2s: number;
+  calls: number;
+  avgScore: number;
+}
 
-  useEffect(() => {
-    fetch("/api/session")
-      .then((r) => r.json())
-      .then(async ({ user }) => {
-        if (!user) {
-          navigate({ to: "/login" });
-          return;
-        }
-        setUser(user);
-        try {
-          const [callsData, teamData] = await Promise.all([
-            getCompanyCalls(user.companyId, 200),
-            getCompanyUsers(user.companyId),
-          ]);
-          setCalls(callsData);
-          setTeam(teamData.filter((u: any) => u.role === "rep"));
-        } catch (e) {
-          console.error("Failed to fetch analytics data", e);
-        }
-        setLoading(false);
-      })
-      .catch(() => {
-        navigate({ to: "/login" });
-      });
-  }, [navigate]);
+const DEMO_REPS: RepKPI[] = [
+  { id: "r1", name: "Sarah Chen", avatar: "SC", team: "Enterprise Sales", atp: 42, fulls: 28, partials: 14, salesWithATP: 36, spr: 86, inbounds: 84, manuals: 62, h2s: 31, wh2s: 43, calls: 146, avgScore: 88 },
+  { id: "r2", name: "Mike Rodriguez", avatar: "MR", team: "Enterprise Sales", atp: 38, fulls: 22, partials: 16, salesWithATP: 30, spr: 79, inbounds: 72, manuals: 58, h2s: 28, wh2s: 39, calls: 130, avgScore: 82 },
+  { id: "r3", name: "Emily Watson", avatar: "EW", team: "Enterprise Sales", atp: 35, fulls: 18, partials: 12, salesWithATP: 26, spr: 74, inbounds: 94, manuals: 46, h2s: 24, wh2s: 35, calls: 140, avgScore: 76 },
+  { id: "r4", name: "James Wilson", avatar: "JW", team: "SMB Sales", atp: 20, fulls: 10, partials: 10, salesWithATP: 14, spr: 50, inbounds: 36, manuals: 28, h2s: 18, wh2s: 22, calls: 64, avgScore: 58 },
+  { id: "r5", name: "Lisa Park", avatar: "LP", team: "SMB Sales", atp: 44, fulls: 30, partials: 14, salesWithATP: 38, spr: 91, inbounds: 78, manuals: 66, h2s: 34, wh2s: 46, calls: 144, avgScore: 92 },
+  { id: "r6", name: "David Kim", avatar: "DK", team: "SMB Sales", atp: 36, fulls: 24, partials: 12, salesWithATP: 30, spr: 83, inbounds: 68, manuals: 54, h2s: 29, wh2s: 40, calls: 122, avgScore: 85 },
+];
+
+type SortKey = "name" | "atp" | "fulls" | "partials" | "salesWithATP" | "spr" | "inbounds" | "manuals" | "h2s" | "wh2s" | "calls" | "avgScore";
+
+function AnalyticsPage() {
+  const [period, setPeriod] = useState("30d");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("spr");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const periods = [
     { value: "7d", label: "7 Days" },
     { value: "30d", label: "30 Days" },
     { value: "90d", label: "90 Days" },
+    { value: "custom", label: "Custom" },
   ];
 
-  const filteredCalls = calls.filter((c) => {
-    if (!c.started_at) return true;
-    const date = new Date(c.started_at);
-    const now = new Date();
-    const diffDays = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24);
-    if (period === "7d") return diffDays <= 7;
-    if (period === "30d") return diffDays <= 30;
-    return true; // 90d includes all
-  });
+  const totals = useMemo(() => ({
+    totalATP: DEMO_REPS.reduce((s, r) => s + r.atp, 0),
+    totalFulls: DEMO_REPS.reduce((s, r) => s + r.fulls, 0),
+    totalPartials: DEMO_REPS.reduce((s, r) => s + r.partials, 0),
+    totalSalesWithATP: DEMO_REPS.reduce((s, r) => s + r.salesWithATP, 0),
+    avgSPR: Math.round(DEMO_REPS.reduce((s, r) => s + r.spr, 0) / DEMO_REPS.length),
+    totalInbounds: DEMO_REPS.reduce((s, r) => s + r.inbounds, 0),
+    totalManuals: DEMO_REPS.reduce((s, r) => s + r.manuals, 0),
+    avgH2S: Math.round(DEMO_REPS.reduce((s, r) => s + r.h2s, 0) / DEMO_REPS.length),
+    avgWH2S: Math.round(DEMO_REPS.reduce((s, r) => s + r.wh2s, 0) / DEMO_REPS.length),
+    totalCalls: DEMO_REPS.reduce((s, r) => s + r.calls, 0),
+    avgScore: Math.round(DEMO_REPS.reduce((s, r) => s + r.avgScore, 0) / DEMO_REPS.length),
+    activeReps: DEMO_REPS.length,
+  }), []);
 
-  const avgScore = filteredCalls.length > 0
-    ? (filteredCalls.reduce((s, c) => s + (c.overall_score || 0), 0) / filteredCalls.length).toFixed(1)
-    : "0";
+  const sortedReps = useMemo(() => {
+    return [...DEMO_REPS].sort((a, b) => {
+      const aVal = a[sortKey];
+      const bVal = b[sortKey];
+      if (typeof aVal === "string") {
+        return sortDir === "asc" ? aVal.localeCompare(bVal as string) : (bVal as string).localeCompare(aVal);
+      }
+      return sortDir === "asc" ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
+    });
+  }, [sortKey, sortDir]);
 
-  const highScoreCount = filteredCalls.filter((c) => c.overall_score >= 85).length;
-  const mediumScoreCount = filteredCalls.filter((c) => c.overall_score >= 70 && c.overall_score < 85).length;
-  const lowScoreCount = filteredCalls.filter((c) => c.overall_score < 70).length;
-  const maxCount = Math.max(highScoreCount, mediumScoreCount, lowScoreCount, 1);
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("desc");
+    }
+  };
 
-  // Per-rep stats
-  const repStats = team.map((rep) => {
-    const repCalls = filteredCalls.filter((c) => c.rep_name === rep.name);
-    const avg = repCalls.length > 0
-      ? (repCalls.reduce((s, c) => s + (c.overall_score || 0), 0) / repCalls.length).toFixed(1)
-      : "0";
-    return { name: rep.name, calls: repCalls.length, avgScore: avg };
-  }).sort((a, b) => Number(b.avgScore) - Number(a.avgScore));
-
-  if (loading) return <AnalyticsSkeleton />;
+  const SortArrow = ({ column }: { column: SortKey }) => {
+    if (sortKey !== column) return <span className="ml-1 text-gray-600">↕</span>;
+    return <span className="ml-1 text-purple-400">{sortDir === "asc" ? "↑" : "↓"}</span>;
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Analytics</h1>
-          <p className="text-sm text-gray-400">Team performance insights</p>
+          <p className="text-sm text-gray-400">Team performance insights & KPI dashboard</p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Period Selector */}
           <div className="flex rounded-xl border border-white/10 bg-white/5 p-1">
             {periods.map((p) => (
               <button
@@ -102,6 +112,24 @@ function AnalyticsPage() {
               </button>
             ))}
           </div>
+          {period === "custom" && (
+            <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5">
+              <span className="text-xs text-gray-400">From</span>
+              <input
+                type="date"
+                value={customStart}
+                onChange={(e) => setCustomStart(e.target.value)}
+                className="w-32 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-white placeholder-gray-500 focus:border-purple-500/50 focus:outline-none"
+              />
+              <span className="text-xs text-gray-400">To</span>
+              <input
+                type="date"
+                value={customEnd}
+                onChange={(e) => setCustomEnd(e.target.value)}
+                className="w-32 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-white placeholder-gray-500 focus:border-purple-500/50 focus:outline-none"
+              />
+            </div>
+          )}
           <button className="btn-ghost rounded-xl border border-white/5 px-3 py-1.5 text-xs">
             <svg className="h-3.5 w-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -111,228 +139,334 @@ function AnalyticsPage() {
         </div>
       </div>
 
-      {/* KPI Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-card rounded-xl p-4 sm:p-5">
-          <p className="text-xs text-gray-400 mb-1">Avg Score</p>
-          <p className="text-2xl sm:text-3xl font-bold text-white">{avgScore}</p>
-          <p className="text-xs text-gray-500 mt-1">{filteredCalls.length} calls analyzed</p>
-        </div>
-        <div className="glass-card rounded-xl p-4 sm:p-5">
-          <p className="text-xs text-gray-400 mb-1">High Performers</p>
-          <p className="text-2xl sm:text-3xl font-bold text-emerald-400">{highScoreCount}</p>
-          <p className="text-xs text-gray-500 mt-1">Score ≥ 85</p>
-        </div>
-        <div className="glass-card rounded-xl p-4 sm:p-5">
-          <p className="text-xs text-gray-400 mb-1">Needs Improvement</p>
-          <p className="text-2xl sm:text-3xl font-bold text-amber-400">{lowScoreCount}</p>
-          <p className="text-xs text-gray-500 mt-1">Score &lt; 70</p>
-        </div>
-        <div className="glass-card rounded-xl p-4 sm:p-5">
-          <p className="text-xs text-gray-400 mb-1">Active Reps</p>
-          <p className="text-2xl sm:text-3xl font-bold text-white">{team.length}</p>
-          <p className="text-xs text-gray-500 mt-1">{filteredCalls.length > 0 ? `${(filteredCalls.length / Math.max(team.length, 1)).toFixed(0)} calls/rep` : "No data"}</p>
+      {/* Team Performance Summary */}
+      <div>
+        <h2 className="mb-4 text-sm font-semibold text-gray-400 uppercase tracking-wider">Team Performance Summary</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+          <div className="glass-card rounded-xl p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-lg">🏆</span>
+              <p className="text-xs text-gray-400">Total ATP</p>
+            </div>
+            <p className="text-2xl sm:text-3xl font-bold text-white">{totals.totalATP}</p>
+            <p className="text-xs text-gray-500 mt-1">Appointments</p>
+          </div>
+
+          <div className="glass-card rounded-xl p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-lg">✅</span>
+              <p className="text-xs text-gray-400">Total Fulls</p>
+            </div>
+            <p className="text-2xl sm:text-3xl font-bold text-emerald-400">{totals.totalFulls}</p>
+            <p className="text-xs text-gray-500 mt-1">Full sales closed</p>
+          </div>
+
+          <div className="glass-card rounded-xl p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-lg">📋</span>
+              <p className="text-xs text-gray-400">Total Partials</p>
+            </div>
+            <p className="text-2xl sm:text-3xl font-bold text-amber-400">{totals.totalPartials}</p>
+            <p className="text-xs text-gray-500 mt-1">Partial sales closed</p>
+          </div>
+
+          <div className="glass-card rounded-xl p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-lg">🎯</span>
+              <p className="text-xs text-gray-400">Sales w/ ATP</p>
+            </div>
+            <p className="text-2xl sm:text-3xl font-bold text-purple-400">{totals.totalSalesWithATP}</p>
+            <p className="text-xs text-gray-500 mt-1">Sales with appointments</p>
+          </div>
+
+          <div className="glass-card rounded-xl p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-lg">📊</span>
+              <p className="text-xs text-gray-400">Avg SPR</p>
+            </div>
+            <p className="text-2xl sm:text-3xl font-bold text-white">{totals.avgSPR}%</p>
+            <p className="text-xs text-gray-500 mt-1">Sales Performance Rating</p>
+          </div>
+
+          <div className="glass-card rounded-xl p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-lg">📞</span>
+              <p className="text-xs text-gray-400">Total Inbounds</p>
+            </div>
+            <p className="text-2xl sm:text-3xl font-bold text-white">{totals.totalInbounds}</p>
+            <p className="text-xs text-gray-500 mt-1">Inbound calls</p>
+          </div>
+
+          <div className="glass-card rounded-xl p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-lg">🔁</span>
+              <p className="text-xs text-gray-400">Total Manuals</p>
+            </div>
+            <p className="text-2xl sm:text-3xl font-bold text-white">{totals.totalManuals}</p>
+            <p className="text-xs text-gray-500 mt-1">Manual dials</p>
+          </div>
+
+          <div className="glass-card rounded-xl p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-lg">🔄</span>
+              <p className="text-xs text-gray-400">Avg H2S</p>
+            </div>
+            <p className="text-2xl sm:text-3xl font-bold text-emerald-400">{totals.avgH2S}%</p>
+            <p className="text-xs text-gray-500 mt-1">Handle to Sale</p>
+          </div>
+
+          <div className="glass-card rounded-xl p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-lg">🔥</span>
+              <p className="text-xs text-gray-400">Avg WH2S</p>
+            </div>
+            <p className="text-2xl sm:text-3xl font-bold text-amber-400">{totals.avgWH2S}%</p>
+            <p className="text-xs text-gray-500 mt-1">Warm Handle to Sale</p>
+          </div>
+
+          <div className="glass-card rounded-xl p-4 sm:p-5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-lg">💎</span>
+              <p className="text-xs text-gray-400">Avg Score</p>
+            </div>
+            <p className="text-2xl sm:text-3xl font-bold text-white">{totals.avgScore}</p>
+            <p className="text-xs text-gray-500 mt-1">{totals.totalCalls} total calls</p>
+          </div>
         </div>
       </div>
 
-      {/* Score Distribution Chart */}
-      <div className="glass-card rounded-xl p-5">
-        <h3 className="text-base font-semibold text-white mb-4">Score Distribution</h3>
-        <div className="space-y-3">
-          {/* High Scores */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                <span className="text-xs text-gray-400">High (85+)</span>
-              </div>
-              <span className="text-xs font-mono text-gray-300">{highScoreCount}</span>
-            </div>
-            <div className="h-3 w-full rounded-full bg-white/5 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-700"
-                style={{ width: `${(highScoreCount / maxCount) * 100}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Medium Scores */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
-                <span className="text-xs text-gray-400">Medium (70-84)</span>
-              </div>
-              <span className="text-xs font-mono text-gray-300">{mediumScoreCount}</span>
-            </div>
-            <div className="h-3 w-full rounded-full bg-white/5 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-700"
-                style={{ width: `${(mediumScoreCount / maxCount) * 100}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Low Scores */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
-                <span className="text-xs text-gray-400">Low (&lt;70)</span>
-              </div>
-              <span className="text-xs font-mono text-gray-300">{lowScoreCount}</span>
-            </div>
-            <div className="h-3 w-full rounded-full bg-white/5 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-red-500 to-red-400 transition-all duration-700"
-                style={{ width: `${(lowScoreCount / maxCount) * 100}%` }}
-              />
-            </div>
-          </div>
+      {/* Rep KPI Table */}
+      <div className="glass-card rounded-xl overflow-hidden">
+        <div className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
+          <h3 className="text-base font-semibold text-white">Individual Rep Performance</h3>
+          <p className="text-xs text-gray-500">{DEMO_REPS.length} reps · Click column headers to sort</p>
         </div>
-      </div>
 
-      {/* Team Trends */}
-      <div className="glass-card rounded-xl p-5">
-        <h3 className="text-base font-semibold text-white mb-4">Rep Performance</h3>
-
-        {repStats.length === 0 ? (
-          <div className="py-6 text-center">
-            <p className="text-sm text-gray-400">No rep data available for this period.</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {repStats.map((rep, i) => {
-              const avgNum = Number(rep.avgScore);
-              const maxScore = Math.max(...repStats.map((r) => Number(r.avgScore)), 1);
-              const barWidth = Math.max((avgNum / maxScore) * 100, 5);
-
-              return (
-                <div key={i} className="flex items-center gap-3 sm:gap-4">
-                  <span className="w-6 text-xs text-gray-500 font-mono text-right">#{i + 1}</span>
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/30 to-indigo-600/30 text-xs font-medium text-purple-300 shrink-0">
-                    {rep.name?.charAt(0).toUpperCase() || "?"}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-white/5">
+                <th className="sticky left-0 bg-[#0f0a1e] px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors min-w-[140px]" onClick={() => handleSort("name")}>
+                  <div className="flex items-center">
+                    Rep
+                    <SortArrow column="name" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-white truncate">{rep.name}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-400">{rep.calls} calls</span>
-                        <span className={`text-xs font-bold font-mono ${
-                          avgNum >= 85 ? "text-emerald-400" :
-                          avgNum >= 70 ? "text-amber-300" :
-                          "text-gray-400"
+                </th>
+                <th className="px-3 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors whitespace-nowrap" onClick={() => handleSort("calls")}>
+                  <div className="flex items-center justify-end">
+                    Calls
+                    <SortArrow column="calls" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors whitespace-nowrap" onClick={() => handleSort("avgScore")}>
+                  <div className="flex items-center justify-end">
+                    Score
+                    <SortArrow column="avgScore" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors whitespace-nowrap" onClick={() => handleSort("atp")}>
+                  <div className="flex items-center justify-end">
+                    ATP
+                    <SortArrow column="atp" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors whitespace-nowrap" onClick={() => handleSort("fulls")}>
+                  <div className="flex items-center justify-end">
+                    Fulls
+                    <SortArrow column="fulls" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors whitespace-nowrap" onClick={() => handleSort("partials")}>
+                  <div className="flex items-center justify-end">
+                    Partials
+                    <SortArrow column="partials" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors whitespace-nowrap" onClick={() => handleSort("salesWithATP")}>
+                  <div className="flex items-center justify-end">
+                    Sales w/ ATP
+                    <SortArrow column="salesWithATP" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors whitespace-nowrap" onClick={() => handleSort("spr")}>
+                  <div className="flex items-center justify-end">
+                    SPR %
+                    <SortArrow column="spr" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors whitespace-nowrap" onClick={() => handleSort("inbounds")}>
+                  <div className="flex items-center justify-end">
+                    Inbounds
+                    <SortArrow column="inbounds" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors whitespace-nowrap" onClick={() => handleSort("manuals")}>
+                  <div className="flex items-center justify-end">
+                    Manuals
+                    <SortArrow column="manuals" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors whitespace-nowrap" onClick={() => handleSort("h2s")}>
+                  <div className="flex items-center justify-end">
+                    H2S %
+                    <SortArrow column="h2s" />
+                  </div>
+                </th>
+                <th className="px-3 py-3 text-right text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors whitespace-nowrap" onClick={() => handleSort("wh2s")}>
+                  <div className="flex items-center justify-end">
+                    WH2S %
+                    <SortArrow column="wh2s" />
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedReps.map((rep, i) => {
+                const isTopPerformer = rep.avgScore >= 85;
+                const isStruggling = rep.avgScore < 65;
+                return (
+                  <tr key={rep.id} className={`border-b border-white/5 hover:bg-white/[0.03] transition-colors animate-fade-up`} style={{ animationDelay: `${i * 50}ms` }}>
+                    <td className="sticky left-0 bg-[#0f0a1e] px-4 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-xs font-semibold text-white">
+                          {rep.avatar}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-white truncate">{rep.name}</p>
+                          <p className="text-xs text-gray-500">{rep.team}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-3.5 text-right">
+                      <span className="text-sm font-semibold text-white">{rep.calls}</span>
+                    </td>
+                    <td className="px-3 py-3.5 text-right">
+                      <span className={`text-sm font-bold font-mono ${
+                        isTopPerformer ? "text-emerald-400" :
+                        isStruggling ? "text-red-400" :
+                        "text-amber-300"
+                      }`}>
+                        {rep.avgScore}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3.5 text-right">
+                      <span className="text-sm font-semibold text-white">{rep.atp}</span>
+                    </td>
+                    <td className="px-3 py-3.5 text-right">
+                      <span className="text-sm font-semibold text-emerald-400">{rep.fulls}</span>
+                    </td>
+                    <td className="px-3 py-3.5 text-right">
+                      <span className="text-sm font-semibold text-amber-400">{rep.partials}</span>
+                    </td>
+                    <td className="px-3 py-3.5 text-right">
+                      <span className="text-sm font-semibold text-purple-400">{rep.salesWithATP}</span>
+                    </td>
+                    <td className="px-3 py-3.5 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="hidden sm:block w-16 h-1.5 rounded-full bg-white/5 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-700 ${
+                              rep.spr >= 80 ? "bg-emerald-400" :
+                              rep.spr >= 65 ? "bg-amber-400" :
+                              "bg-red-400"
+                            }`}
+                            style={{ width: `${rep.spr}%` }}
+                          />
+                        </div>
+                        <span className={`text-sm font-bold font-mono ${
+                          rep.spr >= 80 ? "text-emerald-400" :
+                          rep.spr >= 65 ? "text-amber-300" :
+                          "text-red-400"
                         }`}>
-                          {rep.avgScore}
+                          {rep.spr}%
                         </span>
                       </div>
-                    </div>
-                    <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-gradient-to-r from-purple-500 to-violet-400 transition-all duration-700"
-                        style={{ width: `${barWidth}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Call Volume Trend */}
-      <div className="glass-card rounded-xl p-5">
-        <h3 className="text-base font-semibold text-white mb-4">Call Volume</h3>
-        <div className="flex items-end justify-between gap-1 sm:gap-2 h-32 sm:h-40">
-          {generateVolumeBars(filteredCalls).map((bar, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-1">
-              <div className="flex-1 w-full rounded-t-md bg-gradient-to-t from-purple-600/30 to-purple-500/50 transition-all duration-500 relative group" style={{ height: `${bar.height}%` }}>
-                <div className="absolute -top-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-purple-300 whitespace-nowrap">
-                  {bar.count}
-                </div>
-              </div>
-              <span className="text-[8px] sm:text-[10px] text-gray-500">{bar.label}</span>
-            </div>
-          ))}
+                    </td>
+                    <td className="px-3 py-3.5 text-right">
+                      <span className="text-sm font-semibold text-white">{rep.inbounds}</span>
+                    </td>
+                    <td className="px-3 py-3.5 text-right">
+                      <span className="text-sm font-semibold text-white">{rep.manuals}</span>
+                    </td>
+                    <td className="px-3 py-3.5 text-right">
+                      <span className={`text-sm font-bold font-mono ${
+                        rep.h2s >= 30 ? "text-emerald-400" :
+                        rep.h2s >= 22 ? "text-amber-300" :
+                        "text-red-400"
+                      }`}>
+                        {rep.h2s}%
+                      </span>
+                    </td>
+                    <td className="px-3 py-3.5 text-right">
+                      <span className={`text-sm font-bold font-mono ${
+                        rep.wh2s >= 40 ? "text-emerald-400" :
+                        rep.wh2s >= 30 ? "text-amber-300" :
+                        "text-red-400"
+                      }`}>
+                        {rep.wh2s}%
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
-    </div>
-  );
-}
 
-function generateVolumeBars(calls: any[]) {
-  // Group by day, last 7 days
-  const days: { [key: string]: number } = {};
-  const now = new Date();
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    const key = d.toLocaleDateString("en-US", { weekday: "short" });
-    days[key] = 0;
-  }
-
-  calls.forEach((c) => {
-    if (!c.started_at) return;
-    const d = new Date(c.started_at);
-    const key = d.toLocaleDateString("en-US", { weekday: "short" });
-    if (days[key] !== undefined) days[key]++;
-  });
-
-  const maxCount = Math.max(...Object.values(days), 1);
-  return Object.entries(days).map(([label, count]) => ({
-    label,
-    count,
-    height: (count / maxCount) * 100,
-  }));
-}
-
-function AnalyticsSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="space-y-2">
-          <div className="h-7 w-28 rounded-lg bg-white/5 animate-pulse" />
-          <div className="h-4 w-36 rounded-lg bg-white/5 animate-pulse" />
+      {/* Bottom Summary Bar */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="glass-card rounded-xl p-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400">
+            <span className="text-lg">⭐</span>
+          </div>
+          <div>
+            <p className="text-xs text-gray-400">Top Performer</p>
+            <p className="text-sm font-semibold text-white">
+              {DEMO_REPS.reduce((best, r) => r.avgScore > best.avgScore ? r : best, DEMO_REPS[0]).name}
+            </p>
+          </div>
         </div>
-        <div className="h-8 w-52 rounded-xl bg-white/5 animate-pulse" />
-      </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="glass-card rounded-xl p-5 space-y-3">
-            <div className="h-3 w-20 rounded bg-white/5 animate-pulse" />
-            <div className="h-8 w-16 rounded bg-white/5 animate-pulse" />
-            <div className="h-3 w-24 rounded bg-white/5 animate-pulse" />
+        <div className="glass-card rounded-xl p-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500/10 text-purple-400">
+            <span className="text-lg">📈</span>
           </div>
-        ))}
-      </div>
+          <div>
+            <p className="text-xs text-gray-400">Highest ATP</p>
+            <p className="text-sm font-semibold text-white">
+              {DEMO_REPS.reduce((best, r) => r.atp > best.atp ? r : best, DEMO_REPS[0]).name}
+              {" "}
+              <span className="text-purple-400">({DEMO_REPS.reduce((max, r) => Math.max(max, r.atp), 0)})</span>
+            </p>
+          </div>
+        </div>
 
-      <div className="glass-card rounded-xl p-5 space-y-4">
-        <div className="h-5 w-36 rounded bg-white/5 animate-pulse" />
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="h-3 w-24 rounded bg-white/5 animate-pulse" />
-              <div className="h-3 w-8 rounded bg-white/5 animate-pulse" />
-            </div>
-            <div className="h-3 w-full rounded-full bg-white/5 animate-pulse" />
+        <div className="glass-card rounded-xl p-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-400">
+            <span className="text-lg">🔔</span>
           </div>
-        ))}
-      </div>
+          <div>
+            <p className="text-xs text-gray-400">Needs Coaching</p>
+            <p className="text-sm font-semibold text-white">
+              {DEMO_REPS.reduce((worst, r) => r.avgScore < worst.avgScore ? r : worst, DEMO_REPS[0]).name}
+            </p>
+          </div>
+        </div>
 
-      <div className="glass-card rounded-xl p-5 space-y-4">
-        <div className="h-5 w-28 rounded bg-white/5 animate-pulse" />
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="flex items-center gap-4">
-            <div className="h-4 w-6 rounded bg-white/5 animate-pulse" />
-            <div className="h-8 w-8 rounded-full bg-white/5 animate-pulse" />
-            <div className="flex-1 space-y-1.5">
-              <div className="h-3 w-24 rounded bg-white/5 animate-pulse" />
-              <div className="h-2 w-full rounded-full bg-white/5 animate-pulse" />
-            </div>
+        <div className="glass-card rounded-xl p-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400">
+            <span className="text-lg">📊</span>
           </div>
-        ))}
+          <div>
+            <p className="text-xs text-gray-400">Best H2S Rate</p>
+            <p className="text-sm font-semibold text-white">
+              {DEMO_REPS.reduce((best, r) => r.h2s > best.h2s ? r : best, DEMO_REPS[0]).name}
+              {" "}
+              <span className="text-blue-400">({DEMO_REPS.reduce((max, r) => Math.max(max, r.h2s), 0)}%)</span>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { EmptyState } from '~/components/EmptyState';
 import type { UserSession } from "~/utils/auth";
 import { db } from "~/utils/db";
 import { sql } from "~/utils/sql";
@@ -21,9 +22,18 @@ interface LeaderboardEntry {
 function LeaderboardPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState<UserSession | null>(null);
-  const [period, setPeriod] = useState<"weekly" | "monthly">("weekly");
+  const [period, setPeriod] = useState("30d");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const periods = [
+    { value: "7d", label: "7 Days" },
+    { value: "30d", label: "30 Days" },
+    { value: "90d", label: "90 Days" },
+    { value: "custom", label: "Custom" },
+  ];
 
   useEffect(() => {
     fetch("/api/session")
@@ -92,43 +102,50 @@ function LeaderboardPage() {
       </div>
 
       {/* Period Tabs */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => setPeriod("weekly")}
-          className={`rounded-xl px-5 py-2.5 text-sm font-medium transition-all ${
-            period === "weekly"
-              ? "bg-purple-500/20 text-purple-300 border border-purple-500/30 shadow-lg shadow-purple-500/10"
-              : "text-gray-400 border border-white/5 hover:text-white hover:bg-white/5"
-          }`}
-        >
-          <span className="mr-1.5">📅</span>
-          Weekly
-        </button>
-        <button
-          onClick={() => setPeriod("monthly")}
-          className={`rounded-xl px-5 py-2.5 text-sm font-medium transition-all ${
-            period === "monthly"
-              ? "bg-purple-500/20 text-purple-300 border border-purple-500/30 shadow-lg shadow-purple-500/10"
-              : "text-gray-400 border border-white/5 hover:text-white hover:bg-white/5"
-          }`}
-        >
-          <span className="mr-1.5">📆</span>
-          Monthly
-        </button>
+      <div className="flex rounded-xl border border-white/10 bg-white/5 p-1 w-fit">
+        {periods.map((p) => (
+          <button
+            key={p.value}
+            onClick={() => setPeriod(p.value)}
+            className={`rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all ${
+              period === p.value
+                ? "bg-purple-500/20 text-purple-300"
+                : "text-gray-400 hover:text-white"
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
       </div>
+      {period === "custom" && (
+        <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5">
+          <span className="text-xs text-gray-400">From</span>
+          <input
+            type="date"
+            value={customStart}
+            onChange={(e) => setCustomStart(e.target.value)}
+            className="w-32 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-white placeholder-gray-500 focus:border-purple-500/50 focus:outline-none"
+          />
+          <span className="text-xs text-gray-400">To</span>
+          <input
+            type="date"
+            value={customEnd}
+            onChange={(e) => setCustomEnd(e.target.value)}
+            className="w-32 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-xs text-white placeholder-gray-500 focus:border-purple-500/50 focus:outline-none"
+          />
+        </div>
+      )}
 
       {/* Loading */}
       {loading ? (
         <LeaderboardSkeleton />
       ) : entries.length === 0 ? (
-        /* Empty State */
-        <div className="glass-card rounded-xl p-12 text-center">
-          <span className="text-4xl">🏆</span>
-          <h3 className="mt-4 text-lg font-medium text-white">No standings yet</h3>
-          <p className="mt-1 text-sm text-gray-400">
-            Leaderboard data will appear once team members start completing calls.
-          </p>
-        </div>
+        <EmptyState
+          icon="🏆"
+          title="No standings yet"
+          description="Leaderboard data will appear once team members start completing calls. Scores are calculated based on call analysis results."
+          secondaryAction={{ label: "Learn about scoring", link: "#" }}
+        />
       ) : (
         /* Podium for top 3 */
         <>
