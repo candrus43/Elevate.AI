@@ -6,6 +6,8 @@
 
 import { jsonResponse, UPLOADS_DIR } from "./middleware";
 import { handleLogin, handleRegister, handleLogout, handleSession } from "./auth";
+import { handleDemoLogin } from "./demo-login";
+import { handleWizardGetStatus, handleCompleteOnboardingStep, handleSkipOnboardingStep } from "./onboarding";
 import { handleCallUpload, handleCallList, handleCallDelete } from "./calls";
 import {
   handleListScorecards,
@@ -16,7 +18,7 @@ import {
   handleUpdateCriteria,
   handleDeleteCriteria,
 } from "./scorecards";
-import { handleRoleplayScenarios, handleRoleplayStart, handleRoleplayMessage, handleRoleplayEnd, handleGenerateCoachingPlan } from "./coaching";
+import { handleRoleplayScenarios, handleRoleplayStart, handleRoleplayMessage, handleRoleplayEnd, handleGenerateCoachingPlan, handleCreateManualPlan } from "./coaching";
 import { handleGetCompanySettings, handleUpdateCompanySettings, handleUpdateProfile, handleChangePassword, handleGetNotifications, handleUpdateNotifications } from "./settings";
 import { handleListComplianceRules, handleCreateComplianceRule, handleUpdateComplianceRule, handleDeleteComplianceRule, handleListComplianceChecks } from "./compliance";
 import { handleGetBillingPlan } from "./billing";
@@ -55,6 +57,8 @@ import {
 // ── Executive Analytics ─────────────────────────────────────────────────────────
 import {
   handleExecutiveDashboard,
+  handleExecutiveManagers,
+  handleExecutiveAIInsights,
   handleAnalyticsForecast,
   handleAnalyticsExport,
   handleScheduledReports,
@@ -69,6 +73,7 @@ import {
   handleDeleteIntegration,
   handleSyncIntegration,
   handleIntegrationLogs,
+  handleSetIntegrationMode,
   handleListWebhooks,
   handleRegisterWebhook,
   handleUpdateWebhook,
@@ -77,6 +82,7 @@ import {
 } from "./integrations";
 // ── Security ────────────────────────────────────────────────────────────────────
 import { apiRateLimiter, logRequest, handleHealthCheck } from "./security";
+import { handleGetOpenAIConfig, handleSaveOpenAIConfig, handleTestOpenAIConnection } from "./openai";
 
 // ── SSO / SAML Authentication ───────────────────────────────────────────────────
 import {
@@ -221,6 +227,13 @@ import {
   handleHoduClickToDial, handleHoduLiveStream, handleHoduLogs,
 } from "./hodu";
 
+// ── Observe.ai Integration ─────────────────────────────────────────────────
+import {
+  handleObserveAIConnect, handleObserveAIDisconnect, handleObserveAISyncCalls,
+  handleObserveAICalls, handleObserveAITranscript, handleObserveAIScores,
+  handleObserveAICoaching, handleObserveAISkills, handleObserveAILogs,
+} from "./observeai";
+
 /**
  * Route all API requests to the appropriate handler.
  * Returns a Response or null if the path is not an API route.
@@ -242,6 +255,7 @@ export async function routeApi(req: Request): Promise<Response | null> {
     // ── Auth ──────────────────────────────────────────────────────────────────────
     if (pathname === "/api/login" && req.method === "POST") return handleLogin(req);
     if (pathname === "/api/register" && req.method === "POST") return handleRegister(req);
+    if (pathname === "/api/demo-login" && req.method === "POST") return handleDemoLogin(req);
     if (pathname === "/api/logout" && req.method === "POST") return handleLogout(req);
     if (pathname === "/api/session" && req.method === "GET") return handleSession(req);
 
@@ -278,6 +292,7 @@ export async function routeApi(req: Request): Promise<Response | null> {
 
     // ── Coaching Plan Generator ──────────────────────────────────────────────────
     if (pathname === "/api/coaching/generate" && req.method === "POST") return handleGenerateCoachingPlan(req);
+    if (pathname === "/api/coaching/create" && req.method === "POST") return handleCreateManualPlan(req);
 
     // ── Call Recording ───────────────────────────────────────────────────────────
     if (pathname === "/api/calls/upload" && req.method === "POST") return handleCallUpload(req);
@@ -303,6 +318,13 @@ export async function routeApi(req: Request): Promise<Response | null> {
     if (pathname === "/api/settings/password" && req.method === "PUT") return handleChangePassword(req);
     if (pathname === "/api/settings/notifications" && req.method === "GET") return handleGetNotifications(req);
     if (pathname === "/api/settings/notifications" && req.method === "PUT") return handleUpdateNotifications(req);
+
+    // Demo mode routes have been removed — everything defaults to live mode.
+
+    // ── Onboarding Wizard ─────────────────────────────────────────────────────────
+    if (pathname === "/api/onboarding/status" && req.method === "GET") return handleWizardGetStatus(req);
+    if (pathname.match(/^\/api\/onboarding\/step\/[a-z_]+$/) && req.method === "POST") return handleCompleteOnboardingStep(req);
+    if (pathname.match(/^\/api\/onboarding\/skip\/[a-z_]+$/) && req.method === "POST") return handleSkipOnboardingStep(req);
 
     // ── Notifications / Slack Webhooks ────────────────────────────────────────────
     if (pathname === "/api/notifications/preferences" && req.method === "GET") return handleGetNotificationPreferences(req);
@@ -348,6 +370,8 @@ export async function routeApi(req: Request): Promise<Response | null> {
 
     // ── Executive Analytics ──────────────────────────────────────────────────────
     if (pathname === "/api/analytics/executive" && req.method === "GET") return handleExecutiveDashboard(req);
+    if (pathname === "/api/analytics/executive/managers" && req.method === "GET") return handleExecutiveManagers(req);
+    if (pathname === "/api/analytics/executive/ai-insights" && req.method === "GET") return handleExecutiveAIInsights(req);
     if (pathname === "/api/analytics/forecast" && req.method === "GET") return handleAnalyticsForecast(req);
     if (pathname === "/api/analytics/export" && req.method === "GET") return handleAnalyticsExport(req);
     // Scheduled Reports
@@ -362,6 +386,7 @@ export async function routeApi(req: Request): Promise<Response | null> {
     if (pathname.match(/^\/api\/integrations\/[^/]+\/logs$/) && req.method === "GET") return handleIntegrationLogs(req);
     if (pathname.match(/^\/api\/integrations\/[^/]+$/) && req.method === "PUT") return handleUpdateIntegration(req);
     if (pathname.match(/^\/api\/integrations\/[^/]+$/) && req.method === "DELETE") return handleDeleteIntegration(req);
+    if (pathname.match(/^\/api\/integrations\/[^/]+\/mode$/) && req.method === "PUT") return handleSetIntegrationMode(req);
 
     // ── CRM Deep Sync ─────────────────────────────────────────────────────────────
     if (pathname === "/api/crm/connections" && req.method === "GET") return handleListCrmConnections(req);
@@ -536,6 +561,26 @@ export async function routeApi(req: Request): Promise<Response | null> {
     if (pathname === "/api/integrations/hodu/live-stream" && req.method === "POST") return handleHoduLiveStream(req);
     if (pathname === "/api/integrations/hodu/logs" && req.method === "GET") return handleHoduLogs(req);
 
+    // ── Observe.ai Integration ──────────────────────────────────────────────────
+    if (pathname === "/api/integrations/observeai/connect" && req.method === "POST") return handleObserveAIConnect(req);
+    if (pathname === "/api/integrations/observeai/disconnect" && req.method === "POST") return handleObserveAIDisconnect(req);
+    if (pathname === "/api/integrations/observeai/sync-calls" && req.method === "POST") return handleObserveAISyncCalls(req);
+    if (pathname === "/api/integrations/observeai/calls" && req.method === "GET") return handleObserveAICalls(req);
+    if (pathname === "/api/integrations/observeai/transcript" && req.method === "GET") return handleObserveAITranscript(req);
+    if (pathname === "/api/integrations/observeai/scores" && req.method === "GET") return handleObserveAIScores(req);
+    if (pathname === "/api/integrations/observeai/coaching" && req.method === "GET") return handleObserveAICoaching(req);
+    if (pathname === "/api/integrations/observeai/skills" && req.method === "GET") return handleObserveAISkills(req);
+    if (pathname === "/api/integrations/observeai/logs" && req.method === "GET") return handleObserveAILogs(req);
+
+    // ── OpenAI Configuration ──────────────────────────────────────────────────────
+    if (pathname === "/api/openai/config" && req.method === "GET") return handleGetOpenAIConfig(req);
+    if (pathname === "/api/openai/config" && req.method === "PUT") return handleSaveOpenAIConfig(req);
+    if (pathname === "/api/openai/test" && req.method === "POST") return handleTestOpenAIConnection(req);
+
+    // Catch-all for unmatched /api/* routes — return JSON instead of HTML
+    if (pathname.startsWith("/api/")) {
+      return jsonResponse({ error: "API endpoint not found" }, 404);
+    }
     // Not an API route
     return null;
   } finally {

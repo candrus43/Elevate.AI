@@ -1,3 +1,4 @@
+import { LoadingSkeleton } from '~/components/GlassCard';
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 
@@ -39,7 +40,7 @@ function ManagerDashboard() {
     });
   }, [navigate]);
 
-  if (loading) return <div className="flex items-center justify-center h-48"><div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" /></div>;
+  if (loading) return <div className="flex items-center justify-center h-48"><LoadingSkeleton className="h-8 w-8 rounded-full" /></div>;
 
   const avgScore = calls.length > 0 ? (calls.reduce((s, c) => s + (c.overall_score || 0), 0) / calls.length).toFixed(1) : "0";
   const analyzedCalls = calls.filter(c => c.status === "analyzed").length;
@@ -49,10 +50,10 @@ function ManagerDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Manager Dashboard</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Welcome back, {user?.name}</p>
+          <h1 className="text-2xl font-bold text-white">Manager Dashboard</h1>
+          <p className="text-sm text-gray-400">Welcome back, {user?.name}</p>
         </div>
-        <Link to="/dashboard/calls" className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+        <Link to="/dashboard/calls" className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white hover:from-purple-500 hover:to-indigo-500 transition-all">
           + New Review
         </Link>
       </div>
@@ -67,34 +68,52 @@ function ManagerDashboard() {
 
       {/* Activity + Recent Calls */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
-          <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
+        <div className="rounded-2xl p-6"
+          style={{
+            background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(139,92,246,0.04) 50%, rgba(255,255,255,0.02) 100%)",
+            backdropFilter: "blur(24px)",
+            border: "1px solid rgba(255, 255, 255, 0.06)",
+          }}
+        >
+          <h3 className="mb-4 text-lg font-semibold text-white">Recent Activity</h3>
           <div className="space-y-3">
             {activity.length === 0 && <p className="text-sm text-gray-400">No recent activity</p>}
             {activity.map((item, i) => (
-              <div key={i} className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+              <div key={i} className="flex items-center justify-between rounded-xl p-3 transition-colors hover:bg-white/[0.03]"
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+              >
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{item.user_name || "System"}</p>
+                  <p className="text-sm font-medium text-white">{item.user_name || "System"}</p>
                   <p className="text-xs text-gray-500">{item.event_type?.replace(/_/g, " ")} · {item.created_at ? new Date(item.created_at).toLocaleDateString() : ""}</p>
                 </div>
+                <span className="text-xs text-gray-500">{item.created_at ? new Date(item.created_at).toLocaleTimeString() : ""}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
-          <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">Recent Calls</h3>
+        <div className="rounded-2xl p-6"
+          style={{
+            background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(139,92,246,0.04) 50%, rgba(255,255,255,0.02) 100%)",
+            backdropFilter: "blur(24px)",
+            border: "1px solid rgba(255, 255, 255, 0.06)",
+          }}
+        >
+          <h3 className="mb-4 text-lg font-semibold text-white">Recent Calls</h3>
           <div className="space-y-3">
             {calls.slice(0, 5).map((call, i) => (
-              <Link key={i} to="/dashboard/calls/$callId" params={{ callId: call.id }} className="flex items-center justify-between rounded-lg bg-gray-50 p-3 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700">
+              <Link key={i} to="/dashboard/calls/$callId" params={{ callId: call.id }}
+                className="flex items-center justify-between rounded-xl p-3 transition-colors hover:bg-white/[0.03]"
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
+              >
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">{call.rep_name || "Unknown"}</p>
+                  <p className="text-sm font-medium text-white">{call.rep_name || "Unknown"}</p>
                   <p className="text-xs text-gray-500">{call.started_at ? new Date(call.started_at).toLocaleDateString() : ""} · {call.duration_seconds ? `${Math.floor(call.duration_seconds / 60)}m` : ""}</p>
                 </div>
-                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                  call.overall_score >= 85 ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" :
-                  call.overall_score >= 70 ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300" :
-                  "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                  call.overall_score >= 85 ? "bg-green-500/10 text-green-300" :
+                  call.overall_score >= 70 ? "bg-amber-500/10 text-amber-300" :
+                  "bg-red-500/10 text-red-300"
                 }`}>
                   {call.overall_score ?? "-"}
                 </span>
@@ -105,30 +124,35 @@ function ManagerDashboard() {
       </div>
 
       {/* Team Members */}
-      <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
-        <div className="border-b border-gray-200 px-6 py-4 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Team Members</h3>
+      <div className="rounded-2xl overflow-hidden"
+        style={{
+          background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(139,92,246,0.04) 50%, rgba(255,255,255,0.02) 100%)",
+          backdropFilter: "blur(24px)",
+          border: "1px solid rgba(255, 255, 255, 0.06)",
+        }}
+      >
+        <div className="px-5 sm:px-6 py-3.5 sm:py-4" style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
+          <h3 className="text-lg font-semibold text-white">Team Members</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-gray-200 text-gray-500 dark:border-gray-700">
-                <th className="px-6 py-3 font-medium">Name</th>
-                <th className="px-6 py-3 font-medium">Role</th>
-                <th className="px-6 py-3 font-medium">Team</th>
-                <th className="px-6 py-3 font-medium">Status</th>
+              <tr className="text-gray-500" style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
+                <th className="px-5 sm:px-6 py-3.5 font-medium">Name</th>
+                <th className="px-5 sm:px-6 py-3.5 font-medium">Role</th>
+                <th className="px-5 sm:px-6 py-3.5 font-medium">Team</th>
+                <th className="px-5 sm:px-6 py-3.5 font-medium">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y" style={{ borderColor: "rgba(255, 255, 255, 0.06)" }}>
               {team.map((member, i) => (
-                <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{member.name}</td>
-                  <td className="px-6 py-4 capitalize text-gray-600 dark:text-gray-400">{member.role}</td>
-                  <td className="px-6 py-4 text-gray-600 dark:text-gray-400">{member.team_name || "-"}</td>
-                  <td className="px-6 py-4">
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      member.is_active ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300" :
-                      "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                <tr key={i} className="hover:bg-white/[0.02] transition-colors">
+                  <td className="px-5 sm:px-6 py-4 font-medium text-white">{member.name}</td>
+                  <td className="px-5 sm:px-6 py-4 capitalize text-gray-400">{member.role}</td>
+                  <td className="px-5 sm:px-6 py-4 text-gray-400">{member.team_name || "-"}</td>
+                  <td className="px-5 sm:px-6 py-4">
+                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      member.is_active ? "bg-green-500/10 text-green-300" : "bg-white/5 text-gray-400"
                     }`}>
                       {member.is_active ? "Active" : "Inactive"}
                     </span>
@@ -145,13 +169,19 @@ function ManagerDashboard() {
 
 function KpiCard({ title, value, subtitle, icon }: { title: string; value: string; subtitle: string; icon: string }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
+    <div className="rounded-2xl p-5"
+      style={{
+        background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(139,92,246,0.04) 50%, rgba(255,255,255,0.02) 100%)",
+        backdropFilter: "blur(24px)",
+        border: "1px solid rgba(255, 255, 255, 0.06)",
+      }}
+    >
       <div className="flex items-center justify-between">
         <span className="text-2xl">{icon}</span>
       </div>
-      <p className="mt-3 text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
-      <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
-      <p className="text-xs text-gray-400 dark:text-gray-500">{subtitle}</p>
+      <p className="mt-3 text-2xl font-bold text-white">{value}</p>
+      <p className="text-sm text-gray-400">{title}</p>
+      <p className="text-xs text-gray-500">{subtitle}</p>
     </div>
   );
 }
