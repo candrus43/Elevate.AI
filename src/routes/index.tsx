@@ -1,37 +1,24 @@
+import { useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { readFile } from "node:fs/promises";
-import { useState, useEffect } from "react";
-
-const getBusinessName = createServerFn({ method: "GET" }).handler(async () => {
-  try {
-    const cfg = JSON.parse(await readFile("site.json", "utf8")) as {
-      businessName?: string;
-    };
-    return cfg.businessName?.trim() ?? "";
-  } catch {
-    return "";
-  }
-});
 
 export const Route = createFileRoute("/")({
-  loader: () => getBusinessName(),
   component: Home,
 });
 
 function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const navLinks = [
+    { href: "#features", label: "Features" },
+    { href: "#pricing", label: "Pricing" },
+    { href: "#how-it-works", label: "How it works" },
+    { href: "#faq", label: "FAQ" },
+  ];
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? "navbar-scrolled" : ""}`}>
+    <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-500">
       <div className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-12">
-        <div className={`mx-auto mt-3 sm:mt-4 flex max-w-5xl items-center justify-between rounded-2xl px-4 sm:px-6 py-2.5 sm:py-3 transition-all duration-500 ${scrolled ? "bg-transparent border border-white/5 shadow-lg shadow-purple-500/5" : "glass"}`}>
+        <div className="mx-auto mt-3 sm:mt-4 flex max-w-5xl items-center justify-between rounded-2xl px-4 sm:px-6 py-2.5 sm:py-3 glass">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600">
@@ -42,33 +29,61 @@ function Navbar() {
             <span className="text-lg font-bold text-white">ElevateAI</span>
           </Link>
 
-          {/* Nav Links */}
+          {/* Desktop Nav Links */}
           <div className="hidden items-center gap-8 md:flex">
-            <a href="#features" className="text-sm text-gray-400 transition-colors hover:text-white">
-              Features
-            </a>
-            <a href="#pricing" className="text-sm text-gray-400 transition-colors hover:text-white">
-              Pricing
-            </a>
-            <a href="#testimonials" className="text-sm text-gray-400 transition-colors hover:text-white">
-              Testimonials
-            </a>
-            <a href="#faq" className="text-sm text-gray-400 transition-colors hover:text-white">
-              FAQ
-            </a>
+            {navLinks.map((l) => (
+              <a key={l.href} href={l.href} className="text-sm text-gray-400 transition-colors hover:text-white">{l.label}</a>
+            ))}
           </div>
 
           {/* CTA Buttons */}
           <div className="flex items-center gap-3">
-            <a href="/login" className="btn-demo animate-pulse-glow">
-              Launch Demo
-            </a>
-            <a href="/login" className="btn-ghost hidden sm:inline-flex">Sign in</a>
-            <a href="/register" className="btn-primary text-xs px-4 py-2 hidden sm:inline-flex">
-              Get started
-            </a>
+            {/* Desktop-only: all CTAs wrapped in responsive div to avoid btn-* @apply inline-flex overriding hidden */}
+            <div className="hidden sm:flex items-center gap-3">
+              <a href="/login" className="btn-demo animate-pulse-glow">Launch Demo</a>
+              <a href="/login" className="btn-ghost">Sign in</a>
+              <a href="/register" className="btn-primary text-xs px-4 py-2">Get started</a>
+            </div>
+            {/* Mobile hamburger */}
+            <button
+              type="button"
+              aria-label="Toggle navigation menu"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-white/10 hover:text-white md:hidden"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                {menuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu dropdown */}
+        {menuOpen && (
+          <div className="mx-auto mt-2 max-w-5xl rounded-2xl p-3 glass animate-fade-in md:hidden">
+            <div className="flex flex-col">
+              {navLinks.map((l) => (
+                <a
+                  key={l.href}
+                  href={l.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-xl px-4 py-3 text-sm font-medium text-gray-300 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  {l.label}
+                </a>
+              ))}
+              <div className="mt-2 flex flex-col gap-2 border-t border-white/10 pt-3">
+                <a href="/login" className="btn-demo w-full justify-center">Launch Demo</a>
+                <a href="/register" className="btn-primary w-full justify-center">Get started</a>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
@@ -147,7 +162,7 @@ function HeroSection() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </a>
-            <a href="#demo" className="btn-secondary w-full sm:w-auto justify-center text-sm sm:text-base px-5 sm:px-8 py-2.5 sm:py-4">
+            <a href="/demo.html" target="_blank" className="btn-secondary w-full sm:w-auto justify-center text-sm sm:text-base px-5 sm:px-8 py-2.5 sm:py-4">
               Watch demo
               <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -177,18 +192,14 @@ function HeroSection() {
             </div>
           </div>
 
-          {/* Social proof */}
+          {/* Integrations (in-scope tools, not endorsements) */}
           <div className="mt-10 sm:mt-16 flex flex-col items-center gap-4 sm:gap-6">
             <p className="text-xs sm:text-sm font-medium uppercase tracking-widest text-gray-500">
-              Trusted by leading sales teams
+              Integrates with your existing stack
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 opacity-40 grayscale">
-              {["Salesforce", "HubSpot", "ZoomInfo", "Outreach", "Gong"].map((name) => (
-                <span key={name} className="text-sm sm:text-lg font-bold text-gray-400">
-                  {name}
-                </span>
-              ))}
-            </div>
+            <p className="max-w-2xl text-sm sm:text-base text-gray-500">
+              Salesforce &amp; HubSpot CRMs · Five9, RingCentral, Aircall &amp; Twilio dialers
+            </p>
           </div>
         </div>
       </div>
@@ -353,7 +364,7 @@ function DashboardPreviewSection() {
             </div>
 
             {/* Main Content Mockup */}
-            <div className="flex-1 p-4 sm:p-6">
+            <div className="min-w-0 flex-1 p-4 sm:p-6">
               {/* Stats Row */}
               <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <div className="mockup-stat mockup-stat-primary">
@@ -393,7 +404,7 @@ function DashboardPreviewSection() {
                         <div className="mt-1 h-2 w-20 rounded bg-white/10" />
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="hidden sm:flex items-center gap-4">
                       <div className="h-2 w-12 rounded bg-green-400/40" />
                       <div className="h-2 w-10 rounded bg-white/20" />
                     </div>
@@ -459,54 +470,58 @@ function DashboardPreviewSection() {
 function PricingSection() {
   const plans = [
     {
-      name: "Core",
-      price: "29",
-      description: "For teams getting started with AI coaching",
-      stripeLink: "https://buy.stripe.com/8x2fZh4pL2Tp1sY3kw1wY02",
+      name: "Starter",
+      price: "299",
+      period: "/manager/mo",
+      description: "For teams getting started with AI coaching — min 3 manager seats",
+      stripeLink: "https://buy.stripe.com/cNi3cv8G1ctZc7C2gs1wY06",
       features: [
         "AI call analysis & transcription",
-        "Basic scorecards",
-        "Manager dashboards",
-        "Up to 500 calls/month",
-        "5 team members",
+        "Basic scorecards & manager dashboards",
+        "Email coaching delivery for reps",
+        "30-day call storage",
+        "Min 3 manager seats (from $897/mo)",
         "Email support",
       ],
       cta: "Subscribe now",
       popular: false,
     },
     {
-      name: "Pro",
-      price: "79",
-      description: "For growing teams that want full AI coaching power",
-      stripeLink: "https://buy.stripe.com/28E00jbSd79F1sYaMY1wY01",
+      name: "Growth",
+      price: "599",
+      period: "/manager/mo",
+      description: "For growing teams — full AI coaching, CRM integrations — min 5 seats",
+      stripeLink: "https://buy.stripe.com/14A00jcWh65B8Vq2gs1wY07",
       features: [
-        "Everything in Core, plus:",
-        "Live AI coaching during calls",
-        "AI role-playing scenarios",
+        "Everything in Starter, plus:",
+        "Live AI coaching delivery via Teams/Slack",
+        "AI role-playing scenarios & practice",
         "Custom scorecards & rubrics",
-        "Up to 2,000 calls/month",
-        "Unlimited team members",
+        "CRM integrations (Salesforce, HubSpot, etc.)",
         "Advanced analytics & reports",
+        "90-day call storage",
+        "Min 5 manager seats (from $2,995/mo)",
         "Priority support",
       ],
       cta: "Subscribe now",
       popular: true,
     },
     {
-      name: "Enterprise",
-      price: "199",
-      description: "For large organizations with advanced needs",
-      stripeLink: "https://buy.stripe.com/dRmd9Rf4p65B2x23kw1wY00",
+      name: "Scale",
+      price: "999",
+      period: "/manager/mo",
+      description: "For large organizations — full customization & white-label — min 10 seats",
+      stripeLink: "https://buy.stripe.com/3cI5kDf4pgKfefK6wI1wY08",
       features: [
-        "Everything in Pro, plus:",
-        "Multi-company admin",
-        "SSO & SAML",
-        "Custom AI prompts & models",
-        "Unlimited calls/month",
+        "Everything in Growth, plus:",
+        "White-label / custom domain",
+        "API access & custom integrations",
+        "SSO / SAML authentication",
         "Dedicated success manager",
+        "Unlimited call storage",
+        "Unlimited manager seats",
+        "Min 10 seats (from $9,990/mo)",
         "SLA guarantees",
-        "Custom integrations",
-        "On-premise deployment option",
       ],
       cta: "Subscribe now",
       popular: false,
@@ -525,10 +540,10 @@ function PricingSection() {
             Pricing
           </span>
           <h2 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white">
-            Simple, Transparent Pricing
+            Per-Manager Pricing
           </h2>
           <p className="mt-3 sm:mt-4 text-base sm:text-lg text-gray-400">
-            Start with a free trial. No credit card required. Scale as you grow.
+            Pay for the managers who use it. Reps get coaching at no extra cost. Start with a free trial.
           </p>
         </div>
 
@@ -551,8 +566,9 @@ function PricingSection() {
               <p className="mt-2 text-sm text-gray-400">{plan.description}</p>
               <div className="mt-6 flex items-baseline gap-1">
                 <span className="text-5xl font-extrabold text-white">${plan.price}</span>
-                <span className="text-sm text-gray-500">/month</span>
+                <span className="text-sm text-gray-500">{plan.period}</span>
               </div>
+              <p className="mt-1 text-xs text-gray-500">Billed monthly per manager seat</p>
               <ul className="mt-8 space-y-3">
                 {plan.features.map((feature, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-gray-300">
@@ -580,75 +596,58 @@ function PricingSection() {
         </div>
 
         <p className="mt-8 text-center text-sm text-gray-500">
-          All plans include a 14-day free trial. Usage-based add-ons available for high-volume teams.
+          All plans include a 14-day free trial. Reps are always free — you only pay for manager seats.
         </p>
       </div>
     </section>
   );
 }
 
-function TestimonialsSection() {
-  const testimonials = [
+function HowItWorksSection() {
+  const steps = [
     {
-      quote:
-        "ElevateAI transformed our sales coaching process. We saw a 34% increase in conversion rates within the first quarter. The AI call analysis is incredibly accurate.",
-      name: "Sarah Chen",
-      role: "VP of Sales, TechFlow Inc.",
-      avatar: "SC",
+      step: "01",
+      title: "Connect your calls",
+      description:
+        "Recorded and live calls flow into ElevateAI from your existing dialer or CRM workflow.",
     },
     {
-      quote:
-        "The live coaching feature is a game-changer. Our reps perform better on every call with real-time AI guidance. It's like having a top-performing manager on every line.",
-      name: "Marcus Johnson",
-      role: "Director of Sales Development, CloudScale",
-      avatar: "MJ",
+      step: "02",
+      title: "AI analyzes every call",
+      description:
+        "Calls are transcribed and graded against your configurable scorecards, KPIs, and compliance rules.",
     },
     {
-      quote:
-        "We've cut our onboarding time in half. New reps ramp up 2x faster with AI role-playing and personalized coaching plans. ROI was immediate and substantial.",
-      name: "Emily Rodriguez",
-      role: "Head of Revenue Enablement, DataVista",
-      avatar: "ER",
+      step: "03",
+      title: "Coaching reaches reps automatically",
+      description:
+        "Personalized coaching plans are delivered to each rep's email or chat — no extra login required.",
     },
   ];
 
   return (
-    <section id="testimonials" className="relative py-16 sm:py-32">
+    <section id="how-it-works" className="relative py-16 sm:py-32">
       <div className="absolute inset-0 grid-bg opacity-30" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-2xl text-center">
           <span className="gradient-text text-xs sm:text-sm font-semibold uppercase tracking-widest">
-            Testimonials
+            How it works
           </span>
           <h2 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white">
-            Loved by Sales Leaders
+            From call to coaching, automatically
           </h2>
           <p className="mt-3 sm:mt-4 text-base sm:text-lg text-gray-400">
-            See how ElevateAI is helping teams across industries achieve more.
+            ElevateAI turns every sales call into coaching, performance, and compliance intelligence.
           </p>
         </div>
 
         <div className="mt-16 grid gap-6 md:grid-cols-3">
-          {testimonials.map((t, i) => (
-            <div key={i} className="glass-card rounded-2xl p-6" style={{ animationDelay: `${i * 150}ms` }}>
-              <div className="flex gap-1 text-purple-400">
-                {[...Array(5)].map((_, s) => (
-                  <svg key={s} className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-              </div>
-              <p className="mt-4 text-sm leading-relaxed text-gray-300">&ldquo;{t.quote}&rdquo;</p>
-              <div className="mt-6 flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-sm font-bold text-white">
-                  {t.avatar}
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-white">{t.name}</p>
-                  <p className="text-xs text-gray-400">{t.role}</p>
-                </div>
-              </div>
+          {steps.map((s) => (
+            <div key={s.step} className="glass-card rounded-2xl p-6">
+              <span className="text-sm font-bold text-purple-400">{s.step}</span>
+              <h3 className="mt-3 text-lg font-semibold text-white">{s.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-gray-400">{s.description}</p>
             </div>
           ))}
         </div>
@@ -667,12 +666,12 @@ function FAQSection() {
     {
       question: "Can I customize the scorecards?",
       answer:
-        "Yes! Pro and Enterprise plans allow you to create custom scorecards with your own criteria, weighting, and grading rubrics. You can tailor them to your specific sales methodology and KPIs.",
+        "Yes! Growth and Scale plans allow you to create custom scorecards with your own criteria, weighting, and grading rubrics. You can tailor them to your specific sales methodology and KPIs.",
     },
     {
       question: "Does ElevateAI integrate with my CRM?",
       answer:
-        "Absolutely. ElevateAI integrates with Salesforce, HubSpot, and major dialers like Five9, RingCentral, Aircall, and Twilio. Enterprise plans include custom integrations.",
+        "Absolutely. CRM integrations are included in our Growth and Scale plans — connecting with Salesforce, HubSpot, and major dialers like Five9, RingCentral, Aircall, and Twilio. Scale plans also include custom API integrations.",
     },
     {
       question: "How does live coaching work?",
@@ -680,9 +679,9 @@ function FAQSection() {
         "During a live call, our AI listens in real-time and provides subtle prompts to the rep — objection responses, next-best-action suggestions, compliance reminders — displayed in a discreet overlay. Only the rep sees these prompts.",
     },
     {
-      question: "What kind of ROI can I expect?",
+      question: "How do we measure improvement?",
       answer:
-        "Our customers typically see 20-40% improvement in conversion rates, 2x faster ramp for new reps, and 30% reduction in coaching overhead. The average ROI is 5x within the first quarter.",
+        "ElevateAI reports call performance, coaching completion, and process adherence out of the box. Business outcomes like conversion and revenue are only shown when a CRM is connected — so you never see guessed numbers, only metrics backed by your own data.",
     },
     {
       question: "Is my data secure?",
@@ -744,8 +743,8 @@ function CTASection() {
               Ready to Elevate Your Sales Team?
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-lg text-gray-400">
-              Join hundreds of sales teams already using ElevateAI. Start your free trial today.
-              No credit card required.
+              Start your free trial today and turn every sales call into coaching, performance,
+              and compliance intelligence. No credit card required.
             </p>
             <div className="mt-8 sm:mt-10 flex flex-col items-center justify-center gap-3 sm:gap-4">
               <a href="/register" className="btn-primary text-sm sm:text-base px-6 sm:px-8 py-2.5 sm:py-4">
@@ -779,10 +778,10 @@ function Footer() {
             </div>
             <span className="text-sm font-bold text-white">ElevateAI</span>
           </div>
-          <div className="flex items-center gap-6 text-sm text-gray-500">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-500">
             <a href="#features" className="transition-colors hover:text-gray-300">Features</a>
             <a href="#pricing" className="transition-colors hover:text-gray-300">Pricing</a>
-            <a href="#testimonials" className="transition-colors hover:text-gray-300">Testimonials</a>
+            <a href="#how-it-works" className="transition-colors hover:text-gray-300">How it works</a>
             <a href="#faq" className="transition-colors hover:text-gray-300">FAQ</a>
             <a href="#" className="transition-colors hover:text-gray-300">Privacy</a>
             <a href="#" className="transition-colors hover:text-gray-300">Terms</a>
@@ -807,7 +806,7 @@ function Home() {
         <FeaturesSection />
         <DashboardPreviewSection />
         <PricingSection />
-        <TestimonialsSection />
+        <HowItWorksSection />
         <FAQSection />
         <CTASection />
       </main>
