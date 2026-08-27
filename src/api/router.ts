@@ -64,6 +64,7 @@ import {
   handleUpdateWhiteLabel,
 } from "./admin";
 import { runMigrations } from "./migrations";
+import { ensureCallDimensionScoresTable } from "./scoring";
 // ── Live Coaching ───────────────────────────────────────────────────────────────
 import {
   handleLiveCoachingStart,
@@ -454,6 +455,7 @@ export async function routeApi(req: Request): Promise<Response | null> {
     // ── Migrations (admin) ───────────────────────────────────────────────────────
     if (pathname === "/api/admin/migrate" && req.method === "POST") {
       await runMigrations();
+      await ensureCallDimensionScoresTable();
       return jsonResponse({ success: true, message: "Migrations completed" });
     }
 

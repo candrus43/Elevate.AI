@@ -5,6 +5,7 @@
 
 import { sql, esc } from "~/utils/sql";
 import { db, jsonResponse, getAuthUser } from "./middleware";
+import { getCompanyDimensionAverages } from "./scoring";
 
 // 30-second in-memory cache for executive dashboard
 const execDashboardCache = new Map<string, { data: any; expiresAt: number }>();
@@ -137,6 +138,9 @@ export async function handleExecutiveDashboard(req: Request): Promise<Response> 
       estimatedDealsFromCoaching: null,
     };
 
+    // ── Dimensional Score Averages ─────────────────────────────────────────
+    const dimensionAverages = await getCompanyDimensionAverages(companyId, cutoff).catch(() => []);
+
     const responseData = {
       kpis: {
         totalCalls,
@@ -145,6 +149,7 @@ export async function handleExecutiveDashboard(req: Request): Promise<Response> 
         avgScore,
         analysisRate: totalCalls > 0 ? Math.round((analyzedCalls / totalCalls) * 100) : 0,
       },
+      dimensionScores: dimensionAverages,
       teamHealth,
       coachingEffectiveness,
       callTrends: dailyCallStats,
