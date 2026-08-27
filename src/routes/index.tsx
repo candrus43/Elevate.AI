@@ -38,8 +38,9 @@ function Navbar() {
 
           {/* CTA Buttons */}
           <div className="flex items-center gap-3">
-            <a href="/login" className="btn-demo animate-pulse-glow hidden sm:inline-flex">Launch Demo</a>
+            {/* Desktop-only: all CTAs wrapped in responsive div to avoid btn-* @apply inline-flex overriding hidden */}
             <div className="hidden sm:flex items-center gap-3">
+              <a href="/login" className="btn-demo animate-pulse-glow">Launch Demo</a>
               <a href="/login" className="btn-ghost">Sign in</a>
               <a href="/register" className="btn-primary text-xs px-4 py-2">Get started</a>
             </div>
