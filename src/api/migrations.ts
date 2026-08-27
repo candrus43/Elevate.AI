@@ -339,5 +339,138 @@ export async function runMigrations(): Promise<void> {
   `);
   console.log("KPI Engine: Created kpi_definitions, kpi_profiles, kpi_profile_items, kpi_measurements tables");
 
+  // ── 18. Compliance Intelligence — extend compliance_rules (additive) ──────────
+  // Additive-only. Never overwrites existing rows; new columns default sensibly so
+  // legacy rows remain valid. Historical records are preserved via version snapshots.
+  const complianceRuleColumns = await db(sql`PRAGMA table_info(compliance_rules)`);
+  const hasRuleColumn = (name: string) => complianceRuleColumns.some((c: any) => c.name === name);
+  const ruleColumnMigrations: Array<[string, string]> = [
+    ["category", "TEXT NOT NULL DEFAULT ''"],
+    ["severity", "TEXT NOT NULL DEFAULT 'medium'"],
+    ["rule_type", "TEXT NOT NULL DEFAULT 'must_say'"],
+    ["approved_language", "TEXT NOT NULL DEFAULT '[]'"],
+    ["prohibited_language", "TEXT NOT NULL DEFAULT '[]'"],
+    ["compliant_examples", "TEXT NOT NULL DEFAULT '[]'"],
+    ["noncompliant_examples", "TEXT NOT NULL DEFAULT '[]'"],
+    ["scope_type", "TEXT NOT NULL DEFAULT ''"],
+    ["scope_id", "TEXT NOT NULL DEFAULT ''"],
+    ["effective_date", "TEXT"],
+    ["expiration_date", "TEXT"],
+    ["policy_owner", "TEXT NOT NULL DEFAULT ''"],
+    ["version", "INTEGER NOT NULL DEFAULT 1"],
+    ["status", "TEXT NOT NULL DEFAULT 'active'"],
+    ["source_document_id", "TEXT"],
+    ["is_ai_suggested", "INTEGER NOT NULL DEFAULT 0"],
+  ];
+  for (const [colName, colDef] of ruleColumnMigrations) {
+    if (!hasRuleColumn(colName)) {
+      // Identifiers are app-controlled (from the fixed array above), never user input.
+      await db(`ALTER TABLE compliance_rules ADD COLUMN ${colName} ${colDef}`);
+      console.log(`Compliance: Added compliance_rules.${colName}`);
+    }
+  }
+
+  // ── 19. Compliance rule versions (immutable history — no FK so hard-deletes ──
+  //        of a rule never destroy the audit trail) ─────────────────────────────
+  await db(sql`
+    CREATE TABLE IF NOT EXISTS compliance_rule_versions (
+      id TEXT PRIMARY KEY,
+      rule_id TEXT NOT NULL,
+      version INTEGER NOT NULL,
+      snapshot_json TEXT NOT NULL DEFAULT '{}',
+      created_by TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  await db(sql`
+    CREATE INDEX IF NOT EXISTS idx_compliance_rule_versions_rule
+    ON compliance_rule_versions(rule_id, version DESC)
+  `);
+
+  // ── 20. Compliance documents (policy sources) ────────────────────────────────
+  await db(sql`
+    CREATE TABLE IF NOT EXISTS compliance_documents (
+      id TEXT PRIMARY KEY,
+      company_id TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      file_type TEXT DEFAULT '',
+      storage_path TEXT DEFAULT '',
+      uploaded_by TEXT,
+      status TEXT NOT NULL DEFAULT 'uploaded',
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  await db(sql`
+    CREATE INDEX IF NOT EXISTS idx_compliance_documents_company
+    ON compliance_documents(company_id, created_at DESC)
+  `);
+
+  // ── 21. Compliance document sections (traceability) ──────────────────────────
+  await db(sql`
+    CREATE TABLE IF NOT EXISTS compliance_document_sections (
+      id TEXT PRIMARY KEY,
+      document_id TEXT NOT NULL REFERENCES compliance_documents(id) ON DELETE CASCADE,
+      section_title TEXT DEFAULT '',
+      content_text TEXT DEFAULT '',
+      sort_order INTEGER DEFAULT 0
+    )
+  `);
+  await db(sql`
+    CREATE INDEX IF NOT EXISTS idx_compliance_document_sections_doc
+    ON compliance_document_sections(document_id, sort_order)
+  `);
+
+  // ── 22. Compliance findings (evidence-based violation flags) ─────────────────
+  await db(sql`
+    CREATE TABLE IF NOT EXISTS compliance_findings (
+      id TEXT PRIMARY KEY,
+      company_id TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+      call_id TEXT,
+      rule_id TEXT NOT NULL,
+      rule_version INTEGER,
+      severity TEXT NOT NULL DEFAULT 'medium',
+      confidence TEXT NOT NULL DEFAULT 'medium',
+      evidence_excerpt TEXT DEFAULT '',
+      evidence_timestamp TEXT,
+      explanation TEXT DEFAULT '',
+      approved_alternative TEXT DEFAULT '',
+      recommended_action TEXT DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'AI_FLAGGED',
+      reviewer_id TEXT,
+      reviewed_at TEXT,
+      notes TEXT DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  await db(sql`
+    CREATE INDEX IF NOT EXISTS idx_compliance_findings_company_status
+    ON compliance_findings(company_id, status, created_at DESC)
+  `);
+  await db(sql`
+    CREATE INDEX IF NOT EXISTS idx_compliance_findings_rule
+    ON compliance_findings(rule_id, created_at DESC)
+  `);
+
+  // ── 23. Compliance escalation rules ──────────────────────────────────────────
+  await db(sql`
+    CREATE TABLE IF NOT EXISTS compliance_escalation_rules (
+      id TEXT PRIMARY KEY,
+      company_id TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      trigger_type TEXT NOT NULL DEFAULT 'severity',
+      trigger_config TEXT DEFAULT '{}',
+      action TEXT NOT NULL DEFAULT 'notify',
+      notify_user_ids TEXT DEFAULT '[]',
+      enabled INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  await db(sql`
+    CREATE INDEX IF NOT EXISTS idx_compliance_escalation_company
+    ON compliance_escalation_rules(company_id, enabled)
+  `);
+  console.log("Compliance Intelligence: Created compliance_rule_versions, compliance_documents, compliance_document_sections, compliance_findings, compliance_escalation_rules tables");
+
   console.log("Migrations complete.");
 }

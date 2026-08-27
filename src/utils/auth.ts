@@ -6,7 +6,7 @@ export interface UserSession {
   id: string;
   email: string;
   name: string;
-  role: "admin" | "manager" | "rep";
+  role: "admin" | "manager" | "rep" | "executive" | "compliance_admin" | "compliance_reviewer";
   companyId: string;
   companyName: string;
   companySlug: string;
