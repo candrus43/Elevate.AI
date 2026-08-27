@@ -20,7 +20,26 @@ import {
 } from "./scorecards";
 import { handleRoleplayScenarios, handleRoleplayStart, handleRoleplayMessage, handleRoleplayEnd, handleGenerateCoachingPlan, handleCreateManualPlan } from "./coaching";
 import { handleGetCompanySettings, handleUpdateCompanySettings, handleUpdateProfile, handleChangePassword, handleGetNotifications, handleUpdateNotifications } from "./settings";
-import { handleListComplianceRules, handleCreateComplianceRule, handleUpdateComplianceRule, handleDeleteComplianceRule, handleListComplianceChecks } from "./compliance";
+import {
+  handleListComplianceRules,
+  handleGetComplianceRule,
+  handleListComplianceRuleVersions,
+  handleCreateComplianceRule,
+  handleUpdateComplianceRule,
+  handleDeleteComplianceRule,
+  handleListComplianceChecks,
+  handleListComplianceFindings,
+  handleGetComplianceFinding,
+  handleCreateComplianceFinding,
+  handleReviewComplianceFinding,
+  handleListComplianceDocuments,
+  handleCreateComplianceDocument,
+  handleGetComplianceDocument,
+  handleListComplianceEscalationRules,
+  handleCreateComplianceEscalationRule,
+  handleUpdateComplianceEscalationRule,
+  handleDeleteComplianceEscalationRule,
+} from "./compliance";
 import { handleGetBillingPlan } from "./billing";
 import { handleCreateInvite, handleListInvites, handleCancelInvite } from "./team";
 // ── Multi-Tenant Admin ──────────────────────────────────────────────────────────
@@ -346,11 +365,28 @@ export async function routeApi(req: Request): Promise<Response | null> {
     if (pathname.match(/^\/api\/notifications\/slack\/[^/]+$/) && req.method === "DELETE") return handleDeleteSlackWebhook(req);
 
     // ── Compliance ───────────────────────────────────────────────────────────────
+    // Rules
     if (pathname === "/api/compliance/rules" && req.method === "GET") return handleListComplianceRules(req);
     if (pathname === "/api/compliance/rules" && req.method === "POST") return handleCreateComplianceRule(req);
-    if (pathname.startsWith("/api/compliance/rules/") && req.method === "PUT") return handleUpdateComplianceRule(req);
-    if (pathname.startsWith("/api/compliance/rules/") && req.method === "DELETE") return handleDeleteComplianceRule(req);
+    if (pathname.match(/^\/api\/compliance\/rules\/[^/]+\/versions$/) && req.method === "GET") return handleListComplianceRuleVersions(req);
+    if (pathname.match(/^\/api\/compliance\/rules\/[^/]+$/) && req.method === "GET") return handleGetComplianceRule(req);
+    if (pathname.match(/^\/api\/compliance\/rules\/[^/]+$/) && req.method === "PUT") return handleUpdateComplianceRule(req);
+    if (pathname.match(/^\/api\/compliance\/rules\/[^/]+$/) && req.method === "DELETE") return handleDeleteComplianceRule(req);
     if (pathname === "/api/compliance/checks" && req.method === "GET") return handleListComplianceChecks(req);
+    // Findings + review workflow
+    if (pathname === "/api/compliance/findings" && req.method === "GET") return handleListComplianceFindings(req);
+    if (pathname === "/api/compliance/findings" && req.method === "POST") return handleCreateComplianceFinding(req);
+    if (pathname.match(/^\/api\/compliance\/findings\/[^/]+\/review$/) && req.method === "POST") return handleReviewComplianceFinding(req);
+    if (pathname.match(/^\/api\/compliance\/findings\/[^/]+$/) && req.method === "GET") return handleGetComplianceFinding(req);
+    // Documents (policy sources)
+    if (pathname === "/api/compliance/documents" && req.method === "GET") return handleListComplianceDocuments(req);
+    if (pathname === "/api/compliance/documents" && req.method === "POST") return handleCreateComplianceDocument(req);
+    if (pathname.match(/^\/api\/compliance\/documents\/[^/]+$/) && req.method === "GET") return handleGetComplianceDocument(req);
+    // Escalation rules
+    if (pathname === "/api/compliance/escalation-rules" && req.method === "GET") return handleListComplianceEscalationRules(req);
+    if (pathname === "/api/compliance/escalation-rules" && req.method === "POST") return handleCreateComplianceEscalationRule(req);
+    if (pathname.match(/^\/api\/compliance\/escalation-rules\/[^/]+$/) && req.method === "PUT") return handleUpdateComplianceEscalationRule(req);
+    if (pathname.match(/^\/api\/compliance\/escalation-rules\/[^/]+$/) && req.method === "DELETE") return handleDeleteComplianceEscalationRule(req);
 
     // ── Multi-Tenant Admin ───────────────────────────────────────────────────────
     if (pathname === "/api/admin/company" && req.method === "GET") return handleAdminGetCompany(req);
