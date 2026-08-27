@@ -56,7 +56,7 @@ function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-surface-950 px-4">
       <div className="absolute inset-0 grid-bg opacity-50" />
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-40 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-purple-600/20 blur-[120px]" />
+        <div className="absolute -top-40 left-1/2 h-[400px] w-[400px] sm:h-[500px] sm:w-[500px] -translate-x-1/2 rounded-full bg-purple-600/20 blur-[120px]" />
       </div>
 
       <div className="relative w-full max-w-md">

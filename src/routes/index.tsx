@@ -1,37 +1,24 @@
+import { useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { createServerFn } from "@tanstack/react-start";
-import { readFile } from "node:fs/promises";
-import { useState, useEffect } from "react";
-
-const getBusinessName = createServerFn({ method: "GET" }).handler(async () => {
-  try {
-    const cfg = JSON.parse(await readFile("site.json", "utf8")) as {
-      businessName?: string;
-    };
-    return cfg.businessName?.trim() ?? "";
-  } catch {
-    return "";
-  }
-});
 
 export const Route = createFileRoute("/")({
-  loader: () => getBusinessName(),
   component: Home,
 });
 
 function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  const navLinks = [
+    { href: "#features", label: "Features" },
+    { href: "#pricing", label: "Pricing" },
+    { href: "#testimonials", label: "Testimonials" },
+    { href: "#faq", label: "FAQ" },
+  ];
 
   return (
-    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? "navbar-scrolled" : ""}`}>
+    <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-500">
       <div className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-12">
-        <div className={`mx-auto mt-3 sm:mt-4 flex max-w-5xl items-center justify-between rounded-2xl px-4 sm:px-6 py-2.5 sm:py-3 transition-all duration-500 ${scrolled ? "bg-transparent border border-white/5 shadow-lg shadow-purple-500/5" : "glass"}`}>
+        <div className="mx-auto mt-3 sm:mt-4 flex max-w-5xl items-center justify-between rounded-2xl px-4 sm:px-6 py-2.5 sm:py-3 glass">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600">
@@ -42,33 +29,60 @@ function Navbar() {
             <span className="text-lg font-bold text-white">ElevateAI</span>
           </Link>
 
-          {/* Nav Links */}
+          {/* Desktop Nav Links */}
           <div className="hidden items-center gap-8 md:flex">
-            <a href="#features" className="text-sm text-gray-400 transition-colors hover:text-white">
-              Features
-            </a>
-            <a href="#pricing" className="text-sm text-gray-400 transition-colors hover:text-white">
-              Pricing
-            </a>
-            <a href="#testimonials" className="text-sm text-gray-400 transition-colors hover:text-white">
-              Testimonials
-            </a>
-            <a href="#faq" className="text-sm text-gray-400 transition-colors hover:text-white">
-              FAQ
-            </a>
+            {navLinks.map((l) => (
+              <a key={l.href} href={l.href} className="text-sm text-gray-400 transition-colors hover:text-white">{l.label}</a>
+            ))}
           </div>
 
           {/* CTA Buttons */}
           <div className="flex items-center gap-3">
-            <a href="/login" className="btn-demo animate-pulse-glow">
-              Launch Demo
-            </a>
-            <a href="/login" className="btn-ghost hidden sm:inline-flex">Sign in</a>
-            <a href="/register" className="btn-primary text-xs px-4 py-2 hidden sm:inline-flex">
-              Get started
-            </a>
+            <a href="/login" className="btn-demo animate-pulse-glow hidden sm:inline-flex">Launch Demo</a>
+            <div className="hidden sm:flex items-center gap-3">
+              <a href="/login" className="btn-ghost">Sign in</a>
+              <a href="/register" className="btn-primary text-xs px-4 py-2">Get started</a>
+            </div>
+            {/* Mobile hamburger */}
+            <button
+              type="button"
+              aria-label="Toggle navigation menu"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-white/10 hover:text-white md:hidden"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                {menuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu dropdown */}
+        {menuOpen && (
+          <div className="mx-auto mt-2 max-w-5xl rounded-2xl p-3 glass animate-fade-in md:hidden">
+            <div className="flex flex-col">
+              {navLinks.map((l) => (
+                <a
+                  key={l.href}
+                  href={l.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-xl px-4 py-3 text-sm font-medium text-gray-300 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  {l.label}
+                </a>
+              ))}
+              <div className="mt-2 flex flex-col gap-2 border-t border-white/10 pt-3">
+                <a href="/login" className="btn-demo w-full justify-center">Launch Demo</a>
+                <a href="/register" className="btn-primary w-full justify-center">Get started</a>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
@@ -147,7 +161,7 @@ function HeroSection() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
             </a>
-            <a href="#demo" className="btn-secondary w-full sm:w-auto justify-center text-sm sm:text-base px-5 sm:px-8 py-2.5 sm:py-4">
+            <a href="/demo.html" target="_blank" className="btn-secondary w-full sm:w-auto justify-center text-sm sm:text-base px-5 sm:px-8 py-2.5 sm:py-4">
               Watch demo
               <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -353,7 +367,7 @@ function DashboardPreviewSection() {
             </div>
 
             {/* Main Content Mockup */}
-            <div className="flex-1 p-4 sm:p-6">
+            <div className="min-w-0 flex-1 p-4 sm:p-6">
               {/* Stats Row */}
               <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <div className="mockup-stat mockup-stat-primary">
@@ -393,7 +407,7 @@ function DashboardPreviewSection() {
                         <div className="mt-1 h-2 w-20 rounded bg-white/10" />
                       </div>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="hidden sm:flex items-center gap-4">
                       <div className="h-2 w-12 rounded bg-green-400/40" />
                       <div className="h-2 w-10 rounded bg-white/20" />
                     </div>
@@ -459,54 +473,58 @@ function DashboardPreviewSection() {
 function PricingSection() {
   const plans = [
     {
-      name: "Core",
-      price: "29",
-      description: "For teams getting started with AI coaching",
-      stripeLink: "https://buy.stripe.com/8x2fZh4pL2Tp1sY3kw1wY02",
+      name: "Starter",
+      price: "299",
+      period: "/manager/mo",
+      description: "For teams getting started with AI coaching — min 3 manager seats",
+      stripeLink: "https://buy.stripe.com/cNi3cv8G1ctZc7C2gs1wY06",
       features: [
         "AI call analysis & transcription",
-        "Basic scorecards",
-        "Manager dashboards",
-        "Up to 500 calls/month",
-        "5 team members",
+        "Basic scorecards & manager dashboards",
+        "Email coaching delivery for reps",
+        "30-day call storage",
+        "Min 3 manager seats (from $897/mo)",
         "Email support",
       ],
       cta: "Subscribe now",
       popular: false,
     },
     {
-      name: "Pro",
-      price: "79",
-      description: "For growing teams that want full AI coaching power",
-      stripeLink: "https://buy.stripe.com/28E00jbSd79F1sYaMY1wY01",
+      name: "Growth",
+      price: "599",
+      period: "/manager/mo",
+      description: "For growing teams — full AI coaching, CRM integrations — min 5 seats",
+      stripeLink: "https://buy.stripe.com/14A00jcWh65B8Vq2gs1wY07",
       features: [
-        "Everything in Core, plus:",
-        "Live AI coaching during calls",
-        "AI role-playing scenarios",
+        "Everything in Starter, plus:",
+        "Live AI coaching delivery via Teams/Slack",
+        "AI role-playing scenarios & practice",
         "Custom scorecards & rubrics",
-        "Up to 2,000 calls/month",
-        "Unlimited team members",
+        "CRM integrations (Salesforce, HubSpot, etc.)",
         "Advanced analytics & reports",
+        "90-day call storage",
+        "Min 5 manager seats (from $2,995/mo)",
         "Priority support",
       ],
       cta: "Subscribe now",
       popular: true,
     },
     {
-      name: "Enterprise",
-      price: "199",
-      description: "For large organizations with advanced needs",
-      stripeLink: "https://buy.stripe.com/dRmd9Rf4p65B2x23kw1wY00",
+      name: "Scale",
+      price: "999",
+      period: "/manager/mo",
+      description: "For large organizations — full customization & white-label — min 10 seats",
+      stripeLink: "https://buy.stripe.com/3cI5kDf4pgKfefK6wI1wY08",
       features: [
-        "Everything in Pro, plus:",
-        "Multi-company admin",
-        "SSO & SAML",
-        "Custom AI prompts & models",
-        "Unlimited calls/month",
+        "Everything in Growth, plus:",
+        "White-label / custom domain",
+        "API access & custom integrations",
+        "SSO / SAML authentication",
         "Dedicated success manager",
+        "Unlimited call storage",
+        "Unlimited manager seats",
+        "Min 10 seats (from $9,990/mo)",
         "SLA guarantees",
-        "Custom integrations",
-        "On-premise deployment option",
       ],
       cta: "Subscribe now",
       popular: false,
@@ -525,10 +543,10 @@ function PricingSection() {
             Pricing
           </span>
           <h2 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white">
-            Simple, Transparent Pricing
+            Per-Manager Pricing
           </h2>
           <p className="mt-3 sm:mt-4 text-base sm:text-lg text-gray-400">
-            Start with a free trial. No credit card required. Scale as you grow.
+            Pay for the managers who use it. Reps get coaching at no extra cost. Start with a free trial.
           </p>
         </div>
 
@@ -551,8 +569,9 @@ function PricingSection() {
               <p className="mt-2 text-sm text-gray-400">{plan.description}</p>
               <div className="mt-6 flex items-baseline gap-1">
                 <span className="text-5xl font-extrabold text-white">${plan.price}</span>
-                <span className="text-sm text-gray-500">/month</span>
+                <span className="text-sm text-gray-500">{plan.period}</span>
               </div>
+              <p className="mt-1 text-xs text-gray-500">Billed monthly per manager seat</p>
               <ul className="mt-8 space-y-3">
                 {plan.features.map((feature, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-gray-300">
@@ -580,7 +599,7 @@ function PricingSection() {
         </div>
 
         <p className="mt-8 text-center text-sm text-gray-500">
-          All plans include a 14-day free trial. Usage-based add-ons available for high-volume teams.
+          All plans include a 14-day free trial. Reps are always free — you only pay for manager seats.
         </p>
       </div>
     </section>
@@ -672,7 +691,7 @@ function FAQSection() {
     {
       question: "Does ElevateAI integrate with my CRM?",
       answer:
-        "Absolutely. ElevateAI integrates with Salesforce, HubSpot, and major dialers like Five9, RingCentral, Aircall, and Twilio. Enterprise plans include custom integrations.",
+        "Absolutely. CRM integrations are included in our Growth and Scale plans — connecting with Salesforce, HubSpot, and major dialers like Five9, RingCentral, Aircall, and Twilio. Scale plans also include custom API integrations.",
     },
     {
       question: "How does live coaching work?",
@@ -779,7 +798,7 @@ function Footer() {
             </div>
             <span className="text-sm font-bold text-white">ElevateAI</span>
           </div>
-          <div className="flex items-center gap-6 text-sm text-gray-500">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-500">
             <a href="#features" className="transition-colors hover:text-gray-300">Features</a>
             <a href="#pricing" className="transition-colors hover:text-gray-300">Pricing</a>
             <a href="#testimonials" className="transition-colors hover:text-gray-300">Testimonials</a>
