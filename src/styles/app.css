@@ -205,4 +205,142 @@
   @apply inline-flex items-center justify-center gap-2 rounded-xl
          px-4 py-2 text-sm font-medium text-gray-400
          transition-all duration-300 hover:text-white hover:bg-white/5;
+}/* ElevateAI Design System v2 — graphite/navy + blue/teal accent     */
+/* Additive: legacy purple `brand-*` tokens above remain untouched   */
+/* so existing screens keep rendering. New primitives in             */
+/* src/components/ui/ consume the semantic tokens below.             */
+/* ════════════════════════════════════════════════════════════════ */
+
+/* Class-based dark variant (for `dark:` utilities) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* ── Graphite (neutral, near-black, cool) ─────────────────── */
+  --color-graphite-50: #f6f7f8;
+  --color-graphite-100: #eceef1;
+  --color-graphite-200: #d7dbe0;
+  --color-graphite-300: #b6bdc6;
+  --color-graphite-400: #8f98a5;
+  --color-graphite-500: #6b7684;
+  --color-graphite-600: #545e6b;
+  --color-graphite-700: #434c57;
+  --color-graphite-800: #2c333d;
+  --color-graphite-850: #232932;
+  --color-graphite-900: #171b21;
+  --color-graphite-950: #0c0e12;
+
+  /* ── Navy (deep navy — brand depth, elevated surfaces) ─────── */
+  --color-navy-50: #eef2f8;
+  --color-navy-100: #d9e2ef;
+  --color-navy-200: #b6c7de;
+  --color-navy-300: #8aa3c6;
+  --color-navy-400: #5f7fa9;
+  --color-navy-500: #43638e;
+  --color-navy-600: #334e73;
+  --color-navy-700: #2a3f5c;
+  --color-navy-800: #1f2e44;
+  --color-navy-900: #16202f;
+  --color-navy-950: #0e141e;
+
+  /* ── Accent (electric blue — primary action) ───────────────── */
+  --color-accent-50: #eef6ff;
+  --color-accent-100: #d9ecff;
+  --color-accent-200: #bcdfff;
+  --color-accent-300: #8ecbff;
+  --color-accent-400: #59adff;
+  --color-accent-500: #338fff;
+  --color-accent-600: #1b6ff5;
+  --color-accent-700: #1458e0;
+  --color-accent-800: #1648b5;
+  --color-accent-900: #183e8e;
+  --color-accent-950: #142756;
+
+  /* ── Semantic (theme-aware) tokens — resolve via CSS vars ──── */
+  --color-canvas: var(--canvas);
+  --color-panel: var(--panel);
+  --color-panel-raised: var(--panel-raised);
+  --color-edge: var(--edge);
+  --color-edge-strong: var(--edge-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-ink-inverse: var(--ink-inverse);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-muted: var(--accent-muted);
+  --color-focus: var(--focus);
+
+  /* ── Motion (additive) ─────────────────────────────────────── */
+  --animate-fade-in-fast: fade-in 0.25s ease-out forwards;
+  --animate-scale-in-fast: scale-in 0.2s ease-out forwards;
+
+  /* ── Shadows (blue-tinted, replace purple glow over time) ───── */
+  --shadow-glow: 0 0 24px rgba(51, 143, 255, 0.18), 0 0 48px rgba(51, 143, 255, 0.06);
+  --shadow-glow-lg: 0 0 40px rgba(51, 143, 255, 0.24), 0 0 80px rgba(51, 143, 255, 0.08);
+}
+
+/* ── Runtime theme variables (dark = default) ─────────────────── */
+:root {
+  --canvas: #0c0e12;
+  --panel: #171b21;
+  --panel-raised: #232932;
+  --edge: rgba(255, 255, 255, 0.08);
+  --edge-strong: rgba(255, 255, 255, 0.16);
+  --ink: #f6f7f8;
+  --ink-muted: #b6bdc6;
+  --ink-faint: #6b7684;
+  --ink-inverse: #0c0e12;
+  --accent-fg: #59adff;
+  --accent-muted: #1458e0;
+  --focus: #59adff;
+}
+
+/* Explicit light mode (add `.light` to <html>) */
+.light {
+  --canvas: #f6f7f8;
+  --panel: #ffffff;
+  --panel-raised: #eceef1;
+  --edge: rgba(23, 27, 33, 0.1);
+  --edge-strong: rgba(23, 27, 33, 0.2);
+  --ink: #0c0e12;
+  --ink-muted: #434c57;
+  --ink-faint: #6b7684;
+  --ink-inverse: #ffffff;
+  --accent-fg: #1458e0;
+  --accent-muted: #338fff;
+  --focus: #1458e0;
+}
+
+/* System preference: light, unless `.dark` is explicitly set */
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) {
+    --canvas: #f6f7f8;
+    --panel: #ffffff;
+    --panel-raised: #eceef1;
+    --edge: rgba(23, 27, 33, 0.1);
+    --edge-strong: rgba(23, 27, 33, 0.2);
+    --ink: #0c0e12;
+    --ink-muted: #434c57;
+    --ink-faint: #6b7684;
+    --ink-inverse: #ffffff;
+    --accent-fg: #1458e0;
+    --accent-muted: #338fff;
+    --focus: #1458e0;
+  }
+}
+
+/* ── Accessibility: focus ring + reduced motion ───────────────── */
+@layer base {
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--focus);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
