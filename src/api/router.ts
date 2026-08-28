@@ -53,6 +53,7 @@ import {
   handleComplianceReportByAgent,
   handleComplianceReportExecutive,
 } from "./compliance-reporting";
+import { handleComplianceAssistantAsk, handleComplianceAssistantContext } from "./compliance-assistant";
 import { handleGetBillingPlan } from "./billing";
 import { handleCreateInvite, handleListInvites, handleCancelInvite } from "./team";
 // ── Multi-Tenant Admin ──────────────────────────────────────────────────────────
@@ -408,6 +409,9 @@ export async function routeApi(req: Request): Promise<Response | null> {
     if (pathname === "/api/compliance/report/by-rule" && req.method === "GET") return handleComplianceReportByRule(req);
     if (pathname === "/api/compliance/report/by-agent" && req.method === "GET") return handleComplianceReportByAgent(req);
     if (pathname === "/api/compliance/report/executive" && req.method === "GET") return handleComplianceReportExecutive(req);
+    // AI assistant (Phase E)
+    if (pathname === "/api/compliance/assistant/ask" && req.method === "POST") return handleComplianceAssistantAsk(req);
+    if (pathname === "/api/compliance/assistant/context" && req.method === "GET") return handleComplianceAssistantContext(req);
     // Documents (policy sources)
     if (pathname === "/api/compliance/documents" && req.method === "GET") return handleListComplianceDocuments(req);
     if (pathname === "/api/compliance/documents" && req.method === "POST") return handleCreateComplianceDocument(req);
