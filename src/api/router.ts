@@ -43,6 +43,7 @@ import {
   handleUpdateComplianceEscalationRule,
   handleDeleteComplianceEscalationRule,
 } from "./compliance";
+import { handleCoachComplianceFinding, handleCoachAllComplianceFindings } from "./compliance-coaching";
 import { handleEvaluateCallCompliance, handleEvaluateAllCalls } from "./compliance-eval";
 import { handleGetBillingPlan } from "./billing";
 import { handleCreateInvite, handleListInvites, handleCancelInvite } from "./team";
@@ -384,6 +385,9 @@ export async function routeApi(req: Request): Promise<Response | null> {
     if (pathname === "/api/compliance/findings" && req.method === "POST") return handleCreateComplianceFinding(req);
     if (pathname.match(/^\/api\/compliance\/findings\/[^/]+\/review$/) && req.method === "POST") return handleReviewComplianceFinding(req);
     if (pathname.match(/^\/api\/compliance\/findings\/[^/]+$/) && req.method === "GET") return handleGetComplianceFinding(req);
+    // Compliance → coaching (Phase D)
+    if (pathname.match(/^\/api\/compliance\/findings\/[^/]+\/coach$/) && req.method === "POST") return handleCoachComplianceFinding(req);
+    if (pathname === "/api/compliance/coach-all" && req.method === "POST") return handleCoachAllComplianceFindings(req);
     // AI evaluation (calls × rules → findings) — Phase C-3a
     if (pathname === "/api/compliance/evaluate/all" && req.method === "POST") return handleEvaluateAllCalls(req);
     if (pathname === "/api/compliance/evaluate" && req.method === "POST") return handleEvaluateCallCompliance(req);
