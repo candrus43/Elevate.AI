@@ -70,12 +70,7 @@ function RegisterPage() {
         <div className="rounded-2xl border border-edge bg-panel p-8">
           <div className="mb-8 text-center">
             <Link to="/" className="inline-flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-accent-500 to-accent-600">
-                <svg className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M10 2L11.5 7L17 7L12.5 10.5L14.5 16L10 12.5L5.5 16L7.5 10.5L3 7L8.5 7L10 2Z" />
-                </svg>
-              </div>
-              <span className="text-lg font-bold text-ink">ElevateAI</span>
+              <img src="/logo.png" alt="ElevateAI" className="h-9 w-auto" />
             </Link>
             <p className="mt-2 text-sm text-ink-muted">Create your company account</p>
           </div>

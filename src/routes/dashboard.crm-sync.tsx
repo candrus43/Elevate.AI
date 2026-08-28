@@ -38,8 +38,8 @@ function CRMSync() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">CRM Deep Sync</h1>
-          <p className="text-sm text-gray-400 mt-1">Bi-directional field-level sync with your CRM</p>
+          <h1 className="text-2xl font-bold text-ink">CRM Deep Sync</h1>
+          <p className="text-sm text-ink-muted mt-1">Bi-directional field-level sync with your CRM</p>
         </div>
         <GlassButton variant="primary">+ Add Integration</GlassButton>
       </div>
@@ -56,15 +56,15 @@ function CRMSync() {
             <div className="p-5 sm:p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-4">
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${int.color} text-lg font-bold text-white shadow-lg`}>
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${int.color} text-lg font-bold text-ink shadow-lg`}>
                     {int.icon}
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white">{int.name}</h3>
+                    <h3 className="font-semibold text-ink">{int.name}</h3>
                     <div className="flex items-center gap-2 mt-1">
                       <span className={`inline-flex h-2 w-2 rounded-full ${int.status === "connected" ? "bg-green-500" : "bg-gray-500"}`} />
-                      <span className="text-xs text-gray-500 capitalize">{int.status}</span>
-                      <span className="text-xs text-gray-500">· Last sync: {int.lastSync}</span>
+                      <span className="text-xs text-ink-faint capitalize">{int.status}</span>
+                      <span className="text-xs text-ink-faint">· Last sync: {int.lastSync}</span>
                     </div>
                   </div>
                 </div>
@@ -79,20 +79,20 @@ function CRMSync() {
 
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 mb-4">
                 <div>
-                  <p className="text-xs text-gray-500">Records</p>
-                  <p className="text-sm font-medium text-white">{int.records.toLocaleString()}</p>
+                  <p className="text-xs text-ink-faint">Records</p>
+                  <p className="text-sm font-medium text-ink">{int.records.toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Fields Mapped</p>
-                  <p className="text-sm font-medium text-white">{int.fields}</p>
+                  <p className="text-xs text-ink-faint">Fields Mapped</p>
+                  <p className="text-sm font-medium text-ink">{int.fields}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Direction</p>
-                  <p className="text-sm font-medium text-white capitalize">{int.direction}</p>
+                  <p className="text-xs text-ink-faint">Direction</p>
+                  <p className="text-sm font-medium text-ink capitalize">{int.direction}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Sync Interval</p>
-                  <p className="text-sm font-medium text-white">{int.syncInterval}</p>
+                  <p className="text-xs text-ink-faint">Sync Interval</p>
+                  <p className="text-sm font-medium text-ink">{int.syncInterval}</p>
                 </div>
               </div>
 
@@ -116,19 +116,19 @@ function CRMSync() {
       {/* Field Mapping Table */}
       <GlassCard>
         <GlassCardHeader>
-          <h3 className="text-lg font-semibold text-white">Field Mapping Preview</h3>
+          <h3 className="text-lg font-semibold text-ink">Field Mapping Preview</h3>
         </GlassCardHeader>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
               <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
-                <th className="px-6 py-3 font-medium text-gray-400">ElevateAI Field</th>
-                <th className="px-6 py-3 font-medium text-gray-400">Salesforce Field</th>
-                <th className="px-6 py-3 font-medium text-gray-400">Direction</th>
-                <th className="px-6 py-3 font-medium text-gray-400">Status</th>
+                <th className="px-6 py-3 font-medium text-ink-muted">ElevateAI Field</th>
+                <th className="px-6 py-3 font-medium text-ink-muted">Salesforce Field</th>
+                <th className="px-6 py-3 font-medium text-ink-muted">Direction</th>
+                <th className="px-6 py-3 font-medium text-ink-muted">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-edge">
               {[
                 { from: "Call Score", to: "Call_Score__c", dir: "Bi-directional", status: "active" },
                 { from: "Coaching Notes", to: "Coaching_Notes__c", dir: "ElevateAI → CRM", status: "active" },
@@ -137,9 +137,9 @@ function CRMSync() {
                 { from: "Skill Score", to: "Skill_Score__c", dir: "ElevateAI → CRM", status: "mapping_needed" },
               ].map((field, i) => (
                 <tr key={i} className="transition-colors hover:bg-white/[0.02]">
-                  <td className="px-6 py-3 font-medium text-white">{field.from}</td>
-                  <td className="px-6 py-3 text-gray-400"><code className="text-purple-300/70">{field.to}</code></td>
-                  <td className="px-6 py-3 text-gray-400">{field.dir}</td>
+                  <td className="px-6 py-3 font-medium text-ink">{field.from}</td>
+                  <td className="px-6 py-3 text-ink-muted"><code className="text-accent-300/70">{field.to}</code></td>
+                  <td className="px-6 py-3 text-ink-muted">{field.dir}</td>
                   <td className="px-6 py-3">
                     <GlassBadge color={field.status === "active" ? "green" : "amber"}>
                       {field.status === "active" ? "✓ Active" : "⚠ Needs Mapping"}

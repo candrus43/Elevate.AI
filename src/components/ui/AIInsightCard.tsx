@@ -22,14 +22,14 @@ const confidenceColor: Record<NonNullable<AIInsightCardProps["confidence"]>, str
   high: "text-emerald-400",
   medium: "text-amber-400",
   low: "text-red-400",
-  requires_review: "text-violet-400",
+  requires_review: "text-teal-300",
 };
 
 const confidenceBg: Record<NonNullable<AIInsightCardProps["confidence"]>, string> = {
   high: "bg-emerald-500/10",
   medium: "bg-amber-500/10",
   low: "bg-red-500/10",
-  requires_review: "bg-violet-500/10",
+  requires_review: "bg-teal-500/10",
 };
 
 export function AIInsightCard({

@@ -258,7 +258,7 @@ function OnboardingPage() {
                 <button
                   onClick={() => completeStep("company_profile", { companyName, industry, teamSize })}
                   disabled={saving || !companyName}
-                  className="flex-1 bg-accent-600 hover:bg-accent-500 disabled:opacity-50 text-white py-2.5 rounded-lg font-medium transition"
+                  className="flex-1 bg-accent-600 hover:bg-accent-500 disabled:opacity-50 text-ink py-2.5 rounded-lg font-medium transition"
                 >
                   {saving ? "Saving..." : "Continue"}
                 </button>
@@ -311,7 +311,7 @@ function OnboardingPage() {
                 <button
                   onClick={handleCreateTeams}
                   disabled={saving}
-                  className="flex-1 bg-accent-600 hover:bg-accent-500 text-white py-2.5 rounded-lg font-medium transition"
+                  className="flex-1 bg-accent-600 hover:bg-accent-500 text-ink py-2.5 rounded-lg font-medium transition"
                 >
                   {saving ? "Saving..." : "Continue"}
                 </button>
@@ -366,7 +366,7 @@ function OnboardingPage() {
                         setInviteEmail("");
                       }
                     }}
-                    className="bg-accent-600 hover:bg-accent-500 text-white px-3 rounded-lg transition"
+                    className="bg-accent-600 hover:bg-accent-500 text-ink px-3 rounded-lg transition"
                   >
                     Add
                   </button>
@@ -377,7 +377,7 @@ function OnboardingPage() {
                 <button
                   onClick={handleInviteMembers}
                   disabled={saving}
-                  className="flex-1 bg-accent-600 hover:bg-accent-500 text-white py-2.5 rounded-lg font-medium transition"
+                  className="flex-1 bg-accent-600 hover:bg-accent-500 text-ink py-2.5 rounded-lg font-medium transition"
                 >
                   {saving ? "Saving..." : "Continue"}
                 </button>
@@ -424,7 +424,7 @@ function OnboardingPage() {
                 <button
                   onClick={handleConnectPhone}
                   disabled={saving}
-                  className="flex-1 bg-accent-600 hover:bg-accent-500 text-white py-2.5 rounded-lg font-medium transition"
+                  className="flex-1 bg-accent-600 hover:bg-accent-500 text-ink py-2.5 rounded-lg font-medium transition"
                 >
                   {saving ? "Saving..." : "Continue"}
                 </button>
@@ -468,7 +468,7 @@ function OnboardingPage() {
                 <button
                   onClick={handleSetupScorecards}
                   disabled={saving}
-                  className="flex-1 bg-accent-600 hover:bg-accent-500 text-white py-2.5 rounded-lg font-medium transition"
+                  className="flex-1 bg-accent-600 hover:bg-accent-500 text-ink py-2.5 rounded-lg font-medium transition"
                 >
                   {saving ? "Saving..." : "Finish"}
                 </button>

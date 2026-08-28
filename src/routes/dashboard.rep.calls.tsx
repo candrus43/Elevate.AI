@@ -157,12 +157,12 @@ function RepCallsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">My Calls</h1>
-          <p className="text-sm text-gray-400">{calls.length} total calls · Avg {avgScore}</p>
+          <h1 className="text-2xl font-bold text-ink">My Calls</h1>
+          <p className="text-sm text-ink-muted">{calls.length} total calls · Avg {avgScore}</p>
         </div>
         <button
           onClick={() => setShowUpload(!showUpload)}
-          className="btn-primary flex items-center gap-2"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98] transition-all flex items-center gap-2"
           disabled={uploading}
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -175,8 +175,8 @@ function RepCallsPage() {
       {/* Upload Area */}
       {showUpload && (
         <div
-          className={`glass-card rounded-xl p-8 text-center border-2 border-dashed transition-all ${
-            dragOver ? "border-purple-500 bg-purple-500/5" : "border-white/10 hover:border-purple-500/30"
+          className={`border border-edge bg-panel rounded-xl p-8 text-center border-2 border-dashed transition-all ${
+            dragOver ? "border-accent-500 bg-accent-500/10" : "border-edge hover:border-accent-500/30"
           }`}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
@@ -185,11 +185,11 @@ function RepCallsPage() {
           {uploading ? (
             <div className="space-y-4">
               <div className="flex justify-center">
-                <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
+                <div className="h-12 w-12 animate-spin rounded-full border-4 border-accent-500 border-t-transparent" />
               </div>
-              <p className="text-sm text-purple-300">{uploadProgress}</p>
-              <div className="h-1.5 w-full max-w-xs mx-auto rounded-full bg-white/10 overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-500"
+              <p className="text-sm text-accent-300">{uploadProgress}</p>
+              <div className="h-1.5 w-full max-w-xs mx-auto rounded-full bg-panel-raised overflow-hidden">
+                <div className="h-full rounded-full bg-gradient-to-r from-accent-500 to-accent-500 transition-all duration-500"
                   style={{ width: uploadProgress.match(/\d+/)?.[0] + "%" || "0%" }}
                 />
               </div>
@@ -199,11 +199,11 @@ function RepCallsPage() {
               <div className="flex justify-center mb-4">
                 <span className="text-4xl">🎧</span>
               </div>
-              <h3 className="text-lg font-medium text-white mb-2">Upload a Call Recording</h3>
-              <p className="text-sm text-gray-400 mb-4">
+              <h3 className="text-lg font-medium text-ink mb-2">Upload a Call Recording</h3>
+              <p className="text-sm text-ink-muted mb-4">
                 Drag & drop an audio file here, or click to browse
               </p>
-              <p className="text-xs text-gray-500 mb-4">
+              <p className="text-xs text-ink-faint mb-4">
                 Supports MP3, WAV, OGG, WEBM, M4A, FLAC · Max 50MB
               </p>
               <input
@@ -215,7 +215,7 @@ function RepCallsPage() {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="btn-primary"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98] transition-all"
               >
                 Browse Files
               </button>
@@ -226,34 +226,34 @@ function RepCallsPage() {
 
       {/* Upload Progress Toast */}
       {uploadProgress && !showUpload && (
-        <div className="glass-card rounded-xl p-4 flex items-center gap-3 animate-fade-up">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
-          <p className="text-sm text-purple-300">{uploadProgress}</p>
+        <div className="border border-edge bg-panel rounded-xl p-4 flex items-center gap-3 animate-fade-up">
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-accent-500 border-t-transparent" />
+          <p className="text-sm text-accent-300">{uploadProgress}</p>
         </div>
       )}
 
       {/* Search & Sort */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔍</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint text-sm">🔍</span>
           <input
             type="text"
             placeholder="Search by date..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 pl-10 text-sm text-white placeholder-gray-500 backdrop-blur-sm focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
+            className="w-full rounded-xl border border-edge bg-panel-raised px-4 py-2.5 pl-10 text-sm text-ink placeholder-ink-faint backdrop-blur-sm focus:border-accent-500/50 focus:outline-none focus:ring-1 focus:ring-focus/40"
           />
         </div>
-        <div className="flex rounded-xl border border-white/10 bg-white/5 p-1">
+        <div className="flex rounded-xl border border-edge bg-panel-raised p-1">
           <button
             onClick={() => setSortBy("date")}
-            className={`rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all ${sortBy === "date" ? "bg-purple-500/20 text-purple-300" : "text-gray-400 hover:text-white"}`}
+            className={`rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all ${sortBy === "date" ? "bg-accent-500/20 text-accent-300" : "text-ink-muted hover:text-ink"}`}
           >
             Latest
           </button>
           <button
             onClick={() => setSortBy("score")}
-            className={`rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all ${sortBy === "score" ? "bg-purple-500/20 text-purple-300" : "text-gray-400 hover:text-white"}`}
+            className={`rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all ${sortBy === "score" ? "bg-accent-500/20 text-accent-300" : "text-ink-muted hover:text-ink"}`}
           >
             Best Score
           </button>
@@ -262,14 +262,14 @@ function RepCallsPage() {
 
       {/* Calls */}
       {filtered.length === 0 ? (
-        <div className="glass-card rounded-xl p-12 text-center">
+        <div className="border border-edge bg-panel rounded-xl p-12 text-center">
           <span className="text-4xl">🎧</span>
-          <h3 className="mt-4 text-lg font-medium text-white">No calls found</h3>
-          <p className="mt-1 text-sm text-gray-400">
+          <h3 className="mt-4 text-lg font-medium text-ink">No calls found</h3>
+          <p className="mt-1 text-sm text-ink-muted">
             {search ? "Try a different search term." : "Upload a call recording to get started."}
           </p>
           {!search && (
-            <button onClick={() => setShowUpload(true)} className="btn-primary mt-4">
+            <button onClick={() => setShowUpload(true)} className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98] transition-all mt-4">
               Upload Your First Call
             </button>
           )}
@@ -281,7 +281,7 @@ function RepCallsPage() {
               key={call.id}
               to="/dashboard/calls/$callId"
               params={{ callId: call.id }}
-              className="block glass-card rounded-xl p-4 sm:p-5 animate-fade-up"
+              className="block border border-edge bg-panel rounded-xl p-4 sm:p-5 animate-fade-up"
               style={{ animationDelay: `${i * 30}ms` }}
             >
               <div className="flex items-center justify-between">
@@ -293,13 +293,13 @@ function RepCallsPage() {
                         Analyzing
                       </span>
                     )}
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-ink-faint">
                       {call.started_at ? new Date(call.started_at).toLocaleDateString("en-US", {
                         weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
                       }) : "Unknown date"}
                     </span>
                     <span className="text-xs text-gray-600">·</span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-ink-faint">
                       {call.duration_seconds ? `${Math.floor(call.duration_seconds / 60)}:${String(call.duration_seconds % 60).padStart(2, "0")}` : "—"}
                     </span>
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${call.direction === "inbound" ? "bg-blue-500/10 text-blue-400" : "bg-amber-500/10 text-amber-400"}`}>
@@ -310,7 +310,7 @@ function RepCallsPage() {
                     )}
                   </div>
                   {call.status && (
-                    <p className="mt-1 text-sm text-gray-400 capitalize">{call.status}</p>
+                    <p className="mt-1 text-sm text-ink-muted capitalize">{call.status}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-3">
@@ -319,7 +319,7 @@ function RepCallsPage() {
                       {call.overall_score}
                     </span>
                   ) : call.status === "processing" ? (
-                    <span className="text-lg font-mono text-gray-500">...</span>
+                    <span className="text-lg font-mono text-ink-faint">...</span>
                   ) : null}
                   <span className="text-gray-600 text-sm">→</span>
                 </div>
@@ -336,21 +336,21 @@ function RepCallsSkeleton() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <div className="h-7 w-24 rounded-lg bg-white/5 animate-pulse" />
-        <div className="h-4 w-36 rounded-lg bg-white/5 animate-pulse" />
+        <div className="h-7 w-24 rounded-lg bg-panel-raised animate-pulse" />
+        <div className="h-4 w-36 rounded-lg bg-panel-raised animate-pulse" />
       </div>
       <div className="flex gap-3">
-        <div className="h-10 flex-1 rounded-xl bg-white/5 animate-pulse" />
-        <div className="h-10 w-36 rounded-xl bg-white/5 animate-pulse" />
+        <div className="h-10 flex-1 rounded-xl bg-panel-raised animate-pulse" />
+        <div className="h-10 w-36 rounded-xl bg-panel-raised animate-pulse" />
       </div>
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="glass-card rounded-xl p-5">
+        <div key={i} className="border border-edge bg-panel rounded-xl p-5">
           <div className="flex items-center justify-between">
             <div className="space-y-2">
-              <div className="h-3 w-44 rounded bg-white/5 animate-pulse" />
-              <div className="h-4 w-24 rounded bg-white/5 animate-pulse" />
+              <div className="h-3 w-44 rounded bg-panel-raised animate-pulse" />
+              <div className="h-4 w-24 rounded bg-panel-raised animate-pulse" />
             </div>
-            <div className="h-6 w-10 rounded bg-white/5 animate-pulse" />
+            <div className="h-6 w-10 rounded bg-panel-raised animate-pulse" />
           </div>
         </div>
       ))}

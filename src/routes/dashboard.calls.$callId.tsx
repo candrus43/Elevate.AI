@@ -88,7 +88,7 @@ function sentimentColor(sentiment: string): string {
   switch (sentiment) {
     case "positive": return "bg-green-500/10 text-green-400 border-green-500/30";
     case "negative": return "bg-red-500/10 text-red-400 border-red-500/30";
-    default: return "bg-gray-500/10 text-gray-400 border-gray-500/30";
+    default: return "bg-gray-500/10 text-ink-muted border-gray-500/30";
   }
 }
 
@@ -163,8 +163,8 @@ function CallDetail() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-24">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
-        <p className="mt-4 text-sm text-gray-400">Loading call details...</p>
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-accent-500 border-t-transparent" />
+        <p className="mt-4 text-sm text-ink-muted">Loading call details...</p>
       </div>
     );
   }
@@ -174,13 +174,13 @@ function CallDetail() {
     return (
       <div className="mx-auto max-w-xl py-24 text-center">
         <div className="mb-4 text-4xl">🔍</div>
-        <h2 className="mb-2 text-xl font-semibold text-white">{error}</h2>
-        <p className="mb-6 text-sm text-gray-400">
+        <h2 className="mb-2 text-xl font-semibold text-ink">{error}</h2>
+        <p className="mb-6 text-sm text-ink-muted">
           This call may have been deleted or you may not have access to it.
         </p>
         <Link
           to="/dashboard/calls"
-          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500"
+          className="inline-flex items-center gap-2 rounded-xl bg-accent-600 px-5 py-2.5 text-sm font-medium text-ink hover:bg-accent-500"
         >
           ← Back to Call List
         </Link>
@@ -204,25 +204,25 @@ function CallDetail() {
         <div className="flex items-center gap-3">
           <Link
             to="/dashboard/calls"
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-gray-400 transition-colors hover:border-white/20 hover:text-white"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-edge bg-panel-raised text-ink-muted transition-colors hover:border-white/20 hover:text-ink"
           >
             ←
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-white sm:text-2xl">Call Review</h1>
-            <p className="text-sm text-gray-400">{call.rep_name} · {formatDate(call.started_at)}</p>
+            <h1 className="text-xl font-bold text-ink sm:text-2xl">Call Review</h1>
+            <p className="text-sm text-ink-muted">{call.rep_name} · {formatDate(call.started_at)}</p>
           </div>
         </div>
         <Link
           to="/dashboard/calls"
-          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-gray-300 transition-colors hover:border-white/20 hover:text-white sm:hidden"
+          className="inline-flex items-center gap-2 rounded-xl border border-edge bg-panel-raised px-4 py-2 text-sm text-ink-muted transition-colors hover:border-white/20 hover:text-ink sm:hidden"
         >
           ← All Calls
         </Link>
       </div>
 
       {/* ── Score Hero ─────────────────────────────────────── */}
-      <div className="glass-card rounded-2xl p-6 sm:p-8">
+      <div className="border border-edge bg-panel rounded-2xl p-6 sm:p-8">
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-8">
           {/* Big Score Circle */}
           <div className={`flex h-24 w-24 shrink-0 items-center justify-center rounded-full border-2 ${scoreBg(call.overall_score)}`}>
@@ -267,13 +267,13 @@ function CallDetail() {
 
       {/* ── Key Topics ─────────────────────────────────────── */}
       {topics.length > 0 && (
-        <div className="glass-card rounded-2xl p-5 sm:p-6">
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-400">Key Topics</h3>
+        <div className="border border-edge bg-panel rounded-2xl p-5 sm:p-6">
+          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-ink-muted">Key Topics</h3>
           <div className="flex flex-wrap gap-2">
             {topics.map((topic, i) => (
               <span
                 key={i}
-                className="rounded-lg border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5 text-sm font-medium text-indigo-300"
+                className="rounded-lg border border-accent-500/20 bg-accent-500/10 px-3 py-1.5 text-sm font-medium text-accent-300"
               >
                 {topic}
               </span>
@@ -285,8 +285,8 @@ function CallDetail() {
       {/* ── Two column: Objections + Compliance Issues ────── */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Objections */}
-        <div className="glass-card rounded-2xl p-5 sm:p-6">
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-400">
+        <div className="border border-edge bg-panel rounded-2xl p-5 sm:p-6">
+          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-ink-muted">
             Objections Detected
           </h3>
           {objections.length > 0 ? (
@@ -299,13 +299,13 @@ function CallDetail() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-gray-500">No objections detected</p>
+            <p className="text-sm text-ink-faint">No objections detected</p>
           )}
         </div>
 
         {/* Compliance Issues */}
-        <div className="glass-card rounded-2xl p-5 sm:p-6">
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-400">
+        <div className="border border-edge bg-panel rounded-2xl p-5 sm:p-6">
+          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-ink-muted">
             Compliance Issues
           </h3>
           {hasComplianceIssues ? (
@@ -318,27 +318,27 @@ function CallDetail() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-gray-500">No compliance issues found</p>
+            <p className="text-sm text-ink-faint">No compliance issues found</p>
           )}
         </div>
       </div>
 
       {/* ── AI Summary ────────────────────────────────────── */}
       {call.summary && (
-        <div className="glass-card rounded-2xl p-5 sm:p-6">
-          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-400">AI Summary</h3>
-          <p className="text-sm leading-relaxed text-gray-300">{call.summary}</p>
+        <div className="border border-edge bg-panel rounded-2xl p-5 sm:p-6">
+          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-ink-muted">AI Summary</h3>
+          <p className="text-sm leading-relaxed text-ink-muted">{call.summary}</p>
         </div>
       )}
 
       {/* ── Scorecard Criteria Breakdown ─────────────────── */}
       {call.scores && call.scores.length > 0 && (
-        <div className="glass-card rounded-2xl p-5 sm:p-6">
+        <div className="border border-edge bg-panel rounded-2xl p-5 sm:p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-400">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-ink-muted">
               Scorecard: {call.scores[0].scorecard_name || "Standard"}
             </h3>
-            <span className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 text-sm font-medium text-white">
+            <span className="rounded-lg border border-edge bg-panel-raised px-3 py-1 text-sm font-medium text-ink">
               Total: {call.scores[0].total_score ?? "-"}
             </span>
           </div>
@@ -347,10 +347,10 @@ function CallDetail() {
             <div className="space-y-3">
               {Object.entries(criteriaScores).map(([criterionId, score]) => (
                 <div key={criterionId} className="flex items-center gap-3">
-                  <span className="w-1/3 truncate text-sm text-gray-400">{criterionId}</span>
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/5">
+                  <span className="w-1/3 truncate text-sm text-ink-muted">{criterionId}</span>
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-panel-raised">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all"
+                      className="h-full rounded-full bg-gradient-to-r from-accent-500 to-accent-500 transition-all"
                       style={{ width: `${Math.min(score, 100)}%` }}
                     />
                   </div>
@@ -361,13 +361,13 @@ function CallDetail() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-500">No criteria breakdown available</p>
+            <p className="text-sm text-ink-faint">No criteria breakdown available</p>
           )}
 
           {call.scores[0].notes && (
-            <div className="mt-4 rounded-lg bg-white/5 px-4 py-3">
-              <p className="text-xs font-medium text-gray-400">Notes</p>
-              <p className="mt-1 text-sm text-gray-300">{call.scores[0].notes}</p>
+            <div className="mt-4 rounded-lg bg-panel-raised px-4 py-3">
+              <p className="text-xs font-medium text-ink-muted">Notes</p>
+              <p className="mt-1 text-sm text-ink-muted">{call.scores[0].notes}</p>
             </div>
           )}
         </div>
@@ -375,8 +375,8 @@ function CallDetail() {
 
       {/* ── Compliance Checks ─────────────────────────────── */}
       {call.compliance && call.compliance.length > 0 && (
-        <div className="glass-card rounded-2xl p-5 sm:p-6">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-400">
+        <div className="border border-edge bg-panel rounded-2xl p-5 sm:p-6">
+          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-ink-muted">
             Compliance Checks ({call.compliance.filter((c) => c.passed).length}/{call.compliance.length} passed)
           </h3>
           <div className="space-y-3">
@@ -391,8 +391,8 @@ function CallDetail() {
               >
                 <span className="mt-0.5 text-lg">{check.passed ? "✅" : "❌"}</span>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-200">{check.rule_name}</p>
-                  <p className="text-xs text-gray-400">{check.details}</p>
+                  <p className="text-sm font-medium text-ink-muted">{check.rule_name}</p>
+                  <p className="text-xs text-ink-muted">{check.details}</p>
                 </div>
               </div>
             ))}
@@ -402,14 +402,14 @@ function CallDetail() {
 
       {/* ── Transcript Section ────────────────────────────── */}
       {call.transcript && (
-        <div className="glass-card rounded-2xl p-5 sm:p-6">
+        <div className="border border-edge bg-panel rounded-2xl p-5 sm:p-6">
           <button
             onClick={() => setTranscriptExpanded(!transcriptExpanded)}
             className="flex w-full items-center justify-between"
           >
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-400">Transcript</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-ink-muted">Transcript</h3>
             <span
-              className={`text-sm text-gray-500 transition-transform ${
+              className={`text-sm text-ink-faint transition-transform ${
                 transcriptExpanded ? "rotate-180" : ""
               }`}
             >
@@ -417,7 +417,7 @@ function CallDetail() {
             </span>
           </button>
           {transcriptExpanded && (
-            <div className="mt-4 max-h-96 overflow-y-auto whitespace-pre-wrap rounded-lg bg-surface-800/50 p-4 font-mono text-sm leading-relaxed text-gray-300">
+            <div className="mt-4 max-h-96 overflow-y-auto whitespace-pre-wrap rounded-lg bg-panel-raised/50 p-4 font-mono text-sm leading-relaxed text-ink-muted">
               {call.transcript}
             </div>
           )}
@@ -432,13 +432,13 @@ function CallDetail() {
 function QuickStat({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
     <div className="flex flex-col items-center sm:items-start">
-      <span className="text-xs text-gray-500">{label}</span>
+      <span className="text-xs text-ink-faint">{label}</span>
       {color ? (
         <span className={`mt-0.5 rounded-md border px-2.5 py-0.5 text-xs font-medium ${color}`}>
           {value}
         </span>
       ) : (
-        <span className="mt-0.5 text-sm font-medium capitalize text-gray-200">{value}</span>
+        <span className="mt-0.5 text-sm font-medium capitalize text-ink-muted">{value}</span>
       )}
     </div>
   );
@@ -446,12 +446,12 @@ function QuickStat({ label, value, color }: { label: string; value: string; colo
 
 function MetricCard({ label, value, icon }: { label: string; value: string; icon: string }) {
   return (
-    <div className="glass-card rounded-2xl p-4 sm:p-5">
+    <div className="border border-edge bg-panel rounded-2xl p-4 sm:p-5">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500">{label}</span>
+        <span className="text-xs text-ink-faint">{label}</span>
         <span className="text-lg">{icon}</span>
       </div>
-      <p className="mt-2 text-xl font-bold text-white">{value}</p>
+      <p className="mt-2 text-xl font-bold text-ink">{value}</p>
     </div>
   );
 }

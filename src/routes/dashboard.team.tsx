@@ -111,7 +111,7 @@ function TeamPage() {
           </p>
         </div>
         {canInvite && (
-          <button onClick={() => setShowInviteModal(true)} className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98] transition-all">
+          <button onClick={() => setShowInviteModal(true)} className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-600 px-5 py-2.5 text-sm font-semibold text-ink shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98] transition-all">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
