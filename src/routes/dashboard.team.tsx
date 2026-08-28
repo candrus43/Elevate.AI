@@ -104,14 +104,14 @@ function TeamPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">My Team</h1>
-          <p className="text-sm text-gray-400">
+          <h1 className="text-2xl font-bold text-ink">My Team</h1>
+          <p className="text-sm text-ink-muted">
             {members.length} team member{members.length !== 1 ? "s" : ""}
             {invitations.length > 0 && ` · ${invitations.length} pending invitation${invitations.length !== 1 ? "s" : ""}`}
           </p>
         </div>
         {canInvite && (
-          <button onClick={() => setShowInviteModal(true)} className="btn-primary">
+          <button onClick={() => setShowInviteModal(true)} className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98] transition-all">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
@@ -123,23 +123,23 @@ function TeamPage() {
       {/* Search & Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">🔍</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint text-sm">🔍</span>
           <input
             type="text"
             placeholder="Search by name or email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 pl-10 text-sm text-white placeholder-gray-500 backdrop-blur-sm focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
+            className="w-full rounded-xl border border-edge bg-panel-raised px-4 py-2.5 pl-10 text-sm text-ink placeholder-ink-faint backdrop-blur-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-focus/40"
           />
         </div>
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-gray-300 backdrop-blur-sm focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
+          className="rounded-xl border border-edge bg-panel-raised px-4 py-2.5 text-sm text-ink-muted backdrop-blur-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-focus/40"
         >
           <option value="all">All Roles</option>
           {roles.map((role) => (
-            <option key={role} value={role} className="bg-surface-900">
+            <option key={role} value={role} className="bg-panel">
               {role.charAt(0).toUpperCase() + role.slice(1)}
             </option>
           ))}
@@ -149,14 +149,14 @@ function TeamPage() {
       {/* Pending Invitations */}
       {invitations.length > 0 && (
         <div>
-          <h3 className="mb-3 text-sm font-semibold text-gray-400 uppercase tracking-wider">
+          <h3 className="mb-3 text-sm font-semibold text-ink-muted uppercase tracking-wider">
             Pending Invitations
           </h3>
           <div className="space-y-2">
             {invitations.map((inv, i) => (
               <div
                 key={inv.id}
-                className="glass-card rounded-xl p-4 flex items-center gap-4 animate-fade-up"
+                className="border border-edge bg-panel rounded-xl p-4 flex items-center gap-4 animate-fade-up"
                 style={{ animationDelay: `${i * 50}ms` }}
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-amber-400">
@@ -165,8 +165,8 @@ function TeamPage() {
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white truncate">{inv.email}</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-sm font-medium text-ink truncate">{inv.email}</p>
+                  <p className="text-xs text-ink-muted">
                     Invited by {inv.invited_by_name || "someone"} · {new Date(inv.created_at).toLocaleDateString()}
                     {inv.expires_at && ` · Expires ${new Date(inv.expires_at).toLocaleDateString()}`}
                   </p>
@@ -194,10 +194,10 @@ function TeamPage() {
       {/* Team Members */}
       <div className="space-y-3">
         {filteredMembers.length === 0 ? (
-          <div className="glass-card rounded-xl p-12 text-center">
+          <div className="border border-edge bg-panel rounded-xl p-12 text-center">
             <span className="text-4xl">👥</span>
-            <h3 className="mt-4 text-lg font-medium text-white">No members found</h3>
-            <p className="mt-1 text-sm text-gray-400">
+            <h3 className="mt-4 text-lg font-medium text-ink">No members found</h3>
+            <p className="mt-1 text-sm text-ink-muted">
               {search || roleFilter !== "all"
                 ? "Try adjusting your search or filter."
                 : "Invite team members to get started."}
@@ -207,30 +207,30 @@ function TeamPage() {
           filteredMembers.map((member, i) => (
             <div
               key={member.id}
-              className="glass-card rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 animate-fade-up"
+              className="border border-edge bg-panel rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4 animate-fade-up"
               style={{ animationDelay: `${i * 50}ms` }}
             >
               {/* Avatar */}
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-sm font-semibold text-white">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent-500 to-accent-600 text-sm font-semibold text-white">
                 {member.name?.charAt(0).toUpperCase() || "?"}
               </div>
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white truncate">{member.name}</p>
-                <p className="text-xs text-gray-400 truncate">{member.email}</p>
+                <p className="text-sm font-semibold text-ink truncate">{member.name}</p>
+                <p className="text-xs text-ink-muted truncate">{member.email}</p>
               </div>
 
               {/* Role & Status */}
               <div className="flex items-center gap-3">
-                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-gray-300 capitalize">
+                <span className="rounded-full border border-edge bg-panel-raised px-3 py-1 text-xs font-medium text-ink-muted capitalize">
                   {member.role}
                 </span>
                 <span
                   className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
                     member.is_active
                       ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                      : "bg-gray-500/10 text-gray-400 border border-gray-500/20"
+                      : "bg-gray-500/10 text-ink-muted border border-gray-500/20"
                   }`}
                 >
                   <span
@@ -243,7 +243,7 @@ function TeamPage() {
               </div>
 
               {/* Team */}
-              <span className="text-xs text-gray-500 sm:text-right sm:min-w-[100px]">
+              <span className="text-xs text-ink-faint sm:text-right sm:min-w-[100px]">
                 {member.team_name || "—"}
               </span>
             </div>
@@ -261,8 +261,8 @@ function TeamPage() {
       )}
 
       {/* Recent Activity */}
-      <div className="glass-card rounded-xl p-5">
-        <h3 className="mb-4 text-base font-semibold text-white">Recent Activity</h3>
+      <div className="border border-edge bg-panel rounded-xl p-5">
+        <h3 className="mb-4 text-base font-semibold text-ink">Recent Activity</h3>
         <div className="space-y-3">
           {[
             { name: "Sarah Chen", action: "Completed coaching plan", time: "2 hours ago" },
@@ -271,18 +271,18 @@ function TeamPage() {
           ].map((activity, i) => (
             <div
               key={i}
-              className="flex items-center justify-between rounded-lg bg-white/5 p-3"
+              className="flex items-center justify-between rounded-lg bg-panel-raised p-3"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/30 to-indigo-600/30 text-xs font-medium text-purple-300">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent-500/40 to-accent-600/40 text-xs font-medium text-accent-300">
                   {activity.name.charAt(0)}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-white">{activity.name}</p>
-                  <p className="text-xs text-gray-400">{activity.action}</p>
+                  <p className="text-sm font-medium text-ink">{activity.name}</p>
+                  <p className="text-xs text-ink-muted">{activity.action}</p>
                 </div>
               </div>
-              <span className="text-xs text-gray-500">{activity.time}</span>
+              <span className="text-xs text-ink-faint">{activity.time}</span>
             </div>
           ))}
         </div>
@@ -296,27 +296,27 @@ function TeamSkeleton() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-2">
-          <div className="h-7 w-32 rounded-lg bg-white/5 animate-pulse" />
-          <div className="h-4 w-24 rounded-lg bg-white/5 animate-pulse" />
+          <div className="h-7 w-32 rounded-lg bg-panel-raised animate-pulse" />
+          <div className="h-4 w-24 rounded-lg bg-panel-raised animate-pulse" />
         </div>
-        <div className="h-10 w-36 rounded-xl bg-white/5 animate-pulse" />
+        <div className="h-10 w-36 rounded-xl bg-panel-raised animate-pulse" />
       </div>
 
       <div className="flex gap-3">
-        <div className="h-10 flex-1 rounded-xl bg-white/5 animate-pulse" />
-        <div className="h-10 w-32 rounded-xl bg-white/5 animate-pulse" />
+        <div className="h-10 flex-1 rounded-xl bg-panel-raised animate-pulse" />
+        <div className="h-10 w-32 rounded-xl bg-panel-raised animate-pulse" />
       </div>
 
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="glass-card rounded-xl p-5 flex items-center gap-4">
-          <div className="h-10 w-10 shrink-0 rounded-full bg-white/5 animate-pulse" />
+        <div key={i} className="border border-edge bg-panel rounded-xl p-5 flex items-center gap-4">
+          <div className="h-10 w-10 shrink-0 rounded-full bg-panel-raised animate-pulse" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-40 rounded bg-white/5 animate-pulse" />
-            <div className="h-3 w-56 rounded bg-white/5 animate-pulse" />
+            <div className="h-4 w-40 rounded bg-panel-raised animate-pulse" />
+            <div className="h-3 w-56 rounded bg-panel-raised animate-pulse" />
           </div>
           <div className="flex gap-2">
-            <div className="h-6 w-16 rounded-full bg-white/5 animate-pulse" />
-            <div className="h-6 w-16 rounded-full bg-white/5 animate-pulse" />
+            <div className="h-6 w-16 rounded-full bg-panel-raised animate-pulse" />
+            <div className="h-6 w-16 rounded-full bg-panel-raised animate-pulse" />
           </div>
         </div>
       ))}
