@@ -87,8 +87,8 @@ function LeaderboardPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Leaderboard</h1>
-        <p className="text-sm text-gray-400">See how your team ranks</p>
+        <h1 className="text-2xl font-bold text-ink">Leaderboard</h1>
+        <p className="text-sm text-ink-muted">See how your team ranks</p>
       </div>
 
       {/* Period Tabs */}
@@ -97,8 +97,8 @@ function LeaderboardPage() {
           onClick={() => setPeriod("weekly")}
           className={`rounded-xl px-5 py-2.5 text-sm font-medium transition-all ${
             period === "weekly"
-              ? "bg-purple-500/20 text-purple-300 border border-purple-500/30 shadow-lg shadow-purple-500/10"
-              : "text-gray-400 border border-white/5 hover:text-white hover:bg-white/5"
+              ? "bg-accent-500/15 text-accent-300 border border-accent-500/30 shadow-lg shadow-accent-500/10"
+              : "text-ink-muted border border-edge hover:text-ink hover:bg-panel-raised"
           }`}
         >
           <span className="mr-1.5">📅</span>
@@ -108,8 +108,8 @@ function LeaderboardPage() {
           onClick={() => setPeriod("monthly")}
           className={`rounded-xl px-5 py-2.5 text-sm font-medium transition-all ${
             period === "monthly"
-              ? "bg-purple-500/20 text-purple-300 border border-purple-500/30 shadow-lg shadow-purple-500/10"
-              : "text-gray-400 border border-white/5 hover:text-white hover:bg-white/5"
+              ? "bg-accent-500/15 text-accent-300 border border-accent-500/30 shadow-lg shadow-accent-500/10"
+              : "text-ink-muted border border-edge hover:text-ink hover:bg-panel-raised"
           }`}
         >
           <span className="mr-1.5">📆</span>
@@ -122,10 +122,10 @@ function LeaderboardPage() {
         <LeaderboardSkeleton />
       ) : entries.length === 0 ? (
         /* Empty State */
-        <div className="glass-card rounded-xl p-12 text-center">
+        <div className="border border-edge bg-panel rounded-xl p-12 text-center">
           <span className="text-4xl">🏆</span>
-          <h3 className="mt-4 text-lg font-medium text-white">No standings yet</h3>
-          <p className="mt-1 text-sm text-gray-400">
+          <h3 className="mt-4 text-lg font-medium text-ink">No standings yet</h3>
+          <p className="mt-1 text-sm text-ink-muted">
             Leaderboard data will appear once team members start completing calls.
           </p>
         </div>
@@ -140,13 +140,13 @@ function LeaderboardPage() {
                 <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-gradient-to-br from-gray-300 to-gray-400 text-lg sm:text-xl font-bold text-white shadow-lg">
                   {entries[1]?.user_name?.charAt(0) || "?"}
                 </div>
-                <p className="mt-2 text-xs font-medium text-gray-300 text-center max-w-[80px] truncate">
+                <p className="mt-2 text-xs font-medium text-ink-muted text-center max-w-[80px] truncate">
                   {entries[1]?.user_name}
                 </p>
                 <div className="mt-2 flex h-20 sm:h-24 w-20 sm:w-24 items-center justify-center rounded-t-xl bg-gradient-to-t from-gray-500/30 to-gray-500/10 border border-gray-500/20">
                   <div className="text-center">
                     <span className="text-2xl">🥈</span>
-                    <p className="text-xs font-bold text-white">{entries[1]?.score}</p>
+                    <p className="text-xs font-bold text-ink">{entries[1]?.score}</p>
                   </div>
                 </div>
               </div>
@@ -161,13 +161,13 @@ function LeaderboardPage() {
                     {entries[0]?.user_name?.charAt(0) || "?"}
                   </div>
                 </div>
-                <p className="mt-2 text-sm font-semibold text-white text-center max-w-[80px] truncate">
+                <p className="mt-2 text-sm font-semibold text-ink text-center max-w-[80px] truncate">
                   {entries[0]?.user_name}
                 </p>
-                <div className="mt-2 flex h-24 sm:h-28 w-24 sm:w-28 items-center justify-center rounded-t-xl bg-gradient-to-t from-amber-500/30 to-amber-500/10 border border-amber-500/20 glow-sm">
+                <div className="mt-2 flex h-24 sm:h-28 w-24 sm:w-28 items-center justify-center rounded-t-xl bg-gradient-to-t from-amber-500/30 to-amber-500/10 border border-amber-500/20 shadow-glow">
                   <div className="text-center">
                     <span className="text-3xl">🥇</span>
-                    <p className="text-lg font-bold text-white">{entries[0]?.score}</p>
+                    <p className="text-lg font-bold text-ink">{entries[0]?.score}</p>
                   </div>
                 </div>
               </div>
@@ -179,13 +179,13 @@ function LeaderboardPage() {
                 <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-700 to-amber-800 text-lg font-bold text-white shadow-lg">
                   {entries[2]?.user_name?.charAt(0) || "?"}
                 </div>
-                <p className="mt-2 text-xs font-medium text-gray-300 text-center max-w-[80px] truncate">
+                <p className="mt-2 text-xs font-medium text-ink-muted text-center max-w-[80px] truncate">
                   {entries[2]?.user_name}
                 </p>
                 <div className="mt-2 flex h-16 sm:h-20 w-16 sm:w-20 items-center justify-center rounded-t-xl bg-gradient-to-t from-amber-800/30 to-amber-800/10 border border-amber-800/20">
                   <div className="text-center">
                     <span className="text-2xl">🥉</span>
-                    <p className="text-xs font-bold text-white">{entries[2]?.score}</p>
+                    <p className="text-xs font-bold text-ink">{entries[2]?.score}</p>
                   </div>
                 </div>
               </div>
@@ -193,18 +193,18 @@ function LeaderboardPage() {
           </div>
 
           {/* Full Leaderboard Table */}
-          <div className="glass-card rounded-xl overflow-hidden">
+          <div className="border border-edge bg-panel rounded-xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/5">
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Rank</th>
-                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Name</th>
-                    <th className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Score</th>
-                    <th className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Calls</th>
+                  <tr className="border-b border-edge">
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-ink-muted uppercase tracking-wider">Rank</th>
+                    <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-ink-muted uppercase tracking-wider">Name</th>
+                    <th className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-ink-muted uppercase tracking-wider">Score</th>
+                    <th className="px-4 sm:px-6 py-3 text-right text-xs font-medium text-ink-muted uppercase tracking-wider">Calls</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-edge">
                   {entries.map((entry, i) => {
                     const medal = getMedal(entry.rank);
                     const isYou = entry.is_current_user;
@@ -213,8 +213,8 @@ function LeaderboardPage() {
                         key={entry.user_id}
                         className={`transition-colors ${
                           isYou
-                            ? "bg-purple-500/10 border-l-2 border-l-purple-500"
-                            : "hover:bg-white/5"
+                            ? "bg-accent-500/10 border-l-2 border-l-accent-500"
+                            : "hover:bg-panel-raised"
                         }`}
                       >
                         <td className="px-4 sm:px-6 py-3.5">
@@ -222,7 +222,7 @@ function LeaderboardPage() {
                             {medal ? (
                               <span className="text-lg">{medal}</span>
                             ) : (
-                              <span className="w-6 text-center text-sm font-mono text-gray-500">
+                              <span className="w-6 text-center text-sm font-mono text-ink-faint">
                                 #{entry.rank}
                               </span>
                             )}
@@ -230,15 +230,15 @@ function LeaderboardPage() {
                         </td>
                         <td className="px-4 sm:px-6 py-3.5">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/30 to-indigo-600/30 text-sm font-medium text-purple-300">
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-accent-500/40 to-accent-600/40 text-sm font-medium text-accent-300">
                               {entry.user_name?.charAt(0).toUpperCase() || "?"}
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className={`font-medium ${isYou ? "text-purple-300" : "text-white"}`}>
+                              <span className={`font-medium ${isYou ? "text-accent-300" : "text-ink"}`}>
                                 {entry.user_name}
                               </span>
                               {isYou && (
-                                <span className="rounded-full bg-purple-500/20 px-2 py-0.5 text-[10px] font-semibold text-purple-300 border border-purple-500/30">
+                                <span className="rounded-full bg-accent-500/20 px-2 py-0.5 text-[10px] font-semibold text-accent-300 border border-accent-500/30">
                                   You
                                 </span>
                               )}
@@ -249,12 +249,12 @@ function LeaderboardPage() {
                           <span className={`font-bold font-mono ${
                             entry.score >= 90 ? "text-emerald-400" :
                             entry.score >= 70 ? "text-amber-300" :
-                            "text-gray-400"
+                            "text-ink-muted"
                           }`}>
                             {entry.score}
                           </span>
                         </td>
-                        <td className="px-4 sm:px-6 py-3.5 text-right text-gray-400 font-mono text-xs">
+                        <td className="px-4 sm:px-6 py-3.5 text-right text-ink-muted font-mono text-xs">
                           {entry.calls_count}
                         </td>
                       </tr>
@@ -276,30 +276,30 @@ function LeaderboardSkeleton() {
       {/* Podium skeleton */}
       <div className="flex items-end justify-center gap-6 px-4">
         <div className="flex flex-col items-center">
-          <div className="h-12 w-12 rounded-full bg-white/5 animate-pulse" />
-          <div className="mt-2 h-3 w-16 rounded bg-white/5 animate-pulse" />
-          <div className="mt-2 h-20 w-20 rounded-t-xl bg-white/5 animate-pulse" />
+          <div className="h-12 w-12 rounded-full bg-panel-raised animate-pulse" />
+          <div className="mt-2 h-3 w-16 rounded bg-panel-raised animate-pulse" />
+          <div className="mt-2 h-20 w-20 rounded-t-xl bg-panel-raised animate-pulse" />
         </div>
         <div className="flex flex-col items-center">
-          <div className="h-14 w-14 rounded-full bg-white/5 animate-pulse" />
-          <div className="mt-2 h-3 w-16 rounded bg-white/5 animate-pulse" />
-          <div className="mt-2 h-24 w-24 rounded-t-xl bg-white/5 animate-pulse" />
+          <div className="h-14 w-14 rounded-full bg-panel-raised animate-pulse" />
+          <div className="mt-2 h-3 w-16 rounded bg-panel-raised animate-pulse" />
+          <div className="mt-2 h-24 w-24 rounded-t-xl bg-panel-raised animate-pulse" />
         </div>
         <div className="flex flex-col items-center">
-          <div className="h-10 w-10 rounded-full bg-white/5 animate-pulse" />
-          <div className="mt-2 h-3 w-16 rounded bg-white/5 animate-pulse" />
-          <div className="mt-2 h-16 w-16 rounded-t-xl bg-white/5 animate-pulse" />
+          <div className="h-10 w-10 rounded-full bg-panel-raised animate-pulse" />
+          <div className="mt-2 h-3 w-16 rounded bg-panel-raised animate-pulse" />
+          <div className="mt-2 h-16 w-16 rounded-t-xl bg-panel-raised animate-pulse" />
         </div>
       </div>
 
       {/* Table skeleton */}
-      <div className="glass-card rounded-xl p-6 space-y-4">
+      <div className="border border-edge bg-panel rounded-xl p-6 space-y-4">
         {[1, 2, 3, 4, 5].map((i) => (
           <div key={i} className="flex items-center gap-3">
-            <div className="h-5 w-8 rounded bg-white/5 animate-pulse" />
-            <div className="h-8 w-8 rounded-full bg-white/5 animate-pulse" />
-            <div className="flex-1 h-4 w-32 rounded bg-white/5 animate-pulse" />
-            <div className="h-4 w-10 rounded bg-white/5 animate-pulse" />
+            <div className="h-5 w-8 rounded bg-panel-raised animate-pulse" />
+            <div className="h-8 w-8 rounded-full bg-panel-raised animate-pulse" />
+            <div className="flex-1 h-4 w-32 rounded bg-panel-raised animate-pulse" />
+            <div className="h-4 w-10 rounded bg-panel-raised animate-pulse" />
           </div>
         ))}
       </div>

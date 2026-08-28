@@ -105,8 +105,8 @@ function CoachingPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Coaching Plans</h1>
-          <p className="text-sm text-gray-400">
+          <h1 className="text-2xl font-bold text-ink">Coaching Plans</h1>
+          <p className="text-sm text-ink-muted">
             {plans.length} plan{plans.length !== 1 ? "s" : ""} across your team
           </p>
         </div>
@@ -114,7 +114,7 @@ function CoachingPage() {
           <button
             onClick={() => generatePlan(user?.id || "", "myself")}
             disabled={generating}
-            className="btn-ghost flex items-center gap-2 text-purple-400 hover:text-purple-300"
+            className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-accent-fg hover:text-accent-300 transition-all"
             title="Generate AI coaching plan from call analysis"
           >
             <svg className={`h-4 w-4 ${generating ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -122,7 +122,7 @@ function CoachingPage() {
             </svg>
             {generating ? `Generating for ${generatingFor}...` : "Generate AI Plan"}
           </button>
-          <button className="btn-primary">
+          <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98] transition-all">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
@@ -133,9 +133,9 @@ function CoachingPage() {
 
       {/* Generation result toast */}
       {genResult && (
-        <div className="glass-card rounded-xl p-4 flex items-center gap-3 animate-fade-up border border-purple-500/20">
+        <div className="border border-edge bg-panel rounded-xl p-4 flex items-center gap-3 animate-fade-up border border-accent-500/25">
           <span className="text-lg">{genResult.includes("Error") ? "⚠️" : "✅"}</span>
-          <p className="text-sm text-gray-300">{genResult}</p>
+          <p className="text-sm text-ink-muted">{genResult}</p>
         </div>
       )}
 
@@ -147,8 +147,8 @@ function CoachingPage() {
             onClick={() => setStatusFilter(status)}
             className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
               statusFilter === status
-                ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
-                : "text-gray-400 border border-white/5 hover:text-white hover:bg-white/5"
+                ? "bg-accent-500/15 text-accent-300 border border-accent-500/30"
+                : "text-ink-muted border border-edge hover:text-ink hover:bg-panel-raised"
             }`}
           >
             {status === "all" ? "All" : status.charAt(0).toUpperCase() + status.slice(1)}
@@ -161,10 +161,10 @@ function CoachingPage() {
         <CoachingSkeleton />
       ) : filteredPlans.length === 0 ? (
         /* Empty State */
-        <div className="glass-card rounded-xl p-12 text-center">
+        <div className="border border-edge bg-panel rounded-xl p-12 text-center">
           <span className="text-4xl">🎯</span>
-          <h3 className="mt-4 text-lg font-medium text-white">No coaching plans found</h3>
-          <p className="mt-1 text-sm text-gray-400">
+          <h3 className="mt-4 text-lg font-medium text-ink">No coaching plans found</h3>
+          <p className="mt-1 text-sm text-ink-muted">
             {plans.length > 0
               ? "No plans match the selected filter."
               : "Create your first coaching plan to help your team improve."}
@@ -182,14 +182,14 @@ function CoachingPage() {
             return (
               <div
                 key={plan.id}
-                className="glass-card rounded-xl p-5 animate-fade-up"
+                className="border border-edge bg-panel rounded-xl p-5 animate-fade-up"
                 style={{ animationDelay: `${i * 50}ms` }}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                   {/* Plan Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-base font-semibold text-white truncate">
+                      <h3 className="text-base font-semibold text-ink truncate">
                         {plan.title}
                       </h3>
                       <span
@@ -198,16 +198,16 @@ function CoachingPage() {
                             ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                             : plan.status === "completed"
                             ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                            : "bg-gray-500/10 text-gray-400 border border-gray-500/20"
+                            : "bg-gray-500/10 text-ink-muted border border-gray-500/20"
                         }`}
                       >
                         {plan.status}
                       </span>
                     </div>
-                    <p className="mt-1 text-sm text-gray-400 line-clamp-1">
+                    <p className="mt-1 text-sm text-ink-muted line-clamp-1">
                       {plan.description || "No description"}
                     </p>
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-ink-faint">
                       For {plan.user_name}
                       {plan.due_date && ` · Due ${new Date(plan.due_date).toLocaleDateString()}`}
                     </p>
@@ -217,17 +217,17 @@ function CoachingPage() {
                   <div className="flex items-center gap-4 sm:min-w-[200px]">
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-xs text-gray-400">Progress</span>
-                        <span className="text-xs font-medium text-purple-400">{progress}%</span>
+                        <span className="text-xs text-ink-muted">Progress</span>
+                        <span className="text-xs font-medium text-accent-fg">{progress}%</span>
                       </div>
-                      <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
+                      <div className="h-2 w-full rounded-full bg-panel-raised overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 transition-all duration-700"
+                          className="h-full rounded-full bg-gradient-to-r from-accent-500 to-accent-600 transition-all duration-700"
                           style={{ width: `${progress}%` }}
                         />
                       </div>
                     </div>
-                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                    <span className="text-xs text-ink-faint whitespace-nowrap">
                       {plan.completed_items}/{plan.total_items}
                     </span>
                   </div>
@@ -258,19 +258,19 @@ function CoachingSkeleton() {
   return (
     <div className="space-y-4">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="glass-card rounded-xl p-5">
+        <div key={i} className="border border-edge bg-panel rounded-xl p-5">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="flex-1 space-y-3">
               <div className="flex items-center gap-2">
-                <div className="h-5 w-40 rounded bg-white/5 animate-pulse" />
-                <div className="h-5 w-16 rounded-full bg-white/5 animate-pulse" />
+                <div className="h-5 w-40 rounded bg-panel-raised animate-pulse" />
+                <div className="h-5 w-16 rounded-full bg-panel-raised animate-pulse" />
               </div>
-              <div className="h-4 w-64 rounded bg-white/5 animate-pulse" />
-              <div className="h-3 w-36 rounded bg-white/5 animate-pulse" />
+              <div className="h-4 w-64 rounded bg-panel-raised animate-pulse" />
+              <div className="h-3 w-36 rounded bg-panel-raised animate-pulse" />
             </div>
             <div className="w-full sm:w-48 space-y-2">
-              <div className="h-3 w-full rounded bg-white/5 animate-pulse" />
-              <div className="h-2 w-full rounded-full bg-white/5 animate-pulse" />
+              <div className="h-3 w-full rounded bg-panel-raised animate-pulse" />
+              <div className="h-2 w-full rounded-full bg-panel-raised animate-pulse" />
             </div>
           </div>
         </div>
