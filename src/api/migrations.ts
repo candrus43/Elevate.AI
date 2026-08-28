@@ -472,5 +472,20 @@ export async function runMigrations(): Promise<void> {
   `);
   console.log("Compliance Intelligence: Created compliance_rule_versions, compliance_documents, compliance_document_sections, compliance_findings, compliance_escalation_rules tables");
 
+  // ── 24. Compliance coaching linkage — source_finding_id on coaching_plans ─────
+  // Lets a compliance-generated coaching plan reference the finding that triggered
+  // it (Phase D). Additive + idempotent; existing plans default to NULL.
+  try {
+    const coachingPlanColumns = await db(sql`PRAGMA table_info(coaching_plans)`);
+    if (!coachingPlanColumns.some((c: any) => c.name === "source_finding_id")) {
+      await db(sql`ALTER TABLE coaching_plans ADD COLUMN source_finding_id TEXT`);
+      console.log("Compliance Coaching: Added coaching_plans.source_finding_id");
+    } else {
+      console.log("Compliance Coaching: coaching_plans.source_finding_id already exists");
+    }
+  } catch {
+    console.log("Compliance Coaching: Could not check/add coaching_plans.source_finding_id");
+  }
+
   console.log("Migrations complete.");
 }
