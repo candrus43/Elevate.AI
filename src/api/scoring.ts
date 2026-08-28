@@ -294,7 +294,7 @@ function normalizeEvidence(raw: any): Array<{ timestamp: string; quote: string; 
 export async function getCompanyDimensionAverages(
   companyId: string,
   cutoff: string,
-): Promise<Array<{ dimension: DimensionKey; avg_score: number; count: number }> {
+): Promise<Array<{ dimension: DimensionKey; avg_score: number; count: number }>> {
   await ensureCallDimensionScoresTable();
 
   const rows = await db(sql`
