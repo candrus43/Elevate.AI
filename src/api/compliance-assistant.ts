@@ -8,131 +8,43 @@
  *   POST /api/compliance/assistant/ask     — answer a question
  *   GET  /api/compliance/assistant/context — return the grounding payload
  *
- * Grounding strategy: a single tenant-scoped query over `compliance_findings`
- * (joined to rules / calls / agents / teams) is aggregated into the same shape the
- * Compliance Center "Reports" and Executive rollup expose. The aggregation
- * constants below intentionally mirror `compliance-reporting.ts` and
- * `compliance-risk.ts` so the assistant's numbers match the UI (no drift in
- * definitions). We do NOT import/modify those files; the DB is re-queried directly.
+ * Grounding strategy: the assistant calls the existing reporting/risk handlers
+ * (compliance-reporting.ts + compliance-risk.ts) internally and feeds their
+ * responses to the model as structured context. We do NOT re-implement or
+ * duplicate their aggregation — we consume their output so the assistant's
+ * numbers are identical to the Reports / risk endpoints.
  *
  * Core principles honored:
- *  - No fabrication — numbers come only from stored rows; empty tenants get an
- *    explicit "no data" message, never invented counts.
+ *  - No fabrication — numbers come only from the grounded handlers; empty
+ *    tenants get an explicit "no data" message, never invented counts.
  *  - ElevateAI is NOT the legal authority — legal-advice questions are declined
- *    with a fixed, non-legal response (both a fast keyword guard and a model
- *    instruction).
+ *    with a fixed, non-legal response (fast keyword guard + model instruction).
  *  - Reuses the existing AI provider (same client/config as call analysis and
  *    coaching) — no new provider.
  */
 
-import { esc } from "~/utils/sql";
-import { db, jsonResponse, getAuthUser, isComplianceReviewer } from "./middleware";
+import { jsonResponse, getAuthUser, isComplianceReviewer } from "./middleware";
 import { logAuditEvent } from "./admin";
 import { getOpenAIConfig, callOpenAI } from "./openai";
-
-// ─── Constants (mirror reporting/risk modules) ─────────────────────────────────
-
-const SEVERITIES = ["critical", "high", "medium", "low", "informational"] as const;
-const STATUSES = [
-  "AI_FLAGGED",
-  "PENDING_REVIEW",
-  "CONFIRMED",
-  "DISMISSED",
-  "NEEDS_COACHING",
-  "ESCALATED",
-  "RESOLVED",
-] as const;
-
-const OPEN_STATUSES = new Set<string>(["AI_FLAGGED", "PENDING_REVIEW", "CONFIRMED", "NEEDS_COACHING", "ESCALATED"]);
-const NEEDS_REVIEW_STATUSES = new Set<string>(["AI_FLAGGED", "PENDING_REVIEW"]);
-const SCORED_STATUSES = new Set<string>(["CONFIRMED", "AI_FLAGGED"]);
-
-const RISK_WEIGHTS: Record<string, number> = {
-  critical: 40,
-  high: 28,
-  medium: 16,
-  low: 6,
-  informational: 2,
-};
-
-const COMPLIANCE_DEDUCTIONS: Record<string, number> = {
-  critical: 20,
-  high: 12,
-  medium: 6,
-  low: 2,
-  informational: 1,
-};
-
-const TOP_N = 5;
+import {
+  handleComplianceReportSummary,
+  handleComplianceReportByRule,
+  handleComplianceReportByAgent,
+} from "./compliance-reporting";
+import { handleGetTeamRisk } from "./compliance-risk";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
-interface FindingRow {
-  severity: string;
-  status: string;
-  confidence: string | null;
-  rule_name: string | null;
-  rule_type: string | null;
-  agent_id: string | null;
-  agent_name: string | null;
-  team_id: string | null;
-  team_name: string | null;
-}
-
-interface SeverityCounts {
-  critical: number;
-  high: number;
-  medium: number;
-  low: number;
-  informational: number;
-}
-
 interface GroundingContext {
   has_data: boolean;
-  summary: {
-    total_findings: number;
-    open_findings: number;
-    resolved_findings: number;
-    requires_human_review: number;
-    by_severity: SeverityCounts;
-    by_status: Record<string, number>;
-    compliance_score: { score: number | null; state: "scored" | "insufficient_data" };
-  };
-  top_rules: Array<{ rule_name: string; rule_type: string; total: number; open: number; by_severity: SeverityCounts }>;
-  top_agents: Array<{ agent_name: string; team_name: string | null; total: number; open: number; by_severity: SeverityCounts }>;
-  highest_risk_team: { team_name: string; open_findings: number; critical_high: number } | null;
+  summary: unknown;
+  top_rules: unknown[];
+  top_agents: unknown[];
+  team_risk: unknown;
   sources: string[];
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
-
-function emptySeverityCounts(): SeverityCounts {
-  return { critical: 0, high: 0, medium: 0, low: 0, informational: 0 };
-}
-
-function emptyStatusCounts(): Record<string, number> {
-  const out: Record<string, number> = {};
-  for (const s of STATUSES) out[s] = 0;
-  return out;
-}
-
-function normSeverity(s: unknown): string {
-  const v = String(s || "medium").toLowerCase();
-  return (SEVERITIES as readonly string[]).includes(v) ? v : "medium";
-}
-
-function normStatus(s: unknown): string {
-  return String(s || "AI_FLAGGED");
-}
-
-function computeComplianceScore(findings: Array<{ severity: string; status: string }>): { score: number | null; state: "scored" | "insufficient_data" } {
-  if (findings.length === 0) return { score: null, state: "insufficient_data" };
-  let deduction = 0;
-  for (const f of findings) {
-    if (SCORED_STATUSES.has(f.status)) deduction += COMPLIANCE_DEDUCTIONS[f.severity] ?? 0;
-  }
-  return { score: Math.max(0, 100 - deduction), state: "scored" };
-}
 
 /** Lightweight pre-check for obvious legal-advice / legal-conclusion requests. */
 function isLegalAdviceQuestion(question: string): boolean {
@@ -156,118 +68,41 @@ function isLegalAdviceQuestion(question: string): boolean {
   return /\bsue[ds]?\b|\bsuing\b|\bsues\b/.test(lower);
 }
 
-// ─── Grounding context ─────────────────────────────────────────────────────────
-
-async function buildGroundingContext(companyId: string): Promise<GroundingContext> {
-  const rows = (await db(`
-    SELECT
-      f.severity, f.status, f.confidence,
-      cr.name AS rule_name, cr.rule_type AS rule_type,
-      c.user_id AS agent_id, u.name AS agent_name, u.team_id AS team_id,
-      t.name AS team_name
-    FROM compliance_findings f
-    LEFT JOIN compliance_rules cr ON cr.id = f.rule_id
-    LEFT JOIN calls c ON c.id = f.call_id
-    LEFT JOIN users u ON u.id = c.user_id
-    LEFT JOIN teams t ON t.id = u.team_id
-    WHERE f.company_id = ${esc(companyId)}
-  `)) as FindingRow[];
-
-  const hasData = rows.length > 0;
-
-  const by_severity = emptySeverityCounts();
-  const by_status = emptyStatusCounts();
-  let total = 0;
-  let open = 0;
-  let resolved = 0;
-  let requiresHumanReview = 0;
-  const scoredFindings: Array<{ severity: string; status: string }> = [];
-
-  const ruleMap = new Map<string, { rule_name: string; rule_type: string; total: number; open: number; by_severity: SeverityCounts; risk: number }>();
-  const agentMap = new Map<string, { agent_name: string; team_name: string | null; total: number; open: number; by_severity: SeverityCounts; risk: number }>();
-  const teamMap = new Map<string, { team_name: string; open_findings: number; critical_high: number; risk: number }>();
-
-  for (const f of rows) {
-    total++;
-    const sev = normSeverity(f.severity);
-    const st = normStatus(f.status);
-
-    by_severity[sev as keyof SeverityCounts] = (by_severity[sev as keyof SeverityCounts] ?? 0) + 1;
-    by_status[st] = (by_status[st] ?? 0) + 1;
-    if (OPEN_STATUSES.has(st)) open++;
-    else resolved++;
-    if (NEEDS_REVIEW_STATUSES.has(st) || (f.confidence || "").toLowerCase() === "requires_review") requiresHumanReview++;
-
-    scoredFindings.push({ severity: sev, status: st });
-
-    // Rule aggregation
-    const rKey = f.rule_name || "(deleted rule)";
-    if (!ruleMap.has(rKey)) {
-      ruleMap.set(rKey, { rule_name: rKey, rule_type: f.rule_type || "", total: 0, open: 0, by_severity: emptySeverityCounts(), risk: 0 });
-    }
-    const rAgg = ruleMap.get(rKey)!;
-    rAgg.total++;
-    rAgg.by_severity[sev as keyof SeverityCounts] = (rAgg.by_severity[sev as keyof SeverityCounts] ?? 0) + 1;
-    if (OPEN_STATUSES.has(st)) {
-      rAgg.open++;
-      rAgg.risk += RISK_WEIGHTS[sev] ?? 0;
-    }
-
-    // Agent aggregation
-    if (f.agent_id) {
-      if (!agentMap.has(f.agent_id)) {
-        agentMap.set(f.agent_id, { agent_name: f.agent_name || "Unknown agent", team_name: f.team_name ?? null, total: 0, open: 0, by_severity: emptySeverityCounts(), risk: 0 });
-      }
-      const aAgg = agentMap.get(f.agent_id)!;
-      aAgg.total++;
-      aAgg.by_severity[sev as keyof SeverityCounts] = (aAgg.by_severity[sev as keyof SeverityCounts] ?? 0) + 1;
-      if (OPEN_STATUSES.has(st)) {
-        aAgg.open++;
-        aAgg.risk += RISK_WEIGHTS[sev] ?? 0;
-      }
-    }
-
-    // Team aggregation (open risk only)
-    if (f.team_id && OPEN_STATUSES.has(st)) {
-      if (!teamMap.has(f.team_id)) {
-        teamMap.set(f.team_id, { team_name: f.team_name || "Unnamed team", open_findings: 0, critical_high: 0, risk: 0 });
-      }
-      const tAgg = teamMap.get(f.team_id)!;
-      tAgg.open_findings++;
-      if (sev === "critical" || sev === "high") tAgg.critical_high++;
-      tAgg.risk += RISK_WEIGHTS[sev] ?? 0;
-    }
+async function safeJson(resp: Response, fallback: unknown): Promise<unknown> {
+  if (!resp || !resp.ok) return fallback;
+  try {
+    return await resp.json();
+  } catch {
+    return fallback;
   }
+}
 
-  const topRules = [...ruleMap.values()]
-    .sort((a, b) => b.risk - a.risk || b.total - a.total)
-    .slice(0, TOP_N)
-    .map(({ risk: _risk, ...rest }) => rest);
+// ─── Grounding context (calls the existing reporting/risk handlers) ────────────
 
-  const topAgents = [...agentMap.values()]
-    .sort((a, b) => b.risk - a.risk || b.total - a.total)
-    .slice(0, TOP_N)
-    .map(({ risk: _risk, ...rest }) => rest);
+async function buildGroundingContext(req: Request): Promise<GroundingContext> {
+  // Sequential calls — each handler performs its own auth + audit + queries.
+  const summary = await safeJson(await handleComplianceReportSummary(req), null);
+  const byRule = await safeJson(await handleComplianceReportByRule(req), null);
+  const byAgent = await safeJson(await handleComplianceReportByAgent(req), null);
+  const teamRisk = await safeJson(await handleGetTeamRisk(req), null);
 
-  const topTeam = [...teamMap.values()].sort((a, b) => b.risk - a.risk)[0] ?? null;
-  const highestRiskTeam = topTeam
-    ? { team_name: topTeam.team_name, open_findings: topTeam.open_findings, critical_high: topTeam.critical_high }
-    : null;
+  const totalFindings = Number((summary as any)?.total_findings ?? 0);
+  const hasData = totalFindings > 0;
 
   return {
     has_data: hasData,
-    summary: {
-      total_findings: total,
-      open_findings: open,
-      resolved_findings: resolved,
-      requires_human_review: requiresHumanReview,
-      by_severity,
-      by_status,
-      compliance_score: computeComplianceScore(scoredFindings),
-    },
-    top_rules: topRules,
-    top_agents: topAgents,
-    highest_risk_team: highestRiskTeam,
+    summary,
+    top_rules: (byRule as any)?.rules ?? [],
+    top_agents: (byAgent as any)?.agents ?? [],
+    team_risk: teamRisk
+      ? {
+          team_risk_score: (teamRisk as any).team_risk_score,
+          risk_level: (teamRisk as any).risk_level,
+          agent_count: (teamRisk as any).agent_count,
+          agents_with_risk: (teamRisk as any).agents_with_risk,
+          max_agent_risk: (teamRisk as any).max_agent_risk,
+        }
+      : null,
     sources: ["summary", "by-rule", "by-agent", "team-risk"],
   };
 }
@@ -306,14 +141,14 @@ export async function handleComplianceAssistantAsk(req: Request): Promise<Respon
       });
     }
 
-    const context = await buildGroundingContext(user.companyId);
+    const context = await buildGroundingContext(req);
 
     // No data → explicit empty-state answer, never invented numbers.
     if (!context.has_data) {
       await logAuditEvent(user.companyId, user.id, "ask_compliance_assistant", "compliance_assistant", null, `question=${question.slice(0, 200)} (no data)`);
       return jsonResponse({
         kind: "no_data",
-        answer: "No compliance data yet — connect calls and define compliance rules first, then run a compliance evaluation. Once findings exist I can summarize risk, trends, and coaching needs.",
+        answer: "No compliance data yet — connect calls, define compliance rules, and run a compliance evaluation first. Once findings exist I can summarize risk, trends, and coaching needs.",
         grounded: false,
         sources: [],
         context,
@@ -390,7 +225,7 @@ export async function handleComplianceAssistantContext(req: Request): Promise<Re
     if (!user) return jsonResponse({ error: "Not authenticated" }, 401);
     if (!isComplianceReviewer(user)) return jsonResponse({ error: "Insufficient permissions" }, 403);
 
-    const context = await buildGroundingContext(user.companyId);
+    const context = await buildGroundingContext(req);
 
     await logAuditEvent(user.companyId, user.id, "view_compliance_assistant_context", "compliance_assistant", null, `has_data=${context.has_data}`);
 
