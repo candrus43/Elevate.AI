@@ -41,6 +41,7 @@ import {
   handleUpdateComplianceEscalationRule,
   handleDeleteComplianceEscalationRule,
 } from "./compliance";
+import { handleEvaluateCallCompliance, handleEvaluateAllCalls } from "./compliance-eval";
 import { handleGetBillingPlan } from "./billing";
 import { handleCreateInvite, handleListInvites, handleCancelInvite } from "./team";
 // ── Multi-Tenant Admin ──────────────────────────────────────────────────────────
@@ -380,6 +381,9 @@ export async function routeApi(req: Request): Promise<Response | null> {
     if (pathname === "/api/compliance/findings" && req.method === "POST") return handleCreateComplianceFinding(req);
     if (pathname.match(/^\/api\/compliance\/findings\/[^/]+\/review$/) && req.method === "POST") return handleReviewComplianceFinding(req);
     if (pathname.match(/^\/api\/compliance\/findings\/[^/]+$/) && req.method === "GET") return handleGetComplianceFinding(req);
+    // AI evaluation (calls × rules → findings) — Phase C-3a
+    if (pathname === "/api/compliance/evaluate/all" && req.method === "POST") return handleEvaluateAllCalls(req);
+    if (pathname === "/api/compliance/evaluate" && req.method === "POST") return handleEvaluateCallCompliance(req);
     // Documents (policy sources)
     if (pathname === "/api/compliance/documents" && req.method === "GET") return handleListComplianceDocuments(req);
     if (pathname === "/api/compliance/documents" && req.method === "POST") return handleCreateComplianceDocument(req);
