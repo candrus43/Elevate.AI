@@ -1,7 +1,7 @@
-import { LoadingSkeleton } from '~/components/GlassCard';
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 
+import { Badge, Button, Card, CardHeader, CardTitle, Input, EmptyState, Spinner } from "~/components/ui";
 import { getCompanyCalls } from "~/utils/db";
 import type { UserSession } from "~/components/layout/Header";
 
@@ -195,16 +195,10 @@ function CallList() {
           }
         }}
       >
-        <div
-          className="relative w-full max-w-lg rounded-2xl border border-white/10 shadow-2xl"
-          style={{
-            background: "linear-gradient(135deg, rgba(15, 19, 34, 0.98) 0%, rgba(20, 15, 40, 0.98) 50%, rgba(10, 13, 26, 0.98) 100%)",
-            backdropFilter: "blur(32px)",
-          }}
-        >
+        <Card padding="none" className="w-full max-w-lg shadow-2xl">
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
-            <h2 className="text-lg font-semibold text-white">Upload Call Recording</h2>
+          <CardHeader>
+            <CardTitle>Upload Call Recording</CardTitle>
             <button
               onClick={() => {
                 if (!uploading) {
@@ -214,13 +208,14 @@ function CallList() {
                   setUploadProgress(0);
                 }
               }}
-              className="text-gray-400 hover:text-white transition-colors"
+              className="text-ink-muted hover:text-ink transition-colors"
+              aria-label="Close"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-          </div>
+          </CardHeader>
 
           {/* Body */}
           <div className="p-6 space-y-5">
@@ -233,10 +228,10 @@ function CallList() {
               onClick={() => fileInputRef.current?.click()}
               className={`relative cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-all ${
                 dragging
-                  ? "border-purple-500 bg-purple-500/5"
+                  ? "border-accent-500 bg-accent-500/5"
                   : uploadFile
-                    ? "border-green-500/30 bg-green-500/5"
-                    : "border-white/10 hover:border-purple-500/30 hover:bg-white/[0.02]"
+                    ? "border-emerald-500/30 bg-emerald-500/5"
+                    : "border-edge-strong hover:border-accent-500/40 hover:bg-panel-raised/50"
               }`}
             >
               <input
@@ -250,8 +245,8 @@ function CallList() {
               {uploadFile ? (
                 <div className="space-y-2">
                   <span className="text-3xl">🎵</span>
-                  <p className="text-sm text-white font-medium truncate">{uploadFile.name}</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-sm text-ink font-medium truncate">{uploadFile.name}</p>
+                  <p className="text-xs text-ink-muted">
                     {(uploadFile.size / (1024 * 1024)).toFixed(1)} MB
                   </p>
                   <button
@@ -259,7 +254,7 @@ function CallList() {
                       e.stopPropagation();
                       setUploadFile(null);
                     }}
-                    className="text-xs text-gray-400 hover:text-red-400 transition-colors underline"
+                    className="text-xs text-ink-muted hover:text-red-400 transition-colors underline"
                   >
                     Remove
                   </button>
@@ -267,10 +262,10 @@ function CallList() {
               ) : (
                 <div className="space-y-2">
                   <span className="text-3xl">📁</span>
-                  <p className="text-sm text-gray-300">
-                    <span className="text-purple-400 font-medium">Click to browse</span> or drag & drop
+                  <p className="text-sm text-ink-muted">
+                    <span className="text-accent-fg font-medium">Click to browse</span> or drag & drop
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-ink-faint">
                     MP3, WAV, OGG, WEBM, M4A, FLAC — max 50MB
                   </p>
                 </div>
@@ -279,15 +274,15 @@ function CallList() {
 
             {/* Direction Selector */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Direction</label>
+              <label className="block text-sm font-medium text-ink-muted mb-2">Direction</label>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setUploadDirection("outbound")}
                   className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                     uploadDirection === "outbound"
-                      ? "bg-purple-600/30 text-purple-300 border border-purple-500/30"
-                      : "bg-white/5 text-gray-400 border border-white/5 hover:text-white"
+                      ? "bg-accent-500/15 text-accent-fg border border-accent-500/30"
+                      : "bg-panel-raised text-ink-muted border border-edge hover:text-ink"
                   }`}
                 >
                   📤 Outbound
@@ -297,8 +292,8 @@ function CallList() {
                   onClick={() => setUploadDirection("inbound")}
                   className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all ${
                     uploadDirection === "inbound"
-                      ? "bg-purple-600/30 text-purple-300 border border-purple-500/30"
-                      : "bg-white/5 text-gray-400 border border-white/5 hover:text-white"
+                      ? "bg-accent-500/15 text-accent-fg border border-accent-500/30"
+                      : "bg-panel-raised text-ink-muted border border-edge hover:text-ink"
                   }`}
                 >
                   📥 Inbound
@@ -310,18 +305,15 @@ function CallList() {
             {uploadProgress > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-400">
+                  <span className="text-ink-muted">
                     {uploadProgress < 100 ? "Uploading..." : "Processing..."}
                   </span>
-                  <span className="text-gray-400">{uploadProgress}%</span>
+                  <span className="text-ink-muted">{uploadProgress}%</span>
                 </div>
-                <div className="h-2 rounded-full bg-white/5 overflow-hidden">
+                <div className="h-2 rounded-full bg-panel-raised overflow-hidden">
                   <div
-                    className="h-full rounded-full transition-all duration-300"
-                    style={{
-                      width: `${uploadProgress}%`,
-                      background: "linear-gradient(90deg, #7c3aed, #6366f1)",
-                    }}
+                    className="h-full rounded-full bg-gradient-to-r from-accent-600 to-accent-400 transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
                   />
                 </div>
               </div>
@@ -329,15 +321,16 @@ function CallList() {
 
             {/* Error message */}
             {uploadError && (
-              <div className="rounded-lg bg-red-900/30 border border-red-500/20 px-4 py-3 text-sm text-red-300">
+              <div className="rounded-lg bg-red-500/10 border border-red-500/25 px-4 py-3 text-sm text-red-400">
                 {uploadError}
               </div>
             )}
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-3 px-6 py-4" style={{ borderTop: "1px solid rgba(255, 255, 255, 0.06)" }}>
-            <button
+          <div className="flex items-center justify-end gap-3 border-t border-edge px-6 py-4">
+            <Button
+              variant="ghost"
               onClick={() => {
                 setShowUpload(false);
                 setUploadFile(null);
@@ -345,36 +338,25 @@ function CallList() {
                 setUploadProgress(0);
               }}
               disabled={uploading}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-300 transition-all hover:text-white disabled:opacity-50"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleUpload}
               disabled={!uploadFile || uploading}
-              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-2 text-sm font-medium text-white shadow-lg shadow-purple-500/25 transition-all hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97]"
+              loading={uploading}
             >
-              {uploading ? (
-                <>
-                  <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                <>
-                  <span>⬆️</span>
-                  Upload Recording
-                </>
-              )}
-            </button>
+              Upload Recording
+            </Button>
           </div>
-        </div>
+        </Card>
       </div>
     );
   }
 
   if (loading) return (
     <div className="flex items-center justify-center h-48">
-      <LoadingSkeleton className="h-8 w-8 rounded-full" />
+      <Spinner className="h-8 w-8 animate-spin text-accent-fg" />
     </div>
   );
 
@@ -390,35 +372,26 @@ function CallList() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Call Reviews</h1>
-            <p className="text-sm text-gray-400">No calls yet</p>
+            <h1 className="text-2xl font-bold text-ink">Call Reviews</h1>
+            <p className="text-sm text-ink-muted">No calls yet</p>
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <span className="text-4xl mb-4 opacity-50">📞</span>
-          <h3 className="text-lg font-semibold text-white mb-1">No calls yet</h3>
-          <p className="text-sm text-gray-400 max-w-sm mb-6">
-            Connect your phone system or upload a call recording to get started.
-            Your calls will appear here automatically once analyzed.
-          </p>
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setShowUpload(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-purple-500/25 transition-all hover:from-purple-500 hover:to-indigo-500 hover:shadow-xl"
-            >
-              <span>⬆️</span>
+        <EmptyState
+          icon={<span className="text-4xl">📞</span>}
+          title="No calls yet"
+          description="Connect your phone system or upload a call recording to get started. Your calls will appear here automatically once analyzed."
+          action={
+            <Button variant="primary" onClick={() => setShowUpload(true)} leftIcon={<span aria-hidden>⬆️</span>}>
               Upload Call Recording
-            </button>
-            <a
-              href="/dashboard/integrations"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-5 py-2.5 text-sm font-medium text-gray-300 transition-all hover:text-white hover:border-white/20"
-            >
-              <span>🔗</span>
+            </Button>
+          }
+          secondaryAction={
+            <Button variant="outline" href="/dashboard/integrations" leftIcon={<span aria-hidden>🔗</span>}>
               Connect Phone System
-            </a>
-          </div>
-        </div>
+            </Button>
+          }
+        />
 
         {/* Upload Modal */}
         {showUploadModal()}
@@ -434,8 +407,8 @@ function CallList() {
         <div
           className={`fixed top-4 right-4 z-50 rounded-xl px-5 py-3 text-sm font-medium shadow-xl backdrop-blur-xl transition-all ${
             toastType === "success"
-              ? "bg-green-900/80 text-green-200 border border-green-500/20"
-              : "bg-red-900/80 text-red-200 border border-red-500/20"
+              ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/25"
+              : "bg-red-500/15 text-red-300 border border-red-500/25"
           }`}
           style={{ animation: "slideIn 0.3s ease-out" }}
         >
@@ -446,50 +419,37 @@ function CallList() {
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Call Reviews</h1>
-          <p className="text-sm text-gray-400">{calls.length} total calls analyzed</p>
+          <h1 className="text-2xl font-bold text-ink">Call Reviews</h1>
+          <p className="text-sm text-ink-muted">{calls.length} total calls analyzed</p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="relative flex-1 sm:flex-initial">
-            <input
-              type="text"
-              placeholder="Search by rep name..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full sm:w-64 rounded-lg border border-white/10 bg-white/5 px-4 py-2 pl-10 text-sm text-white placeholder-gray-500 backdrop-blur-xl"
-            />
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
-          </div>
-          <button
-            onClick={() => setShowUpload(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-purple-500/25 transition-all hover:from-purple-500 hover:to-indigo-500 hover:shadow-xl active:scale-[0.97]"
-          >
-            <span>⬆️</span>
+          <Input
+            type="text"
+            placeholder="Search by rep name..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            leftIcon={<span aria-hidden>🔍</span>}
+            containerClassName="flex-1 sm:flex-initial"
+            className="sm:w-64"
+          />
+          <Button variant="primary" onClick={() => setShowUpload(true)} leftIcon={<span aria-hidden>⬆️</span>}>
             <span className="hidden sm:inline">Upload Call</span>
-          </button>
+          </Button>
         </div>
       </div>
 
       {filtered.length === 0 ? (
-        <div
-          className="rounded-xl border border-white/5 flex flex-col items-center justify-center py-16 text-center"
-          style={{
-            background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(139,92,246,0.04) 50%, rgba(255,255,255,0.02) 100%)",
-          }}
-        >
+        <Card className="flex flex-col items-center justify-center py-16 text-center">
           <span className="text-4xl mb-4 opacity-50">🔍</span>
-          <h3 className="text-lg font-semibold text-white mb-1">No results found</h3>
-          <p className="text-sm text-gray-400 max-w-sm">No calls match "{search}". Try a different search term.</p>
-        </div>
+          <h3 className="text-lg font-semibold text-ink mb-1">No results found</h3>
+          <p className="text-sm text-ink-muted max-w-sm">No calls match "{search}". Try a different search term.</p>
+        </Card>
       ) : (
-        <div className="rounded-xl border border-white/5" style={{
-          background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(139,92,246,0.04) 50%, rgba(255,255,255,0.02) 100%)",
-          backdropFilter: "blur(24px)",
-        }}>
+        <Card padding="none" className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-white/5 text-gray-400">
+                <tr className="border-b border-edge text-ink-faint">
                   <th className="px-6 py-3 font-medium">Rep</th>
                   <th className="px-6 py-3 font-medium">Date</th>
                   <th className="px-6 py-3 font-medium">Duration</th>
@@ -499,45 +459,44 @@ function CallList() {
                   <th className="px-6 py-3 font-medium"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-edge">
                 {filtered.map((call) => (
-                  <tr key={call.id} className="transition-colors hover:bg-white/[0.02]">
-                    <td className="px-6 py-4 font-medium text-white">
+                  <tr key={call.id} className="transition-colors hover:bg-panel-raised/60">
+                    <td className="px-6 py-4 font-medium text-ink">
                       {call.rep_name || "Unknown"}
                     </td>
-                    <td className="px-6 py-4 text-gray-400">
+                    <td className="px-6 py-4 text-ink-muted">
                       {formatDate(call.started_at)}
                     </td>
-                    <td className="px-6 py-4 text-gray-400">
+                    <td className="px-6 py-4 text-ink-muted">
                       {formatDuration(call.duration_seconds)}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`font-medium ${
-                        call.overall_score >= 85 ? "text-green-400" :
-                        call.overall_score >= 70 ? "text-yellow-400" :
-                        call.overall_score ? "text-red-400" : "text-gray-400"
+                        call.overall_score >= 85 ? "text-emerald-400" :
+                        call.overall_score >= 70 ? "text-amber-400" :
+                        call.overall_score ? "text-red-400" : "text-ink-muted"
                       }`}>
                         {call.overall_score ?? "-"}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        call.sentiment === "positive" ? "bg-green-900/50 text-green-300" :
-                        call.sentiment === "negative" ? "bg-red-900/50 text-red-300" :
-                        "bg-white/5 text-gray-300"
-                      }`}>
+                      <Badge tone={
+                        call.sentiment === "positive" ? "positive" :
+                        call.sentiment === "negative" ? "negative" : "neutral"
+                      }>
                         {call.sentiment || "neutral"}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        call.status === "analyzed" ? "bg-green-900/50 text-green-300" :
-                        call.status === "processing" ? "bg-blue-900/50 text-blue-300 animate-pulse" :
-                        "bg-red-900/50 text-red-300"
+                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                        call.status === "analyzed" ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/25" :
+                        call.status === "processing" ? "bg-sky-500/10 text-sky-300 border border-sky-500/25 animate-pulse" :
+                        "bg-red-500/10 text-red-300 border border-red-500/25"
                       }`}>
                         {call.status === "processing" ? (
                           <span className="flex items-center gap-1.5">
-                            <span className="h-1.5 w-1.5 rounded-full bg-blue-300 animate-pulse" />
+                            <span className="h-1.5 w-1.5 rounded-full bg-sky-300 animate-pulse" />
                             Processing
                           </span>
                         ) : call.status}
@@ -547,7 +506,7 @@ function CallList() {
                       <Link
                         to="/dashboard/calls/$callId"
                         params={{ callId: call.id }}
-                        className="text-sm font-medium text-purple-400 hover:text-purple-300 transition-colors"
+                        className="text-sm font-medium text-accent-fg hover:text-accent-400 transition-colors"
                       >
                         View →
                       </Link>
@@ -557,7 +516,7 @@ function CallList() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Upload Modal */}
