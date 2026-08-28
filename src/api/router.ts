@@ -45,6 +45,13 @@ import {
 } from "./compliance";
 import { handleCoachComplianceFinding, handleCoachAllComplianceFindings } from "./compliance-coaching";
 import { handleEvaluateCallCompliance, handleEvaluateAllCalls } from "./compliance-eval";
+import {
+  handleComplianceReportSummary,
+  handleComplianceReportTrends,
+  handleComplianceReportByRule,
+  handleComplianceReportByAgent,
+  handleComplianceReportExecutive,
+} from "./compliance-reporting";
 import { handleGetBillingPlan } from "./billing";
 import { handleCreateInvite, handleListInvites, handleCancelInvite } from "./team";
 // ── Multi-Tenant Admin ──────────────────────────────────────────────────────────
@@ -391,6 +398,12 @@ export async function routeApi(req: Request): Promise<Response | null> {
     // AI evaluation (calls × rules → findings) — Phase C-3a
     if (pathname === "/api/compliance/evaluate/all" && req.method === "POST") return handleEvaluateAllCalls(req);
     if (pathname === "/api/compliance/evaluate" && req.method === "POST") return handleEvaluateCallCompliance(req);
+    // Reporting (Phase E)
+    if (pathname === "/api/compliance/report/summary" && req.method === "GET") return handleComplianceReportSummary(req);
+    if (pathname === "/api/compliance/report/trends" && req.method === "GET") return handleComplianceReportTrends(req);
+    if (pathname === "/api/compliance/report/by-rule" && req.method === "GET") return handleComplianceReportByRule(req);
+    if (pathname === "/api/compliance/report/by-agent" && req.method === "GET") return handleComplianceReportByAgent(req);
+    if (pathname === "/api/compliance/report/executive" && req.method === "GET") return handleComplianceReportExecutive(req);
     // Documents (policy sources)
     if (pathname === "/api/compliance/documents" && req.method === "GET") return handleListComplianceDocuments(req);
     if (pathname === "/api/compliance/documents" && req.method === "POST") return handleCreateComplianceDocument(req);
