@@ -16,6 +16,7 @@
 import { sql, esc } from "~/utils/sql";
 import { db, jsonResponse, getAuthUser, isComplianceAdmin, isComplianceReviewer } from "./middleware";
 import { logAuditEvent } from "./admin";
+import { chunkDocumentIntoSections } from "~/utils/document-parser";
 
 // ─── Role / permission model ───────────────────────────────────────────────────
 // Role checks are defined centrally in `middleware.ts` (ROLES / hasRole /
@@ -615,6 +616,72 @@ export async function handleCreateComplianceDocument(req: Request): Promise<Resp
   } catch (e) {
     console.error("create document error:", e);
     return jsonResponse({ error: "Failed to create document" }, 500);
+  }
+}
+
+// ─── POST /api/compliance/documents/ingest ─────────────────────────────────────
+// Accepts plain-text / markdown content (JSON body `content` OR multipart `.txt`/
+// `.md` file) and auto-chunks it into `compliance_document_sections`.
+//
+// This is the dependency-free seam for future PDF/DOCX: those formats get
+// converted to text first, then reuse `chunkDocumentIntoSections` here.
+export async function handleIngestComplianceDocument(req: Request): Promise<Response> {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return jsonResponse({ error: "Not authenticated" }, 401);
+    if (!canManageCompliance(user)) {
+      return jsonResponse({ error: "Only admins and managers can ingest documents" }, 403);
+    }
+
+    const contentType = req.headers.get("content-type") || "";
+    let name = "";
+    let content = "";
+    let fileType = "text/plain";
+
+    if (contentType.includes("multipart/form-data")) {
+      const formData = await req.formData();
+      const file = formData.get("file") as File | null;
+      name = (formData.get("name") as string) || file?.name || "Untitled document";
+      if (!file) return jsonResponse({ error: "No file provided" }, 400);
+
+      const lower = file.name.toLowerCase();
+      if (!/\.(txt|md|markdown|text)$/.test(lower) && !file.type.startsWith("text/")) {
+        return jsonResponse({ error: "Only .txt / .md / text files are supported (PDF/DOCX deferred)" }, 400);
+      }
+      content = await file.text();
+      fileType = file.type || (/(\.md|\.markdown)$/.test(lower) ? "text/markdown" : "text/plain");
+    } else {
+      const body = await req.json();
+      name = body.name;
+      content = body.content ?? body.text ?? "";
+      if (body.file_type) fileType = body.file_type;
+    }
+
+    if (!name || !String(name).trim()) return jsonResponse({ error: "Name is required" }, 400);
+    if (!content || !String(content).trim()) return jsonResponse({ error: "Document content is empty" }, 400);
+
+    const sections = chunkDocumentIntoSections(String(content));
+    if (sections.length === 0) return jsonResponse({ error: "Could not extract any sections from document" }, 400);
+
+    const id = crypto.randomUUID();
+    await db(sql`
+      INSERT INTO compliance_documents (id, company_id, name, file_type, storage_path, uploaded_by, status)
+      VALUES (${id}, ${user.companyId}, ${String(name).trim()}, ${fileType}, ${""}, ${user.id}, ${"parsed"})
+    `);
+
+    for (const s of sections) {
+      await db(sql`
+        INSERT INTO compliance_document_sections (id, document_id, section_title, content_text, sort_order)
+        VALUES (${crypto.randomUUID()}, ${id}, ${s.section_title}, ${s.content_text}, ${s.sort_order})
+      `);
+    }
+
+    await audit(user, "ingest_compliance_document", "compliance_document", id, `Ingested compliance document: ${String(name).trim()} (${sections.length} sections)`);
+
+    return jsonResponse({ success: true, id, sectionCount: sections.length, sections });
+  } catch (e) {
+    console.error("ingest document error:", e);
+    return jsonResponse({ error: "Failed to ingest document" }, 500);
   }
 }
 

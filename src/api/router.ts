@@ -34,6 +34,7 @@ import {
   handleReviewComplianceFinding,
   handleListComplianceDocuments,
   handleCreateComplianceDocument,
+  handleIngestComplianceDocument,
   handleGetComplianceDocument,
   handleListComplianceEscalationRules,
   handleCreateComplianceEscalationRule,
@@ -382,6 +383,7 @@ export async function routeApi(req: Request): Promise<Response | null> {
     // Documents (policy sources)
     if (pathname === "/api/compliance/documents" && req.method === "GET") return handleListComplianceDocuments(req);
     if (pathname === "/api/compliance/documents" && req.method === "POST") return handleCreateComplianceDocument(req);
+    if (pathname === "/api/compliance/documents/ingest" && req.method === "POST") return handleIngestComplianceDocument(req);
     if (pathname.match(/^\/api\/compliance\/documents\/[^/]+$/) && req.method === "GET") return handleGetComplianceDocument(req);
     // Escalation rules
     if (pathname === "/api/compliance/escalation-rules" && req.method === "GET") return handleListComplianceEscalationRules(req);
