@@ -664,7 +664,9 @@ export async function routeApi(req: Request): Promise<Response | null> {
     return null;
   } finally {
     const duration = Date.now() - startTime;
-    logRequest(req, duration > 0 ? 200 : 500, duration);
+    // The actual status is returned by the handler above; log 200 for request
+    // tracing (previously mislabeled sub-1ms requests as 500).
+    logRequest(req, 200, duration);
   }
 }
 
