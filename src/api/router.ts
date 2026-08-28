@@ -27,6 +27,7 @@ import {
   handleCreateComplianceRule,
   handleUpdateComplianceRule,
   handleDeleteComplianceRule,
+  handleApproveComplianceRule,
   handleListComplianceChecks,
   handleListComplianceFindings,
   handleGetComplianceFinding,
@@ -36,6 +37,7 @@ import {
   handleCreateComplianceDocument,
   handleIngestComplianceDocument,
   handleGetComplianceDocument,
+  handleSuggestComplianceRules,
   handleListComplianceEscalationRules,
   handleCreateComplianceEscalationRule,
   handleUpdateComplianceEscalationRule,
@@ -372,6 +374,7 @@ export async function routeApi(req: Request): Promise<Response | null> {
     if (pathname === "/api/compliance/rules" && req.method === "GET") return handleListComplianceRules(req);
     if (pathname === "/api/compliance/rules" && req.method === "POST") return handleCreateComplianceRule(req);
     if (pathname.match(/^\/api\/compliance\/rules\/[^/]+\/versions$/) && req.method === "GET") return handleListComplianceRuleVersions(req);
+    if (pathname.match(/^\/api\/compliance\/rules\/[^/]+\/approve$/) && req.method === "POST") return handleApproveComplianceRule(req);
     if (pathname.match(/^\/api\/compliance\/rules\/[^/]+$/) && req.method === "GET") return handleGetComplianceRule(req);
     if (pathname.match(/^\/api\/compliance\/rules\/[^/]+$/) && req.method === "PUT") return handleUpdateComplianceRule(req);
     if (pathname.match(/^\/api\/compliance\/rules\/[^/]+$/) && req.method === "DELETE") return handleDeleteComplianceRule(req);
@@ -388,6 +391,7 @@ export async function routeApi(req: Request): Promise<Response | null> {
     if (pathname === "/api/compliance/documents" && req.method === "GET") return handleListComplianceDocuments(req);
     if (pathname === "/api/compliance/documents" && req.method === "POST") return handleCreateComplianceDocument(req);
     if (pathname === "/api/compliance/documents/ingest" && req.method === "POST") return handleIngestComplianceDocument(req);
+    if (pathname.match(/^\/api\/compliance\/documents\/[^/]+\/suggest-rules$/) && req.method === "POST") return handleSuggestComplianceRules(req);
     if (pathname.match(/^\/api\/compliance\/documents\/[^/]+$/) && req.method === "GET") return handleGetComplianceDocument(req);
     // Escalation rules
     if (pathname === "/api/compliance/escalation-rules" && req.method === "GET") return handleListComplianceEscalationRules(req);

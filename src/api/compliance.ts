@@ -17,6 +17,7 @@ import { sql, esc } from "~/utils/sql";
 import { db, jsonResponse, getAuthUser, isComplianceAdmin, isComplianceReviewer } from "./middleware";
 import { logAuditEvent } from "./admin";
 import { chunkDocumentIntoSections } from "~/utils/document-parser";
+import { getOpenAIConfig, callOpenAI, getComplianceRuleSuggestionSystemPrompt } from "./openai";
 
 // ─── Role / permission model ───────────────────────────────────────────────────
 // Role checks are defined centrally in `middleware.ts` (ROLES / hasRole /
@@ -43,7 +44,7 @@ export const RULE_TYPES = [
   "must_receive_consent",
   "contextual_review",
 ] as const;
-export const RULE_STATUSES = ["draft", "active", "archived"] as const;
+export const RULE_STATUSES = ["draft", "active", "archived", "suggested"] as const;
 export const FINDING_STATUSES = [
   "AI_FLAGGED",
   "PENDING_REVIEW",
@@ -327,6 +328,50 @@ export async function handleDeleteComplianceRule(req: Request): Promise<Response
   } catch (e) {
     console.error("delete rule error:", e);
     return jsonResponse({ error: "Failed to delete rule" }, 500);
+  }
+}
+
+// ─── POST /api/compliance/rules/:id/approve ───────────────────────────────────
+// Flips a SUGGESTED (AI-drafted) rule to ACTIVE. A human must explicitly approve
+// each AI-suggested rule — suggested rules are never auto-activated.
+// Consistent with C-1: writes an immutable pre-approval snapshot + audit event.
+export async function handleApproveComplianceRule(req: Request): Promise<Response> {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return jsonResponse({ error: "Not authenticated" }, 401);
+    if (!canManageCompliance(user)) {
+      return jsonResponse({ error: "Only admins and managers can approve rules" }, 403);
+    }
+
+    const ruleId = new URL(req.url).pathname.split("/")[4]; // /api/compliance/rules/:id/approve
+    if (!ruleId) return jsonResponse({ error: "Rule ID required" }, 400);
+
+    const rows = await db(sql`SELECT * FROM compliance_rules WHERE id = ${ruleId} AND company_id = ${user.companyId}`);
+    if (rows.length === 0) return jsonResponse({ error: "Rule not found" }, 404);
+    const rule = rows[0];
+
+    if ((rule.status || "").toLowerCase() !== "suggested") {
+      return jsonResponse({ error: "Only SUGGESTED rules can be approved" }, 400);
+    }
+
+    const newVersion = (Number(rule.version) || 1) + 1;
+
+    // Snapshot the pre-approval state — never overwrite history.
+    await snapshotRuleVersion(rule, user.id);
+
+    await db(sql`
+      UPDATE compliance_rules
+      SET status = 'active', is_active = 1, version = ${newVersion}, updated_at = datetime('now')
+      WHERE id = ${ruleId} AND company_id = ${user.companyId}
+    `);
+
+    await audit(user, "approve_compliance_rule", "compliance_rule", ruleId, `Approved AI-suggested rule "${rule.name}" (v${newVersion})`);
+
+    const updated = await db(sql`SELECT * FROM compliance_rules WHERE id = ${ruleId} AND company_id = ${user.companyId}`);
+    return jsonResponse({ success: true, version: newVersion, rule: updated.length > 0 ? serializeRule(updated[0]) : null });
+  } catch (e) {
+    console.error("approve rule error:", e);
+    return jsonResponse({ error: "Failed to approve rule" }, 500);
   }
 }
 
@@ -703,6 +748,114 @@ export async function handleGetComplianceDocument(req: Request): Promise<Respons
   } catch (e) {
     console.error("get document error:", e);
     return jsonResponse({ error: "Failed to load document" }, 500);
+  }
+}
+
+// ─── POST /api/compliance/documents/:id/suggest-rules ─────────────────────────
+// Takes an ingested document's sections, sends them to OpenAI with a dedicated
+// prompt, and inserts the returned rules as status = 'suggested' (is_active = 0).
+// Core Principle 2: suggested rules are NEVER auto-activated — a human approves
+// each via POST /api/compliance/rules/:id/approve.
+export async function handleSuggestComplianceRules(req: Request): Promise<Response> {
+  try {
+    const user = await getAuthUser(req);
+    if (!user) return jsonResponse({ error: "Not authenticated" }, 401);
+    if (!canManageCompliance(user)) {
+      return jsonResponse({ error: "Only admins and managers can suggest rules" }, 403);
+    }
+
+    const documentId = new URL(req.url).pathname.split("/")[4]; // /api/compliance/documents/:id/suggest-rules
+    if (!documentId) return jsonResponse({ error: "Document ID required" }, 400);
+
+    const docs = await db(sql`SELECT * FROM compliance_documents WHERE id = ${documentId} AND company_id = ${user.companyId}`);
+    if (docs.length === 0) return jsonResponse({ error: "Document not found" }, 404);
+    const doc = docs[0];
+
+    const sections = await db(sql`
+      SELECT * FROM compliance_document_sections WHERE document_id = ${documentId} ORDER BY sort_order
+    `);
+    if (sections.length === 0) return jsonResponse({ error: "Document has no sections to analyze" }, 400);
+
+    const config = await getOpenAIConfig(user.companyId);
+    if (!config || !config.apiKey) {
+      return jsonResponse({ error: "AI provider is not configured. Configure an API key first." }, 400);
+    }
+
+    const sectionsText = sections
+      .map((s: any, i: number) => `### ${s.section_title || `Section ${i + 1}`}\n${s.content_text || ""}`)
+      .join("\n\n");
+
+    const result = await callOpenAI(config, {
+      model: config.model,
+      messages: [
+        { role: "system", content: getComplianceRuleSuggestionSystemPrompt() },
+        { role: "user", content: `DOCUMENT: ${doc.name || "Untitled"}\n\n${sectionsText}` },
+      ],
+      max_tokens: 4096,
+      temperature: 0.3,
+      response_format: { type: "json_object" },
+    });
+
+    if (!result.success || !result.content) {
+      return jsonResponse({ error: result.error || "AI suggestion failed" }, 502);
+    }
+
+    let parsed: any;
+    try {
+      parsed = JSON.parse(result.content);
+    } catch {
+      return jsonResponse({ error: "AI returned invalid JSON" }, 502);
+    }
+
+    const suggestions = Array.isArray(parsed.suggested_rules) ? parsed.suggested_rules : [];
+    const arr = (v: unknown) => JSON.stringify(Array.isArray(v) ? v : []);
+    const created: any[] = [];
+    let skipped = 0;
+    const now = new Date().toISOString();
+
+    for (const s of suggestions) {
+      const name = String(s?.name || "").trim();
+      if (!name) { skipped++; continue; }
+
+      const ruleType = (RULE_TYPES as readonly string[]).includes(s.rule_type) ? s.rule_type : "must_say";
+      const severity = (RULE_SEVERITIES as readonly string[]).includes(s.severity) ? s.severity : "medium";
+      // Mirror prohibited_language into the legacy prohibited_phrases column for
+      // backward compatibility with the keyword check path.
+      const prohibitedLanguage = arr(s.prohibited_language);
+      const prohibitedPhrases = arr(Array.isArray(s.prohibited_phrases) && s.prohibited_phrases.length > 0 ? s.prohibited_phrases : s.prohibited_language);
+
+      const id = crypto.randomUUID();
+      await db(sql`
+        INSERT INTO compliance_rules (
+          id, company_id, name, description, script_required_phrases, prohibited_phrases,
+          category, severity, rule_type, approved_language, prohibited_language,
+          compliant_examples, noncompliant_examples, scope_type, scope_id,
+          effective_date, expiration_date, policy_owner, version, status,
+          source_document_id, is_ai_suggested, is_active, created_at, updated_at
+        ) VALUES (
+          ${id}, ${user.companyId}, ${name}, ${String(s.description || "")},
+          ${arr(s.script_required_phrases)}, ${prohibitedPhrases},
+          ${String(s.category || "")}, ${severity}, ${ruleType},
+          ${arr(s.approved_language)}, ${prohibitedLanguage},
+          ${arr(s.compliant_examples)}, ${arr(s.noncompliant_examples)},
+          ${""}, ${""}, ${null}, ${null}, ${String(s.policy_owner || "")}, 1, ${"suggested"},
+          ${documentId}, 1, 0, ${now}, ${now}
+        )
+      `);
+
+      const createdRows = await db(sql`SELECT * FROM compliance_rules WHERE id = ${id}`);
+      if (createdRows.length > 0) {
+        await snapshotRuleVersion(createdRows[0], user.id);
+        created.push(serializeRule(createdRows[0]));
+      }
+    }
+
+    await audit(user, "suggest_compliance_rules", "compliance_document", documentId, `AI suggested ${created.length} rule(s) from document: ${doc.name}`);
+
+    return jsonResponse({ success: true, suggested: created.length, skipped, rules: created });
+  } catch (e) {
+    console.error("suggest rules error:", e);
+    return jsonResponse({ error: "Failed to suggest rules" }, 500);
   }
 }
 
