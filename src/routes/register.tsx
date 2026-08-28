@@ -1,9 +1,16 @@
 import { useState, useEffect } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { Button } from "~/components/ui";
 
 export const Route = createFileRoute("/register")({
   component: RegisterPage,
 });
+
+const gridStyle: React.CSSProperties = {
+  backgroundImage:
+    "radial-gradient(circle at 1px 1px, var(--color-edge) 1px, transparent 0)",
+  backgroundSize: "40px 40px",
+};
 
 async function apiRegister(name: string, email: string, password: string, companyName: string) {
   const res = await fetch("/api/register", {
@@ -53,94 +60,90 @@ function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-surface-950 px-4">
-      <div className="absolute inset-0 grid-bg opacity-50" />
+    <div className="flex min-h-screen items-center justify-center bg-canvas text-ink px-4">
+      <div className="absolute inset-0 opacity-50" style={gridStyle} />
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-40 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-purple-600/20 blur-[120px]" />
+        <div className="absolute -top-40 left-1/2 h-[400px] w-[400px] sm:h-[500px] sm:w-[500px] -translate-x-1/2 rounded-full bg-accent-600/20 blur-[120px]" />
       </div>
 
       <div className="relative w-full max-w-md">
-        <div className="glass-card rounded-2xl p-8">
+        <div className="rounded-2xl border border-edge bg-panel p-8">
           <div className="mb-8 text-center">
             <Link to="/" className="inline-flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-accent-500 to-accent-600">
                 <svg className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M10 2L11.5 7L17 7L12.5 10.5L14.5 16L10 12.5L5.5 16L7.5 10.5L3 7L8.5 7L10 2Z" />
                 </svg>
               </div>
-              <span className="text-lg font-bold text-white">ElevateAI</span>
+              <span className="text-lg font-bold text-ink">ElevateAI</span>
             </Link>
-            <p className="mt-2 text-sm text-gray-400">Create your company account</p>
+            <p className="mt-2 text-sm text-ink-muted">Create your company account</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="rounded-lg bg-red-900/20 p-3 text-sm text-red-400 ring-1 ring-red-500/20">
+              <div className="rounded-lg bg-red-500/10 p-3 text-sm text-red-400 ring-1 ring-red-500/25">
                 {error}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-300">Company Name</label>
+              <label className="block text-sm font-medium text-ink-muted">Company Name</label>
               <input
                 type="text"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                className="mt-1 block w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                className="mt-1 block w-full rounded-lg border border-edge bg-panel-raised px-4 py-2.5 text-sm text-ink placeholder-ink-faint focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-focus/40"
                 placeholder="Your Company Inc."
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300">Your Name</label>
+              <label className="block text-sm font-medium text-ink-muted">Your Name</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1 block w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                className="mt-1 block w-full rounded-lg border border-edge bg-panel-raised px-4 py-2.5 text-sm text-ink placeholder-ink-faint focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-focus/40"
                 placeholder="John Doe"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300">Email</label>
+              <label className="block text-sm font-medium text-ink-muted">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 block w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                className="mt-1 block w-full rounded-lg border border-edge bg-panel-raised px-4 py-2.5 text-sm text-ink placeholder-ink-faint focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-focus/40"
                 placeholder="you@company.com"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300">Password</label>
+              <label className="block text-sm font-medium text-ink-muted">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                className="mt-1 block w-full rounded-lg border border-edge bg-panel-raised px-4 py-2.5 text-sm text-ink placeholder-ink-faint focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-focus/40"
                 placeholder="At least 6 characters"
                 required
                 minLength={6}
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary w-full"
-            >
+            <Button type="submit" fullWidth disabled={loading}>
               {loading ? "Creating account..." : "Create account"}
-            </button>
+            </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-gray-500">
+          <p className="mt-6 text-center text-sm text-ink-faint">
             Already have an account?{" "}
-            <Link to="/login" className="font-medium text-purple-400 hover:text-purple-300">
+            <Link to="/login" className="font-medium text-accent-fg hover:text-accent-300">
               Sign in
             </Link>
           </p>
