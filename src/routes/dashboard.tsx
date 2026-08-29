@@ -1,5 +1,6 @@
+import { LoadingSkeleton } from '~/components/GlassCard';
 import { useEffect, useState } from "react";
-import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import type { UserSession } from "~/components/layout/Header";
 import { DashboardShell } from "~/components/layout/DashboardShell";
 
@@ -30,9 +31,9 @@ function DashboardLayout() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="flex h-screen items-center justify-center bg-surface-950">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+          <LoadingSkeleton className="mx-auto mb-4 h-8 w-8 rounded-full" />
           <p className="text-sm text-gray-500">Loading...</p>
         </div>
       </div>
@@ -42,8 +43,10 @@ function DashboardLayout() {
   if (!user) return null;
 
   return (
-    <DashboardShell user={user}>
-      <Outlet />
-    </DashboardShell>
+    <div className="flex min-h-screen flex-col bg-surface-950">
+      <DashboardShell user={user}>
+        <Outlet />
+      </DashboardShell>
+    </div>
   );
 }

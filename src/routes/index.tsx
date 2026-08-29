@@ -33,12 +33,7 @@ function Navbar() {
         <div className="mx-auto mt-3 sm:mt-4 flex max-w-5xl items-center justify-between rounded-2xl border border-edge bg-panel/80 px-4 sm:px-6 py-2.5 sm:py-3 backdrop-blur-xl">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-accent-500 to-accent-600">
-              <svg className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10 2L11.5 7L17 7L12.5 10.5L14.5 16L10 12.5L5.5 16L7.5 10.5L3 7L8.5 7L10 2Z" />
-              </svg>
-            </div>
-            <span className="text-lg font-bold text-ink">ElevateAI</span>
+            <img src="/logo.png" alt="ElevateAI" className="h-8 w-auto" />
           </Link>
 
           {/* Desktop Nav Links */}
@@ -566,7 +561,7 @@ function PricingSection() {
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="whitespace-nowrap rounded-full bg-accent-600 px-4 py-1 text-xs font-semibold text-white">
+                  <span className="whitespace-nowrap rounded-full bg-accent-600 px-4 py-1 text-xs font-semibold text-ink">
                     Most popular
                   </span>
                 </div>
@@ -594,7 +589,7 @@ function PricingSection() {
                 rel="noopener noreferrer"
                 className={`mt-8 flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-semibold transition-all ${
                   plan.popular
-                    ? "bg-accent-600 text-white shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98]"
+                    ? "bg-accent-600 text-ink shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98]"
                     : "border border-edge bg-panel-raised text-ink hover:border-edge-strong hover:bg-graphite-850 active:scale-[0.98]"
                 }`}
               >
@@ -781,12 +776,7 @@ function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-12 py-8 sm:py-12">
         <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-accent-500 to-accent-600">
-              <svg className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10 2L11.5 7L17 7L12.5 10.5L14.5 16L10 12.5L5.5 16L7.5 10.5L3 7L8.5 7L10 2Z" />
-              </svg>
-            </div>
-            <span className="text-sm font-bold text-ink">ElevateAI</span>
+            <img src="/logo.png" alt="ElevateAI" className="h-6 w-auto" />
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-ink-muted">
             <a href="#features" className="transition-colors hover:text-ink">Features</a>

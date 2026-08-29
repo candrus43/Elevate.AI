@@ -79,18 +79,18 @@ export function InviteMemberModal({ open, onClose }: InviteMemberModalProps) {
 
       {/* Modal */}
       <div className="relative w-full max-w-md animate-fade-up">
-        <div className="glass-card rounded-2xl p-6 sm:p-8">
+        <div className="border border-edge bg-panel rounded-2xl p-6 sm:p-8">
           {/* Header */}
           <div className="mb-6 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-white">Invite Team Member</h2>
-              <p className="mt-1 text-sm text-gray-400">
+              <h2 className="text-lg font-bold text-ink">Invite Team Member</h2>
+              <p className="mt-1 text-sm text-ink-muted">
                 They'll receive an email to join your company
               </p>
             </div>
             <button
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 hover:bg-white/5 hover:text-white transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted hover:bg-panel-raised hover:text-ink transition-colors"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -118,7 +118,7 @@ export function InviteMemberModal({ open, onClose }: InviteMemberModalProps) {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              <label className="block text-sm font-medium text-ink-muted mb-1.5">
                 Email Address
               </label>
               <input
@@ -127,13 +127,13 @@ export function InviteMemberModal({ open, onClose }: InviteMemberModalProps) {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="colleague@company.com"
                 required
-                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-500 backdrop-blur-sm focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30"
+                className="w-full rounded-xl border border-edge bg-panel-raised px-4 py-2.5 text-sm text-ink placeholder-ink-faint backdrop-blur-sm focus:border-accent-500 focus:outline-none focus:ring-1 focus:ring-focus/40"
               />
             </div>
 
             {/* Role Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1.5">
+              <label className="block text-sm font-medium text-ink-muted mb-1.5">
                 Role
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -148,13 +148,13 @@ export function InviteMemberModal({ open, onClose }: InviteMemberModalProps) {
                     onClick={() => setRole(opt.value)}
                     className={`rounded-xl border p-3 text-center transition-all ${
                       role === opt.value
-                        ? "border-purple-500/50 bg-purple-500/10 text-purple-300"
-                        : "border-white/10 bg-white/5 text-gray-400 hover:border-white/20 hover:text-white"
+                        ? "border-accent-500/50 bg-accent-500/10 text-accent-300"
+                        : "border-edge bg-panel-raised text-ink-muted hover:border-white/20 hover:text-ink"
                     }`}
                   >
                     <span className="text-lg">{opt.icon}</span>
                     <p className="mt-1 text-xs font-medium">{opt.label}</p>
-                    <p className="text-[10px] text-gray-500 mt-0.5">{opt.desc}</p>
+                    <p className="text-[10px] text-ink-faint mt-0.5">{opt.desc}</p>
                   </button>
                 ))}
               </div>
@@ -165,14 +165,14 @@ export function InviteMemberModal({ open, onClose }: InviteMemberModalProps) {
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/10 hover:text-white transition-all"
+                className="flex-1 rounded-xl border border-edge bg-panel-raised px-4 py-2.5 text-sm font-medium text-ink-muted hover:bg-panel-raised hover:text-ink transition-all"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading || !email}
-                className="btn-primary flex-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98] transition-all flex-1 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">

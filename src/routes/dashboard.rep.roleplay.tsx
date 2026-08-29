@@ -216,13 +216,13 @@ function RepRoleplayPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Role Play</h1>
-          <p className="text-sm text-gray-400">Practice your sales skills with AI-powered scenarios</p>
+          <h1 className="text-2xl font-bold text-ink">Role Play</h1>
+          <p className="text-sm text-ink-muted">Practice your sales skills with AI-powered scenarios</p>
         </div>
 
-        <div className="glass-card rounded-xl p-8 text-center animate-fade-up">
+        <div className="border border-edge bg-panel rounded-xl p-8 text-center animate-fade-up">
           <span className="text-5xl">🎯</span>
-          <h2 className="mt-4 text-xl font-bold text-white">Session Complete!</h2>
+          <h2 className="mt-4 text-xl font-bold text-ink">Session Complete!</h2>
 
           <div className="mt-6 flex justify-center">
             <div className="relative h-28 w-28">
@@ -244,31 +244,31 @@ function RepRoleplayPage() {
                 </defs>
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-3xl font-bold text-white">{sessionResult.score}</span>
+                <span className="text-3xl font-bold text-ink">{sessionResult.score}</span>
               </div>
             </div>
           </div>
 
-          <p className="mt-2 text-sm text-gray-400">out of 100</p>
+          <p className="mt-2 text-sm text-ink-muted">out of 100</p>
 
           {sessionResult.totalTurns > 0 && (
-            <p className="mt-3 text-xs text-gray-500">
+            <p className="mt-3 text-xs text-ink-faint">
               {sessionResult.totalTurns} turns · {sessionResult.durationSeconds > 0 ? `${Math.round(sessionResult.durationSeconds / 60)} min ${sessionResult.durationSeconds % 60} sec` : ""}
             </p>
           )}
 
           <div className="mt-6 max-w-lg mx-auto">
-            <div className="rounded-xl bg-white/5 border border-white/10 p-4 text-left">
-              <p className="text-xs font-semibold text-purple-400 mb-2 uppercase tracking-wider">Feedback</p>
-              <p className="text-sm text-gray-300 whitespace-pre-line">{sessionResult.feedback}</p>
+            <div className="rounded-xl bg-panel-raised border border-edge p-4 text-left">
+              <p className="text-xs font-semibold text-accent-300 mb-2 uppercase tracking-wider">Feedback</p>
+              <p className="text-sm text-ink-muted whitespace-pre-line">{sessionResult.feedback}</p>
             </div>
           </div>
 
           <div className="mt-8 flex gap-3 justify-center">
-            <button onClick={() => setSessionResult(null)} className="btn-primary">
+            <button onClick={() => setSessionResult(null)} className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98] transition-all">
               Practice Again
             </button>
-            <button onClick={() => window.location.reload()} className="btn-ghost text-gray-400">
+            <button onClick={() => window.location.reload()} className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-ink-muted hover:bg-panel-raised hover:text-ink transition-all text-ink-muted">
               Choose Different Scenario
             </button>
           </div>
@@ -280,8 +280,8 @@ function RepRoleplayPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Role Play</h1>
-        <p className="text-sm text-gray-400">Practice your sales skills with AI-powered scenarios</p>
+        <h1 className="text-2xl font-bold text-ink">Role Play</h1>
+        <p className="text-sm text-ink-muted">Practice your sales skills with AI-powered scenarios</p>
       </div>
 
       {activeScenario === null ? (
@@ -293,7 +293,7 @@ function RepRoleplayPage() {
                 key={scenario.id}
                 onClick={() => startScenario(scenario.id)}
                 disabled={sending}
-                className="glass-card rounded-xl p-5 text-left animate-fade-up hover:border-purple-500/30 group disabled:opacity-60 disabled:cursor-not-allowed"
+                className="border border-edge bg-panel rounded-xl p-5 text-left animate-fade-up hover:border-accent-500/30 group disabled:opacity-60 disabled:cursor-not-allowed"
                 style={{ animationDelay: `${i * 50}ms` }}
               >
                 <div className="flex items-center gap-3 mb-3">
@@ -308,9 +308,9 @@ function RepRoleplayPage() {
                     {scenario.difficulty}
                   </span>
                 </div>
-                <h3 className="text-sm font-semibold text-white group-hover:text-purple-300 transition-colors">{scenario.title}</h3>
-                <p className="mt-1 text-xs text-gray-400 line-clamp-2">{scenario.description}</p>
-                <div className="mt-3 text-xs text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                <h3 className="text-sm font-semibold text-ink group-hover:text-accent-300 transition-colors">{scenario.title}</h3>
+                <p className="mt-1 text-xs text-ink-muted line-clamp-2">{scenario.description}</p>
+                <div className="mt-3 text-xs text-accent-300 opacity-0 group-hover:opacity-100 transition-opacity">
                   Start scenario →
                 </div>
               </button>
@@ -319,25 +319,25 @@ function RepRoleplayPage() {
         </>
       ) : (
         /* Active Scenario Chat */
-        <div className="glass-card rounded-xl overflow-hidden flex flex-col" style={{ minHeight: "500px" }}>
+        <div className="border border-edge bg-panel rounded-xl overflow-hidden flex flex-col" style={{ minHeight: "500px" }}>
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-white/5 px-5 py-3">
+          <div className="flex items-center justify-between border-b border-edge px-5 py-3">
             <div>
-              <h2 className="text-sm font-semibold text-white">
+              <h2 className="text-sm font-semibold text-ink">
                 {session?.scenario?.title || "Role Play"}
               </h2>
-              <p className="text-[10px] text-gray-500">
+              <p className="text-[10px] text-ink-faint">
                 AI Roleplay Session · Stage {session ? session.stage + 1 : 1} · Turn {session ? session.turn + 1 : 1}
               </p>
             </div>
             <div className="flex items-center gap-3">
               {sending && (
-                <span className="flex items-center gap-1.5 text-[10px] text-purple-400">
-                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse" />
+                <span className="flex items-center gap-1.5 text-[10px] text-accent-300">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent-400 animate-pulse" />
                   AI thinking...
                 </span>
               )}
-              <button onClick={endScenario} className="btn-ghost text-xs text-red-400 hover:text-red-300">
+              <button onClick={endScenario} className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-ink-muted hover:bg-panel-raised hover:text-ink transition-all text-xs text-red-400 hover:text-red-300">
                 End Session
               </button>
             </div>
@@ -349,8 +349,8 @@ function RepRoleplayPage() {
               <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[85%] rounded-xl px-4 py-2.5 ${
                   msg.role === "user"
-                    ? "bg-purple-500/20 text-purple-100 border border-purple-500/20"
-                    : "bg-white/5 text-gray-200 border border-white/10"
+                    ? "bg-accent-500/20 text-accent-100 border border-accent-500/25"
+                    : "bg-panel-raised text-ink-muted border border-edge"
                 }`}>
                   <p className="text-xs font-medium mb-1 opacity-60">
                     {msg.role === "user" ? "You" : "AI Coach"}
@@ -362,8 +362,8 @@ function RepRoleplayPage() {
                   </p>
                   <p className="text-sm whitespace-pre-line">{msg.text}</p>
                   {msg.feedback && (
-                    <div className="mt-2 pt-2 border-t border-white/10">
-                      <p className="text-[10px] text-gray-500 whitespace-pre-line">{msg.feedback}</p>
+                    <div className="mt-2 pt-2 border-t border-edge">
+                      <p className="text-[10px] text-ink-faint whitespace-pre-line">{msg.feedback}</p>
                     </div>
                   )}
                 </div>
@@ -373,7 +373,7 @@ function RepRoleplayPage() {
           </div>
 
           {/* Input */}
-          <div className="border-t border-white/5 p-4">
+          <div className="border-t border-edge p-4">
             <div className="flex gap-3">
               <input
                 type="text"
@@ -382,12 +382,12 @@ function RepRoleplayPage() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 disabled={sending || !!sessionResult}
-                className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-500 backdrop-blur-sm focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30 disabled:opacity-40"
+                className="flex-1 rounded-xl border border-edge bg-panel-raised px-4 py-2.5 text-sm text-ink placeholder-ink-faint backdrop-blur-sm focus:border-accent-500/50 focus:outline-none focus:ring-1 focus:ring-focus/40 disabled:opacity-40"
               />
               <button
                 onClick={sendMessage}
                 disabled={!input.trim() || sending || !!sessionResult}
-                className="btn-primary px-4 py-2.5 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98] transition-all px-4 py-2.5 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {sending ? "..." : "Send"}
               </button>
@@ -411,19 +411,19 @@ function RepRoleplaySkeleton() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <div className="h-7 w-28 rounded-lg bg-white/5 animate-pulse" />
-        <div className="h-4 w-56 rounded-lg bg-white/5 animate-pulse" />
+        <div className="h-7 w-28 rounded-lg bg-panel-raised animate-pulse" />
+        <div className="h-4 w-56 rounded-lg bg-panel-raised animate-pulse" />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="glass-card rounded-xl p-5 space-y-3">
+          <div key={i} className="border border-edge bg-panel rounded-xl p-5 space-y-3">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded bg-white/5 animate-pulse" />
-              <div className="h-4 w-20 rounded-full bg-white/5 animate-pulse" />
+              <div className="h-8 w-8 rounded bg-panel-raised animate-pulse" />
+              <div className="h-4 w-20 rounded-full bg-panel-raised animate-pulse" />
             </div>
-            <div className="h-4 w-32 rounded bg-white/5 animate-pulse" />
-            <div className="h-3 w-full rounded bg-white/5 animate-pulse" />
-            <div className="h-3 w-3/4 rounded bg-white/5 animate-pulse" />
+            <div className="h-4 w-32 rounded bg-panel-raised animate-pulse" />
+            <div className="h-3 w-full rounded bg-panel-raised animate-pulse" />
+            <div className="h-3 w-3/4 rounded bg-panel-raised animate-pulse" />
           </div>
         ))}
       </div>

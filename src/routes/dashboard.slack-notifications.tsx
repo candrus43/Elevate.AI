@@ -40,8 +40,8 @@ function SlackNotifications() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Slack Notifications</h1>
-          <p className="text-sm text-gray-400 mt-1">Configure which events send notifications to Slack</p>
+          <h1 className="text-2xl font-bold text-ink">Slack Notifications</h1>
+          <p className="text-sm text-ink-muted mt-1">Configure which events send notifications to Slack</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 rounded-2xl px-4 py-2.5"
@@ -50,8 +50,8 @@ function SlackNotifications() {
               border: "1px solid rgba(255, 255, 255, 0.08)",
             }}
           >
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-gradient-to-br from-purple-500 to-indigo-600 text-xs font-bold text-white">SL</div>
-            <span className="text-sm font-medium text-gray-300">Connected to Slack</span>
+            <div className="flex h-6 w-6 items-center justify-center rounded bg-gradient-to-br from-accent-500 to-accent-600 text-xs font-bold text-white">SL</div>
+            <span className="text-sm font-medium text-ink-muted">Connected to Slack</span>
             <span className="h-2 w-2 rounded-full bg-green-500" />
           </div>
         </div>
@@ -59,22 +59,22 @@ function SlackNotifications() {
 
       <GlassCard>
         <GlassCardHeader>
-          <h3 className="text-lg font-semibold text-white">Notification Preferences</h3>
+          <h3 className="text-lg font-semibold text-ink">Notification Preferences</h3>
         </GlassCardHeader>
         <GlassCardBody divide>
           {notifications.map((n) => (
             <GlassCardRow key={n.id}>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="font-medium text-white">{n.event}</p>
+                  <p className="font-medium text-ink">{n.event}</p>
                   <GlassBadge>{n.channel}</GlassBadge>
                 </div>
-                <p className="text-sm text-gray-400 mt-0.5">{n.description}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{n.frequency}</p>
+                <p className="text-sm text-ink-muted mt-0.5">{n.description}</p>
+                <p className="text-xs text-ink-faint mt-0.5">{n.frequency}</p>
               </div>
               <button
                 onClick={() => toggleNotification(n.id)}
-                className={`relative ml-4 inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors ${n.enabled ? "bg-purple-600" : "bg-white/10"}`}
+                className={`relative ml-4 inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors ${n.enabled ? "bg-accent-600" : "bg-panel-raised"}`}
                 role="switch"
                 aria-checked={n.enabled}
                 aria-label={`Toggle ${n.event}`}
@@ -94,14 +94,14 @@ function SlackNotifications() {
                 <span className="text-lg">📢</span>
               </div>
               <div>
-                <p className="font-medium text-white">Configure Channels</p>
-                <p className="text-xs text-gray-500">Manage Slack channels</p>
+                <p className="font-medium text-ink">Configure Channels</p>
+                <p className="text-xs text-ink-faint">Manage Slack channels</p>
               </div>
             </div>
             <div className="space-y-2">
               {["#coaching-alerts", "#team-reports", "#compliance", "#celebrations", "#executive", "#team-admin"].map((ch, i) => (
                 <div key={i} className="flex items-center justify-between rounded-xl px-3 py-2" style={{ background: "rgba(255, 255, 255, 0.03)" }}>
-                  <span className="text-sm text-gray-300">{ch}</span>
+                  <span className="text-sm text-ink-muted">{ch}</span>
                   <span className="text-xs text-green-400">✓</span>
                 </div>
               ))}
@@ -115,8 +115,8 @@ function SlackNotifications() {
                 <span className="text-lg">📊</span>
               </div>
               <div>
-                <p className="font-medium text-white">Digest Schedule</p>
-                <p className="text-xs text-gray-500">Configure frequency</p>
+                <p className="font-medium text-ink">Digest Schedule</p>
+                <p className="text-xs text-ink-faint">Configure frequency</p>
               </div>
             </div>
             <div className="space-y-2">
@@ -133,8 +133,8 @@ function SlackNotifications() {
                 <span className="text-lg">🔔</span>
               </div>
               <div>
-                <p className="font-medium text-white">Test Notification</p>
-                <p className="text-xs text-gray-500">Send a test to Slack</p>
+                <p className="font-medium text-ink">Test Notification</p>
+                <p className="text-xs text-ink-faint">Send a test to Slack</p>
               </div>
             </div>
             <GlassButton variant="primary" className="!w-full">Send Test</GlassButton>

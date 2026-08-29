@@ -198,20 +198,20 @@ function SettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Settings</h1>
-        <p className="text-sm text-gray-400">Manage your account and company preferences</p>
+        <h1 className="text-2xl font-bold text-ink">Settings</h1>
+        <p className="text-sm text-ink-muted">Manage your account and company preferences</p>
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-2 border-b border-white/10 pb-1">
+      <div className="flex gap-2 border-b border-edge pb-1">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`flex items-center gap-2 rounded-t-xl px-4 py-2.5 text-sm font-medium transition-all ${
               activeTab === tab.key
-                ? "bg-white/5 text-white border-b-2 border-purple-500"
-                : "text-gray-400 hover:text-white hover:bg-white/5"
+                ? "bg-panel-raised text-ink border-b-2 border-accent-500"
+                : "text-ink-muted hover:text-ink hover:bg-panel-raised"
             }`}
           >
             <span>{tab.icon}</span>
@@ -223,8 +223,8 @@ function SettingsPage() {
       {/* Company Settings Tab */}
       {activeTab === "company" && (
         <div className="space-y-6">
-          <div className="glass-card rounded-xl p-5 sm:p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Company Information</h2>
+          <div className="border border-edge bg-panel rounded-xl p-5 sm:p-6">
+            <h2 className="text-lg font-semibold text-ink mb-4">Company Information</h2>
             <form onSubmit={handleUpdateCompany} className="space-y-4">
               {companyError && (
                 <div className="rounded-lg bg-red-900/20 p-3 text-sm text-red-400 ring-1 ring-red-500/20">{companyError}</div>
@@ -238,23 +238,23 @@ function SettingsPage() {
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Company Name</label>
+                <label className="block text-sm font-medium text-ink-muted mb-1">Company Name</label>
                 <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30" />
+                  className="w-full rounded-xl border border-edge bg-panel-raised px-4 py-2.5 text-sm text-ink placeholder-ink-faint focus:border-accent-500/50 focus:outline-none focus:ring-1 focus:ring-focus/40" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Slug</label>
+                  <label className="block text-sm font-medium text-ink-muted mb-1">Slug</label>
                   <input type="text" value={company?.slug || ""} disabled
-                    className="w-full rounded-xl border border-white/5 bg-white/5 px-4 py-2.5 text-sm text-gray-500 cursor-not-allowed" />
+                    className="w-full rounded-xl border border-edge bg-panel-raised px-4 py-2.5 text-sm text-ink-faint cursor-not-allowed" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Plan</label>
+                  <label className="block text-sm font-medium text-ink-muted mb-1">Plan</label>
                   <div className="flex items-center gap-3">
                     <input type="text" value={`${company?.tier?.charAt(0).toUpperCase()}${company?.tier?.slice(1) || "Core"}`} disabled
-                      className="flex-1 rounded-xl border border-white/5 bg-white/5 px-4 py-2.5 text-sm text-gray-500 cursor-not-allowed" />
+                      className="flex-1 rounded-xl border border-edge bg-panel-raised px-4 py-2.5 text-sm text-ink-faint cursor-not-allowed" />
                     <a href={stripeLinks[company?.tier] || stripeLinks.core} target="_blank" rel="noopener noreferrer"
-                      className="rounded-xl bg-purple-500/10 border border-purple-500/30 px-4 py-2.5 text-xs font-medium text-purple-300 hover:bg-purple-500/20 transition-all whitespace-nowrap">
+                      className="rounded-xl bg-accent-500/10 border border-accent-500/30 px-4 py-2.5 text-xs font-medium text-accent-300 hover:bg-accent-500/20 transition-all whitespace-nowrap">
                       {company?.tier === "enterprise" ? "Manage" : "Upgrade →"}
                     </a>
                   </div>
@@ -262,29 +262,29 @@ function SettingsPage() {
               </div>
               {user?.role === "admin" && (
                 <button type="submit" disabled={companyLoading || !companyName}
-                  className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed">
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                   {companyLoading ? "Saving..." : "Save Changes"}
                 </button>
               )}
             </form>
           </div>
 
-          <div className="glass-card rounded-xl p-5 sm:p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Usage & Team</h2>
+          <div className="border border-edge bg-panel rounded-xl p-5 sm:p-6">
+            <h2 className="text-lg font-semibold text-ink mb-4">Usage & Team</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="rounded-xl bg-white/5 p-4 text-center">
-                <p className="text-2xl font-bold text-white">{company?.teamSize || 0}</p>
-                <p className="text-xs text-gray-400 mt-1">Team Members</p>
+              <div className="rounded-xl bg-panel-raised p-4 text-center">
+                <p className="text-2xl font-bold text-ink">{company?.teamSize || 0}</p>
+                <p className="text-xs text-ink-muted mt-1">Team Members</p>
               </div>
-              <div className="rounded-xl bg-white/5 p-4 text-center">
-                <p className="text-2xl font-bold text-white capitalize">{company?.tier || "core"}</p>
-                <p className="text-xs text-gray-400 mt-1">Current Plan</p>
+              <div className="rounded-xl bg-panel-raised p-4 text-center">
+                <p className="text-2xl font-bold text-ink capitalize">{company?.tier || "core"}</p>
+                <p className="text-xs text-ink-muted mt-1">Current Plan</p>
               </div>
-              <div className="rounded-xl bg-white/5 p-4 text-center">
-                <p className="text-2xl font-bold text-white">
+              <div className="rounded-xl bg-panel-raised p-4 text-center">
+                <p className="text-2xl font-bold text-ink">
                   {company?.created_at ? new Date(company.created_at).toLocaleDateString() : "—"}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">Account Created</p>
+                <p className="text-xs text-ink-muted mt-1">Account Created</p>
               </div>
             </div>
           </div>
@@ -295,8 +295,8 @@ function SettingsPage() {
       {activeTab === "profile" && (
         <div className="space-y-6">
           {/* Profile Info */}
-          <div className="glass-card rounded-xl p-5 sm:p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Profile Information</h2>
+          <div className="border border-edge bg-panel rounded-xl p-5 sm:p-6">
+            <h2 className="text-lg font-semibold text-ink mb-4">Profile Information</h2>
             <form onSubmit={handleUpdateProfile} className="space-y-4">
               {profileError && (
                 <div className="rounded-lg bg-red-900/20 p-3 text-sm text-red-400 ring-1 ring-red-500/20">{profileError}</div>
@@ -311,36 +311,36 @@ function SettingsPage() {
               )}
               {/* Avatar */}
               <div className="flex items-center gap-4">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-xl font-bold text-white">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-accent-500 to-accent-600 text-xl font-bold text-white">
                   {profileName?.charAt(0)?.toUpperCase() || "?"}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-white">{profileName || "User"}</p>
-                  <p className="text-xs text-gray-400 capitalize">{user?.role || "member"}</p>
+                  <p className="text-sm font-medium text-ink">{profileName || "User"}</p>
+                  <p className="text-xs text-ink-muted capitalize">{user?.role || "member"}</p>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Full Name</label>
+                  <label className="block text-sm font-medium text-ink-muted mb-1">Full Name</label>
                   <input type="text" value={profileName} onChange={(e) => setProfileName(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30" />
+                    className="w-full rounded-xl border border-edge bg-panel-raised px-4 py-2.5 text-sm text-ink placeholder-ink-faint focus:border-accent-500/50 focus:outline-none focus:ring-1 focus:ring-focus/40" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                  <label className="block text-sm font-medium text-ink-muted mb-1">Email</label>
                   <input type="email" value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30" />
+                    className="w-full rounded-xl border border-edge bg-panel-raised px-4 py-2.5 text-sm text-ink placeholder-ink-faint focus:border-accent-500/50 focus:outline-none focus:ring-1 focus:ring-focus/40" />
                 </div>
               </div>
               <button type="submit" disabled={profileLoading}
-                className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed">
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                 {profileLoading ? "Saving..." : "Save Changes"}
               </button>
             </form>
           </div>
 
           {/* Change Password */}
-          <div className="glass-card rounded-xl p-5 sm:p-6">
-            <h2 className="text-lg font-semibold text-white mb-4">Change Password</h2>
+          <div className="border border-edge bg-panel rounded-xl p-5 sm:p-6">
+            <h2 className="text-lg font-semibold text-ink mb-4">Change Password</h2>
             <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
               {passwordError && (
                 <div className="rounded-lg bg-red-900/20 p-3 text-sm text-red-400 ring-1 ring-red-500/20">{passwordError}</div>
@@ -354,22 +354,22 @@ function SettingsPage() {
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Current Password</label>
+                <label className="block text-sm font-medium text-ink-muted mb-1">Current Password</label>
                 <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30" />
+                  className="w-full rounded-xl border border-edge bg-panel-raised px-4 py-2.5 text-sm text-ink placeholder-ink-faint focus:border-accent-500/50 focus:outline-none focus:ring-1 focus:ring-focus/40" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">New Password</label>
+                <label className="block text-sm font-medium text-ink-muted mb-1">New Password</label>
                 <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30" />
+                  className="w-full rounded-xl border border-edge bg-panel-raised px-4 py-2.5 text-sm text-ink placeholder-ink-faint focus:border-accent-500/50 focus:outline-none focus:ring-1 focus:ring-focus/40" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Confirm New Password</label>
+                <label className="block text-sm font-medium text-ink-muted mb-1">Confirm New Password</label>
                 <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500/50 focus:outline-none focus:ring-1 focus:ring-purple-500/30" />
+                  className="w-full rounded-xl border border-edge bg-panel-raised px-4 py-2.5 text-sm text-ink placeholder-ink-faint focus:border-accent-500/50 focus:outline-none focus:ring-1 focus:ring-focus/40" />
               </div>
               <button type="submit" disabled={passwordLoading || !currentPassword || !newPassword || !confirmPassword}
-                className="btn-primary disabled:opacity-40 disabled:cursor-not-allowed">
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                 {passwordLoading ? "Changing..." : "Change Password"}
               </button>
             </form>
@@ -379,8 +379,8 @@ function SettingsPage() {
 
       {/* Notifications Tab */}
       {activeTab === "notifications" && (
-        <div className="glass-card rounded-xl p-5 sm:p-6">
-          <h2 className="text-lg font-semibold text-white mb-4">Notification Preferences</h2>
+        <div className="border border-edge bg-panel rounded-xl p-5 sm:p-6">
+          <h2 className="text-lg font-semibold text-ink mb-4">Notification Preferences</h2>
           {notifError && (
             <div className="mb-4 rounded-lg bg-red-900/20 p-3 text-sm text-red-400 ring-1 ring-red-500/20">{notifError}</div>
           )}
@@ -413,7 +413,7 @@ function SettingsPage() {
             />
           </div>
           <button onClick={handleUpdateNotifications} disabled={notifLoading}
-            className="btn-primary mt-6 disabled:opacity-40 disabled:cursor-not-allowed">
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-600 px-5 py-2.5 text-sm font-semibold text-white shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98] transition-all mt-6 disabled:opacity-40 disabled:cursor-not-allowed">
             {notifLoading ? "Saving..." : "Save Preferences"}
           </button>
         </div>
@@ -429,16 +429,16 @@ function ToggleOption({ label, description, enabled, onChange }: {
   onChange: (v: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-xl bg-white/5 p-4">
+    <div className="flex items-center justify-between rounded-xl bg-panel-raised p-4">
       <div>
-        <p className="text-sm font-medium text-white">{label}</p>
-        <p className="text-xs text-gray-400 mt-0.5">{description}</p>
+        <p className="text-sm font-medium text-ink">{label}</p>
+        <p className="text-xs text-ink-muted mt-0.5">{description}</p>
       </div>
       <button
         type="button"
         onClick={() => onChange(!enabled)}
         className={`relative h-6 w-11 shrink-0 rounded-full transition-all ${
-          enabled ? "bg-purple-500" : "bg-white/10"
+          enabled ? "bg-accent-500" : "bg-panel-raised"
         }`}
       >
         <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-all shadow ${
@@ -453,22 +453,22 @@ function SettingsSkeleton() {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <div className="h-7 w-24 rounded-lg bg-white/5 animate-pulse" />
-        <div className="h-4 w-56 rounded-lg bg-white/5 animate-pulse" />
+        <div className="h-7 w-24 rounded-lg bg-panel-raised animate-pulse" />
+        <div className="h-4 w-56 rounded-lg bg-panel-raised animate-pulse" />
       </div>
       <div className="flex gap-2">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-10 w-28 rounded-t-xl bg-white/5 animate-pulse" />
+          <div key={i} className="h-10 w-28 rounded-t-xl bg-panel-raised animate-pulse" />
         ))}
       </div>
-      <div className="glass-card rounded-xl p-6 space-y-4">
-        <div className="h-5 w-36 rounded bg-white/5 animate-pulse" />
-        <div className="h-10 w-full rounded-xl bg-white/5 animate-pulse" />
+      <div className="border border-edge bg-panel rounded-xl p-6 space-y-4">
+        <div className="h-5 w-36 rounded bg-panel-raised animate-pulse" />
+        <div className="h-10 w-full rounded-xl bg-panel-raised animate-pulse" />
         <div className="grid grid-cols-2 gap-4">
-          <div className="h-10 rounded-xl bg-white/5 animate-pulse" />
-          <div className="h-10 rounded-xl bg-white/5 animate-pulse" />
+          <div className="h-10 rounded-xl bg-panel-raised animate-pulse" />
+          <div className="h-10 rounded-xl bg-panel-raised animate-pulse" />
         </div>
-        <div className="h-10 w-32 rounded-xl bg-white/5 animate-pulse" />
+        <div className="h-10 w-32 rounded-xl bg-panel-raised animate-pulse" />
       </div>
     </div>
   );

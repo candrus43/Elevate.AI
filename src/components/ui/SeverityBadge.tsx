@@ -43,7 +43,7 @@ const config: Record<Severity, { label: string; classes: string; icon: ReactNode
   },
   requires_review: {
     label: "Requires review",
-    classes: "bg-violet-500/10 text-violet-300 border-violet-500/25",
+    classes: "bg-teal-500/10 text-teal-300 border-teal-500/25",
     icon: <AlertTriangle className="h-3.5 w-3.5" />,
   },
 };
