@@ -6,7 +6,7 @@ import { sql } from "~/utils/sql";
 import { calculateScore, calculateSentiment, detectTopics, detectObjections, generateSummary, calculatePoints } from "~/utils/call-analysis";
 import { db, jsonResponse, getAuthUser, UPLOADS_DIR } from "./middleware";
 import { getEffectiveMode, isLive } from "./integration-mode";
-import { getOpenAIConfig, callOpenAI, getCallAnalysisSystemPrompt } from "./openai";
+import { getOpenAIConfig, callOpenAI, getCallAnalysisSystemPrompt, normalizeCallAnalysisDimensions, computeWeightedCompositeScore } from "./openai";
 import { computeAndStoreDimensionScores } from "./scoring";
 
 // ─── POST /api/calls/upload ────────────────────────────────────────────────────
@@ -87,6 +87,7 @@ export async function analyzeCallAsync(callId: string, companyId: string, userId
     const mode = await getEffectiveMode(companyId, userId, "openai");
     let score = 50, sentiment = "neutral", topics: string[] = [], objections: any[] = [], summary = "";
     let fillerWords = 0, talkRatio = 0.5, paceWpm = 150, complianceIssues: string[] = [];
+    let dimensions = "[]";
 
     if (isLive(mode)) {
       // ── OpenAI-powered analysis ──
@@ -99,7 +100,7 @@ export async function analyzeCallAsync(callId: string, companyId: string, userId
             { role: "system", content: getCallAnalysisSystemPrompt() },
             { role: "user", content: transcript },
           ],
-          max_tokens: 2048,
+          max_tokens: 3072,
           temperature: 0.3,
           response_format: { type: "json_object" },
         });
@@ -113,6 +114,14 @@ export async function analyzeCallAsync(callId: string, companyId: string, userId
             summary = analysis.summary || "";
             complianceIssues = analysis.compliance_flags || [];
             talkRatio = analysis.talk_ratio?.rep ? analysis.talk_ratio.rep / 100 : 0.5;
+
+            // Phase B: five evidence-backed dimension scores (conversation skills only)
+            const normalizedDims = normalizeCallAnalysisDimensions(analysis.dimensions);
+            if (normalizedDims.length > 0) {
+              dimensions = JSON.stringify(normalizedDims);
+              const composite = computeWeightedCompositeScore(normalizedDims);
+              if (composite != null) score = composite;
+            }
           } catch { /* fall through to rule-based */ }
         }
       }
@@ -188,8 +197,8 @@ export async function analyzeCallAsync(callId: string, companyId: string, userId
     // 9. Insert analysis
             const analysisId = crypto.randomUUID();
             await db(sql`
-              INSERT INTO call_analyses (id, call_id, overall_score, sentiment, talk_ratio_rep, talk_ratio_customer, avg_pace_wpm, filler_word_count, key_topics, summary, objections_detected, compliance_issues)
-              VALUES (${analysisId}, ${callId}, ${score}, ${sentiment}, ${talkRatio}, ${1 - talkRatio}, ${paceWpm}, ${fillerWords}, ${JSON.stringify(topics)}, ${summary}, ${JSON.stringify(objections.map((o: any) => o.objection))}, ${JSON.stringify(complianceIssues)})
+              INSERT INTO call_analyses (id, call_id, overall_score, sentiment, talk_ratio_rep, talk_ratio_customer, avg_pace_wpm, filler_word_count, key_topics, summary, objections_detected, compliance_issues, dimensions)
+              VALUES (${analysisId}, ${callId}, ${score}, ${sentiment}, ${talkRatio}, ${1 - talkRatio}, ${paceWpm}, ${fillerWords}, ${JSON.stringify(topics)}, ${summary}, ${JSON.stringify(objections.map((o: any) => o.objection))}, ${JSON.stringify(complianceIssues)}, ${dimensions})
             `);
 
             // 9b. Dimensional scoring (fire-and-forget, non-blocking)

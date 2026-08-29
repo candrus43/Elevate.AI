@@ -487,5 +487,22 @@ export async function runMigrations(): Promise<void> {
     console.log("Compliance Coaching: Could not check/add coaching_plans.source_finding_id");
   }
 
+  // ── 25. AI dimensional scoring — dimensions JSON on call_analyses ────────────
+  // Phase B: the main call-analysis prompt returns five evidence-backed
+  // dimension scores (Discovery / Objection Handling / Closing / Communication /
+  // Process Adherence). Stored as a JSON array in `call_analyses.dimensions`.
+  // Additive + idempotent; existing rows default to '[]'.
+  try {
+    const callAnalysisColumns = await db(sql`PRAGMA table_info(call_analyses)`);
+    if (!callAnalysisColumns.some((c: any) => c.name === "dimensions")) {
+      await db(sql`ALTER TABLE call_analyses ADD COLUMN dimensions TEXT NOT NULL DEFAULT '[]'`);
+      console.log("Dimensional Scoring: Added call_analyses.dimensions");
+    } else {
+      console.log("Dimensional Scoring: call_analyses.dimensions already exists");
+    }
+  } catch {
+    console.log("Dimensional Scoring: Could not check/add call_analyses.dimensions");
+  }
+
   console.log("Migrations complete.");
 }
