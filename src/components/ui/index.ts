@@ -69,6 +69,16 @@ export type { SkeletonProps } from "./Skeleton";
 export { ChartCard, Sparkline, Bar } from "./ChartCard";
 export type { ChartCardProps, SparklineProps, BarProps } from "./ChartCard";
 
+export { ResponsiveTable } from "./ResponsiveTable";
+export type { ResponsiveTableProps, ResponsiveColumn } from "./ResponsiveTable";
+
+export { BottomSheet } from "./BottomSheet";
+export type { BottomSheetProps } from "./BottomSheet";
+
+export { FloatingAI } from "./FloatingAI";
+
+export { useMediaQuery, useIsMobile } from "./use-media-query";
+
 export { AIInsightCard } from "./AIInsightCard";
 export type { AIInsightCardProps } from "./AIInsightCard";
 
