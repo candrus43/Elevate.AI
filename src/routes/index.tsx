@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Button } from "~/components/ui";
 
@@ -33,12 +33,7 @@ function Navbar() {
         <div className="mx-auto mt-3 sm:mt-4 flex max-w-5xl items-center justify-between rounded-2xl border border-edge bg-panel/80 px-4 sm:px-6 py-2.5 sm:py-3 backdrop-blur-xl">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-accent-500 to-accent-600">
-              <svg className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10 2L11.5 7L17 7L12.5 10.5L14.5 16L10 12.5L5.5 16L7.5 10.5L3 7L8.5 7L10 2Z" />
-              </svg>
-            </div>
-            <span className="text-lg font-bold text-ink">ElevateAI</span>
+            <img src="/logo.png" alt="ElevateAI" className="h-8 w-auto" />
           </Link>
 
           {/* Desktop Nav Links */}
@@ -189,14 +184,33 @@ function HeroSection() {
 
           {/* Hero Image */}
           <div className="mt-8 sm:mt-12 w-full max-w-5xl animate-fade-up">
-            <div className="relative overflow-hidden rounded-xl sm:rounded-2xl border border-edge bg-panel p-1 sm:p-2 shadow-2xl">
-              <img
-                src="/hero-dashboard.png"
-                alt="ElevateAI Dashboard"
-                className="w-full rounded-xl"
-                loading="lazy"
-              />
-              <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-edge" />
+            <div className="relative">
+              {/* Ambient glow behind the product */}
+              <div className="pointer-events-none absolute -inset-3 sm:-inset-6 rounded-3xl bg-gradient-to-r from-accent-500/25 via-accent-500/5 to-teal-500/25 blur-2xl" />
+              <div className="relative overflow-hidden rounded-xl sm:rounded-2xl border border-edge bg-panel p-1 sm:p-2 shadow-2xl shadow-accent-900/40 ring-1 ring-white/10">
+                <img
+                  src="/hero-dashboard.png"
+                  alt="ElevateAI Dashboard"
+                  className="w-full rounded-xl"
+                  loading="lazy"
+                />
+                <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-edge" />
+                {/* Floating live-call chip */}
+                <div className="absolute -left-2 top-6 sm:-left-4 sm:top-10 flex items-center gap-2 rounded-xl border border-edge bg-panel/90 px-3 py-2 shadow-lg backdrop-blur-xl animate-float">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                  </span>
+                  <span className="text-xs font-medium text-ink">Live call scoring</span>
+                </div>
+                {/* Floating coaching chip */}
+                <div className="absolute -right-2 bottom-6 sm:-right-4 sm:bottom-10 flex items-center gap-2 rounded-xl border border-edge bg-panel/90 px-3 py-2 shadow-lg backdrop-blur-xl animate-float" style={{ animationDelay: "1.5s" }}>
+                  <svg className="h-3.5 w-3.5 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
+                  </svg>
+                  <span className="text-xs font-medium text-ink">Coaching plan ready</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -297,7 +311,7 @@ function FeaturesSection() {
           <span className={`${eyebrowGradient} text-xs sm:text-sm font-semibold uppercase tracking-widest`}>
             Features
           </span>
-          <h2 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink">
+          <h2 data-reveal className="reveal mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink">
             Everything You Need to Elevate Your Team
           </h2>
           <p className="mt-3 sm:mt-4 text-base sm:text-lg text-ink-muted">
@@ -346,7 +360,7 @@ function DashboardPreviewSection() {
           <span className={`${eyebrowGradient} text-sm font-semibold uppercase tracking-widest`}>
             Dashboard Preview
           </span>
-          <h2 className="mt-3 text-4xl font-bold tracking-tight text-ink sm:text-5xl">
+          <h2 data-reveal className="reveal mt-3 text-4xl font-bold tracking-tight text-ink sm:text-5xl">
             See What's Behind the Login
           </h2>
           <p className="mt-4 text-lg text-ink-muted">
@@ -548,7 +562,7 @@ function PricingSection() {
           <span className={`${eyebrowGradient} text-xs sm:text-sm font-semibold uppercase tracking-widest`}>
             Pricing
           </span>
-          <h2 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink">
+          <h2 data-reveal className="reveal mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink">
             Per-Manager Pricing
           </h2>
           <p className="mt-3 sm:mt-4 text-base sm:text-lg text-ink-muted">
@@ -566,7 +580,7 @@ function PricingSection() {
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="whitespace-nowrap rounded-full bg-accent-600 px-4 py-1 text-xs font-semibold text-white">
+                  <span className="whitespace-nowrap rounded-full bg-accent-600 px-4 py-1 text-xs font-semibold text-ink">
                     Most popular
                   </span>
                 </div>
@@ -594,7 +608,7 @@ function PricingSection() {
                 rel="noopener noreferrer"
                 className={`mt-8 flex w-full items-center justify-center rounded-lg px-4 py-3 text-sm font-semibold transition-all ${
                   plan.popular
-                    ? "bg-accent-600 text-white shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98]"
+                    ? "bg-accent-600 text-ink shadow-glow hover:bg-accent-500 active:bg-accent-700 active:scale-[0.98]"
                     : "border border-edge bg-panel-raised text-ink hover:border-edge-strong hover:bg-graphite-850 active:scale-[0.98]"
                 }`}
               >
@@ -643,7 +657,7 @@ function HowItWorksSection() {
           <span className={`${eyebrowGradient} text-xs sm:text-sm font-semibold uppercase tracking-widest`}>
             How it works
           </span>
-          <h2 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink">
+          <h2 data-reveal className="reveal mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink">
             From call to coaching, automatically
           </h2>
           <p className="mt-3 sm:mt-4 text-base sm:text-lg text-ink-muted">
@@ -710,7 +724,7 @@ function FAQSection() {
           <span className={`${eyebrowGradient} text-xs sm:text-sm font-semibold uppercase tracking-widest`}>
             FAQ
           </span>
-          <h2 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink">
+          <h2 data-reveal className="reveal mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink">
             Frequently Asked Questions
           </h2>
         </div>
@@ -748,7 +762,7 @@ function CTASection() {
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-600/10 via-transparent to-teal-500/10" />
 
           <div className="relative">
-            <h2 className="text-4xl font-bold tracking-tight text-ink sm:text-5xl">
+            <h2 data-reveal className="reveal text-4xl font-bold tracking-tight text-ink sm:text-5xl">
               Ready to Elevate Your Sales Team?
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-lg text-ink-muted">
@@ -781,12 +795,7 @@ function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-12 py-8 sm:py-12">
         <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-accent-500 to-accent-600">
-              <svg className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10 2L11.5 7L17 7L12.5 10.5L14.5 16L10 12.5L5.5 16L7.5 10.5L3 7L8.5 7L10 2Z" />
-              </svg>
-            </div>
-            <span className="text-sm font-bold text-ink">ElevateAI</span>
+            <img src="/logo.png" alt="ElevateAI" className="h-6 w-auto" />
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-ink-muted">
             <a href="#features" className="transition-colors hover:text-ink">Features</a>
@@ -807,6 +816,28 @@ function Footer() {
 
 function Home() {
   const businessName = Route.useLoaderData();
+
+  // Scroll-reveal: fade/slide sections in as they enter the viewport
+  useEffect(() => {
+    const els = Array.from(document.querySelectorAll("[data-reveal]"));
+    if (!("IntersectionObserver" in window)) {
+      els.forEach((el) => el.classList.add("reveal-in"));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            (entry.target as HTMLElement).classList.add("reveal-in");
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
 
   return (
     <div className="min-h-dvh bg-canvas text-ink">
