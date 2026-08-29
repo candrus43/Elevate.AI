@@ -148,14 +148,106 @@ export async function callOpenAI(config: OpenAIConfig, request: OpenAIRequest): 
 
 export function getCallAnalysisSystemPrompt(): string {
   return `You are an expert sales call analyst. Analyze the call transcript and return a JSON object with:
-- "overall_score": number 0-100
+- "overall_score": number 0-100 (the weighted composite of the 5 dimension scores below)
+- "dimensions": array of exactly 5 objects, one per dimension, in this shape:
+  { "name": "Discovery"|"Objection Handling"|"Closing"|"Communication"|"Process Adherence",
+    "score": number (0-100),
+    "strength": string (what the rep did well),
+    "opportunity": string (what the rep could improve),
+    "evidence": string (a short verbatim quote from the transcript that supports the score),
+    "recommendation": string (one concrete, actionable next step) }
+  The 5 required "name" values are exactly: "Discovery", "Objection Handling", "Closing", "Communication", "Process Adherence".
 - "objections": array of { "objection": string, "handled": boolean, "handler_quality": "poor"|"average"|"excellent" }
 - "sentiment": "positive"|"neutral"|"negative"
 - "talk_ratio": { "rep": number (0-100), "customer": number (0-100) }
 - "compliance_flags": array of strings (e.g. "missing_disclaimer", "promised_unrealistic_results")
 - "key_moments": array of { "timestamp": string, "description": string, "type": "positive"|"negative"|"neutral" }
 - "summary": string (2-3 sentence summary)
-- "improvement_areas": array of strings`;
+- "improvement_areas": array of strings
+
+Rules:
+- Every dimension MUST include a score (0-100), strength, opportunity, evidence, and recommendation.
+- "evidence" MUST be a verbatim quote pulled from the transcript — never invent a quote. If the transcript has no content that supports a dimension, set "evidence": "Insufficient transcript data".
+- Dimension scores reflect conversation skills only. Never infer business outcomes (conversion, revenue, deals, retention, churn).`;
+}
+
+// ─── Phase B: dimensional scoring helpers ─────────────────────────────────────
+
+export interface CallAnalysisDimension {
+  name: string;       // "Discovery" | "Objection Handling" | "Closing" | "Communication" | "Process Adherence"
+  score: number;      // 0-100
+  strength: string;
+  opportunity: string;
+  evidence: string;   // verbatim quote from transcript
+  recommendation: string;
+}
+
+const CALL_DIMENSION_WEIGHTS: Record<string, number> = {
+  discovery: 0.20,
+  objection_handling: 0.25,
+  closing: 0.20,
+  communication: 0.20,
+  process_adherence: 0.15,
+};
+
+function normalizeDimensionKey(name: string): string | null {
+  const n = (name || "").toLowerCase().trim();
+  if (n.includes("discovery") || n.includes("needs")) return "discovery";
+  if (n.includes("objection") || n.includes("handling")) return "objection_handling";
+  if (n.includes("closing") || n.includes("commitment") || n.includes("next_step") || n.includes("next step")) return "closing";
+  if (n.includes("communicat") || n.includes("rapport") || n.includes("listen")) return "communication";
+  if (n.includes("process") || n.includes("adherence") || n.includes("script") || n.includes("complianc")) return "process_adherence";
+  return null;
+}
+
+/**
+ * Normalize the raw `dimensions` array returned by the AI into clean,
+ * clamped CallAnalysisDimension objects (deduplicated by dimension key).
+ */
+export function normalizeCallAnalysisDimensions(raw: unknown): CallAnalysisDimension[] {
+  if (!Array.isArray(raw)) return [];
+  const out: CallAnalysisDimension[] = [];
+  const seen = new Set<string>();
+  for (const item of raw as any[]) {
+    if (!item || typeof item !== "object") continue;
+    const name = String(item.name || item.dimension || item.label || "").trim();
+    const key = normalizeDimensionKey(name);
+    if (!key || seen.has(key)) continue;
+    const score = typeof item.score === "number"
+      ? Math.max(0, Math.min(100, Math.round(item.score)))
+      : 0;
+    out.push({
+      name,
+      score,
+      strength: String(item.strength || ""),
+      opportunity: String(item.opportunity || ""),
+      evidence: String(item.evidence || ""),
+      recommendation: String(item.recommendation || ""),
+    });
+    seen.add(key);
+  }
+  return out;
+}
+
+/**
+ * Weighted composite of the dimensional scores (0-100). Returns null when
+ * no dimensions could be scored. Weights are normalized over the dimensions
+ * that actually have a score, so the result always stays in range.
+ */
+export function computeWeightedCompositeScore(dimensions: CallAnalysisDimension[]): number | null {
+  const scored: Array<{ weight: number; score: number }> = [];
+  for (const d of dimensions) {
+    const key = normalizeDimensionKey(d.name);
+    if (!key || !Number.isFinite(d.score)) continue;
+    const weight = CALL_DIMENSION_WEIGHTS[key];
+    if (weight == null) continue;
+    scored.push({ weight, score: Math.max(0, Math.min(100, d.score)) });
+  }
+  if (scored.length === 0) return null;
+  const totalWeight = scored.reduce((s, x) => s + x.weight, 0);
+  if (totalWeight <= 0) return null;
+  const composite = scored.reduce((s, x) => s + x.score * (x.weight / totalWeight), 0);
+  return Math.round(Math.max(0, Math.min(100, composite)));
 }
 
 export function getRolePlaySystemPrompt(personalityProfile: string): string {
