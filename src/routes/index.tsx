@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { Button } from "~/components/ui";
 
@@ -184,14 +184,33 @@ function HeroSection() {
 
           {/* Hero Image */}
           <div className="mt-8 sm:mt-12 w-full max-w-5xl animate-fade-up">
-            <div className="relative overflow-hidden rounded-xl sm:rounded-2xl border border-edge bg-panel p-1 sm:p-2 shadow-2xl">
-              <img
-                src="/hero-dashboard.png"
-                alt="ElevateAI Dashboard"
-                className="w-full rounded-xl"
-                loading="lazy"
-              />
-              <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-edge" />
+            <div className="relative">
+              {/* Ambient glow behind the product */}
+              <div className="pointer-events-none absolute -inset-3 sm:-inset-6 rounded-3xl bg-gradient-to-r from-accent-500/25 via-accent-500/5 to-teal-500/25 blur-2xl" />
+              <div className="relative overflow-hidden rounded-xl sm:rounded-2xl border border-edge bg-panel p-1 sm:p-2 shadow-2xl shadow-accent-900/40 ring-1 ring-white/10">
+                <img
+                  src="/hero-dashboard.png"
+                  alt="ElevateAI Dashboard"
+                  className="w-full rounded-xl"
+                  loading="lazy"
+                />
+                <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-edge" />
+                {/* Floating live-call chip */}
+                <div className="absolute -left-2 top-6 sm:-left-4 sm:top-10 flex items-center gap-2 rounded-xl border border-edge bg-panel/90 px-3 py-2 shadow-lg backdrop-blur-xl animate-float">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                  </span>
+                  <span className="text-xs font-medium text-ink">Live call scoring</span>
+                </div>
+                {/* Floating coaching chip */}
+                <div className="absolute -right-2 bottom-6 sm:-right-4 sm:bottom-10 flex items-center gap-2 rounded-xl border border-edge bg-panel/90 px-3 py-2 shadow-lg backdrop-blur-xl animate-float" style={{ animationDelay: "1.5s" }}>
+                  <svg className="h-3.5 w-3.5 text-teal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
+                  </svg>
+                  <span className="text-xs font-medium text-ink">Coaching plan ready</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -292,7 +311,7 @@ function FeaturesSection() {
           <span className={`${eyebrowGradient} text-xs sm:text-sm font-semibold uppercase tracking-widest`}>
             Features
           </span>
-          <h2 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink">
+          <h2 data-reveal className="reveal mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink">
             Everything You Need to Elevate Your Team
           </h2>
           <p className="mt-3 sm:mt-4 text-base sm:text-lg text-ink-muted">
@@ -341,7 +360,7 @@ function DashboardPreviewSection() {
           <span className={`${eyebrowGradient} text-sm font-semibold uppercase tracking-widest`}>
             Dashboard Preview
           </span>
-          <h2 className="mt-3 text-4xl font-bold tracking-tight text-ink sm:text-5xl">
+          <h2 data-reveal className="reveal mt-3 text-4xl font-bold tracking-tight text-ink sm:text-5xl">
             See What's Behind the Login
           </h2>
           <p className="mt-4 text-lg text-ink-muted">
@@ -543,7 +562,7 @@ function PricingSection() {
           <span className={`${eyebrowGradient} text-xs sm:text-sm font-semibold uppercase tracking-widest`}>
             Pricing
           </span>
-          <h2 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink">
+          <h2 data-reveal className="reveal mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink">
             Per-Manager Pricing
           </h2>
           <p className="mt-3 sm:mt-4 text-base sm:text-lg text-ink-muted">
@@ -638,7 +657,7 @@ function HowItWorksSection() {
           <span className={`${eyebrowGradient} text-xs sm:text-sm font-semibold uppercase tracking-widest`}>
             How it works
           </span>
-          <h2 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink">
+          <h2 data-reveal className="reveal mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink">
             From call to coaching, automatically
           </h2>
           <p className="mt-3 sm:mt-4 text-base sm:text-lg text-ink-muted">
@@ -705,7 +724,7 @@ function FAQSection() {
           <span className={`${eyebrowGradient} text-xs sm:text-sm font-semibold uppercase tracking-widest`}>
             FAQ
           </span>
-          <h2 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink">
+          <h2 data-reveal className="reveal mt-3 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-ink">
             Frequently Asked Questions
           </h2>
         </div>
@@ -743,7 +762,7 @@ function CTASection() {
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-600/10 via-transparent to-teal-500/10" />
 
           <div className="relative">
-            <h2 className="text-4xl font-bold tracking-tight text-ink sm:text-5xl">
+            <h2 data-reveal className="reveal text-4xl font-bold tracking-tight text-ink sm:text-5xl">
               Ready to Elevate Your Sales Team?
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-lg text-ink-muted">
@@ -797,6 +816,28 @@ function Footer() {
 
 function Home() {
   const businessName = Route.useLoaderData();
+
+  // Scroll-reveal: fade/slide sections in as they enter the viewport
+  useEffect(() => {
+    const els = Array.from(document.querySelectorAll("[data-reveal]"));
+    if (!("IntersectionObserver" in window)) {
+      els.forEach((el) => el.classList.add("reveal-in"));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            (entry.target as HTMLElement).classList.add("reveal-in");
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
 
   return (
     <div className="min-h-dvh bg-canvas text-ink">
