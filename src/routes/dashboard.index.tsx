@@ -10,13 +10,8 @@ import {
   CardHeader,
   CardTitle,
   MetricCard,
+  ResponsiveTable,
   Spinner,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeaderCell,
-  TableRow,
 } from "~/components/ui";
 
 import { getCompanyCalls, getCompanyMetrics, getRecentActivity, getCompanyUsers } from "~/utils/db";
@@ -119,38 +114,53 @@ function ManagerDashboard() {
         </Card>
       </div>
 
-      {/* Team Members */}
+      {/* Team Members — responsive: real table on desktop, stacked cards on mobile */}
       <Card padding="none" className="overflow-hidden">
         <CardHeader>
           <CardTitle>Team Members</CardTitle>
         </CardHeader>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableHeaderCell>Name</TableHeaderCell>
-              <TableHeaderCell>Role</TableHeaderCell>
-              <TableHeaderCell>Team</TableHeaderCell>
-              <TableHeaderCell>Status</TableHeaderCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {team.map((member, i) => (
-              <TableRow key={i}>
-                <TableCell>
+        <div className="px-5 py-4">
+          <ResponsiveTable
+            data={team}
+            getKey={(member: any) => member.id ?? member.name}
+            columns={[
+              {
+                key: "name",
+                header: "Name",
+                primary: true,
+                render: (member: any) => (
                   <div className="flex items-center gap-3">
                     <Avatar name={member.name} size="sm" />
                     <span className="font-medium text-ink">{member.name}</span>
                   </div>
-                </TableCell>
-                <TableCell className="capitalize text-ink-muted">{member.role}</TableCell>
-                <TableCell className="text-ink-muted">{member.team_name || "-"}</TableCell>
-                <TableCell>
-                  <Badge tone={member.is_active ? "positive" : "neutral"} dot>{member.is_active ? "Active" : "Inactive"}</Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                ),
+              },
+              {
+                key: "role",
+                header: "Role",
+                render: (member: any) => (
+                  <span className="capitalize text-ink-muted">{member.role}</span>
+                ),
+              },
+              {
+                key: "team",
+                header: "Team",
+                render: (member: any) => (
+                  <span className="text-ink-muted">{member.team_name || "-"}</span>
+                ),
+              },
+              {
+                key: "status",
+                header: "Status",
+                render: (member: any) => (
+                  <Badge tone={member.is_active ? "positive" : "neutral"} dot>
+                    {member.is_active ? "Active" : "Inactive"}
+                  </Badge>
+                ),
+              },
+            ]}
+          />
+        </div>
       </Card>
     </div>
   );

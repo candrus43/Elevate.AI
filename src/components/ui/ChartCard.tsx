@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "./cn";
+import { Sparkles } from "./icons";
 
 /* ─────────────────────────────────────────────────────────────────
  * ChartCard — container for a titled chart (sparkline, bar, etc.).
@@ -12,19 +13,28 @@ export interface ChartCardProps {
   children?: ReactNode;
   className?: string;
   actions?: ReactNode;
+  /** Concise one-line AI interpretation rendered below the chart.
+   *  Great for mobile: puts the "so what" right under the visual. */
+  insight?: ReactNode;
 }
 
-export function ChartCard({ title, subtitle, children, className, actions }: ChartCardProps) {
+export function ChartCard({ title, subtitle, children, className, actions, insight }: ChartCardProps) {
   return (
     <div className={cn("rounded-xl border border-edge bg-panel p-5", className)}>
       <div className="mb-3 flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h4 className="text-sm font-semibold text-ink">{title}</h4>
           {subtitle && <p className="mt-0.5 text-xs text-ink-faint">{subtitle}</p>}
         </div>
         {actions}
       </div>
-      {children}
+      <div className="min-w-0">{children}</div>
+      {insight && (
+        <div className="mt-3 flex items-start gap-2 rounded-lg bg-accent-500/10 px-3 py-2">
+          <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-400" />
+          <p className="text-xs leading-relaxed text-ink-muted">{insight}</p>
+        </div>
+      )}
     </div>
   );
 }
