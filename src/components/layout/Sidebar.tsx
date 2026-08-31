@@ -1,5 +1,8 @@
+import { useState } from "react";
 import { useNavigate, useRouter } from "@tanstack/react-router";
+import { Drawer } from "~/components/ui/Drawer";
 import type { UserSession } from "~/utils/auth";
+import { BrandLogo } from "~/components/BrandLogo";
 
 interface SidebarProps {
   user: UserSession;
@@ -14,6 +17,16 @@ const navItems = {
     { label: "Departments", icon: "🏛️", href: "/admin/departments" },
     { label: "Feature Flags", icon: "🚩", href: "/admin/feature-flags" },
     { label: "SSO Settings", icon: "🔐", href: "/admin/sso" },
+    { label: "Billing", icon: "💳", href: "/dashboard/billing" },
+    { label: "Settings", icon: "⚙️", href: "/dashboard/settings" },
+  ],
+  executive: [
+    { label: "Overview", icon: "📊", href: "/executive" },
+    { label: "Team Health", icon: "❤️", href: "/executive/team-health" },
+    { label: "Reports", icon: "📄", href: "/executive/reports" },
+    { label: "Forecasting", icon: "🔮", href: "/executive/forecasting" },
+    { label: "Coaching ROI", icon: "🎯", href: "/executive/coaching" },
+    { label: "Departments", icon: "🏛️", href: "/executive/coaching/departments" },
     { label: "Settings", icon: "⚙️", href: "/dashboard/settings" },
   ],
   manager: [
@@ -27,7 +40,6 @@ const navItems = {
     { label: "Learning", icon: "📚", href: "/dashboard/learning" },
     { label: "Analytics", icon: "📈", href: "/dashboard/analytics" },
     { label: "Integrations", icon: "🔌", href: "/dashboard/integrations" },
-    { label: "Billing", icon: "💳", href: "/dashboard/billing" },
     { label: "Settings", icon: "⚙️", href: "/dashboard/settings" },
   ],
   rep: [
@@ -43,16 +55,17 @@ const navItems = {
   ],
 };
 
-// For the mobile bottom nav, show only the first 5 most important items
+// For the mobile bottom nav, show the first 4 items; the 5th slot is "More".
 function getMobileItems(role: string) {
   const items = navItems[role as keyof typeof navItems] || navItems.rep;
-  return items.slice(0, 5);
+  return items.slice(0, 4);
 }
 
 export function Sidebar({ user, collapsed, onToggle }: SidebarProps) {
   const navigate = useNavigate();
   const router = useRouter();
   const pathname = router.state.location.pathname;
+  const [moreOpen, setMoreOpen] = useState(false);
 
   // Determine which nav items to show based on role + current path
   // Admin users see admin items when on /admin/*, manager items when on /dashboard/*
@@ -80,27 +93,22 @@ export function Sidebar({ user, collapsed, onToggle }: SidebarProps) {
           collapsed ? "w-16" : "w-60"
         }`}
         style={{
-          background: "linear-gradient(180deg, rgba(15, 19, 34, 0.98) 0%, rgba(20, 15, 35, 0.95) 100%)",
+          background: "linear-gradient(180deg, rgba(15, 19, 34, 0.98) 0%, rgba(17,24,39, 0.95) 100%)",
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
           borderRight: "1px solid rgba(255, 255, 255, 0.06)",
         }}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center justify-between border-b border-white/5 px-4">
+        <div className="flex h-16 items-center justify-between border-b border-edge px-4">
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-purple-500 to-indigo-600">
-                <svg className="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
-                  <path d="M10 2L11.5 7L17 7L12.5 10.5L14.5 16L10 12.5L5.5 16L7.5 10.5L3 7L8.5 7L10 2Z" />
-                </svg>
-              </div>
-              <span className="text-lg font-bold text-white">ElevateAI</span>
+              <BrandLogo />
             </div>
           )}
           <button
             onClick={onToggle}
-            className="rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-white/5 hover:text-white"
+            className="rounded-lg p-1.5 text-ink-muted transition-colors hover:bg-panel-raised hover:text-ink"
           >
             {collapsed ? "→" : "←"}
           </button>
@@ -114,10 +122,10 @@ export function Sidebar({ user, collapsed, onToggle }: SidebarProps) {
               onClick={() => navigate({ to: item.href })}
               className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200 ${
                 isActive(item.href)
-                  ? "bg-gradient-to-r from-purple-500/10 to-indigo-500/10 text-white shadow-sm shadow-purple-500/5"
-                  : "text-gray-400 hover:bg-white/5 hover:text-white"
+                  ? "bg-gradient-to-r from-accent-500/10 to-accent-500/10 text-ink shadow-sm shadow-accent-500/10"
+                  : "text-ink-muted hover:bg-panel-raised hover:text-ink"
               }`}
-              style={isActive(item.href) ? { borderLeft: "2px solid rgba(139, 92, 246, 0.6)" } : {}}
+              style={isActive(item.href) ? { borderLeft: "2px solid rgba(51,143,255, 0.6)" } : {}}
             >
               <span className="text-lg">{item.icon}</span>
               {!collapsed && <span>{item.label}</span>}
@@ -129,7 +137,7 @@ export function Sidebar({ user, collapsed, onToggle }: SidebarProps) {
       {/* Mobile Bottom Nav — hidden on desktop */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-2 pb-safe pt-2 md:hidden"
         style={{
-          background: "linear-gradient(180deg, rgba(15, 19, 34, 0.98) 0%, rgba(20, 15, 35, 0.95) 100%)",
+          background: "linear-gradient(180deg, rgba(15, 19, 34, 0.98) 0%, rgba(17,24,39, 0.95) 100%)",
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
           borderTop: "1px solid rgba(255, 255, 255, 0.06)",
@@ -143,19 +151,64 @@ export function Sidebar({ user, collapsed, onToggle }: SidebarProps) {
               onClick={() => navigate({ to: item.href })}
               className={`flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 text-[10px] transition-colors min-w-0 flex-1 ${
                 active
-                  ? "text-purple-400"
-                  : "text-gray-500 hover:text-gray-300"
+                  ? "text-accent-300"
+                  : "text-ink-faint hover:text-ink-muted"
               }`}
             >
-              <span className={`text-lg leading-none ${active ? "drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]" : ""}`}>
+              <span className={`text-lg leading-none ${active ? "drop-shadow-[0_0_8px_rgba(51,143,255,0.5)]" : ""}`}>
                 {item.icon}
               </span>
               <span className="truncate max-w-full">{item.label}</span>
-              {active && <span className="mt-0.5 h-1 w-6 rounded-full bg-purple-500" />}
+              {active && <span className="mt-0.5 h-1 w-6 rounded-full bg-accent-500" />}
             </button>
           );
         })}
+
+        {/* "More" slot — opens a drawer with the full nav */}
+        <button
+          onClick={() => setMoreOpen(true)}
+          className={`flex flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 text-[10px] transition-colors min-w-0 flex-1 ${
+            moreOpen ? "text-accent-300" : "text-ink-faint hover:text-ink-muted"
+          }`}
+          aria-label="More navigation"
+        >
+          <span className="text-lg leading-none">☰</span>
+          <span className="truncate max-w-full">More</span>
+        </button>
       </nav>
+
+      {/* Mobile "More" drawer — full nav list */}
+      <Drawer
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        side="right"
+        size="sm"
+        className="w-[85vw] max-w-xs"
+        title={user.role === "admin" && pathname.startsWith("/admin") ? "Admin" : user.role === "admin" ? "Manager" : "Menu"}
+      >
+        <nav className="space-y-1">
+          {items.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <button
+                key={item.href}
+                onClick={() => {
+                  setMoreOpen(false);
+                  navigate({ to: item.href });
+                }}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors ${
+                  active
+                    ? "bg-accent-500/10 text-accent-300"
+                    : "text-ink-muted hover:bg-panel-raised hover:text-ink"
+                }`}
+              >
+                <span className="text-lg">{item.icon}</span>
+                <span className="font-medium">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </Drawer>
     </>
   );
 }
