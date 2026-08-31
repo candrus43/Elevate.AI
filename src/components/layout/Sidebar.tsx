@@ -1,4 +1,5 @@
 import { useNavigate, useRouter } from "@tanstack/react-router";
+import { BrandLogo } from "~/components/BrandLogo";
 import type { UserSession } from "~/utils/auth";
 
 interface SidebarProps {
@@ -95,7 +96,7 @@ export function Sidebar({ user, collapsed, onToggle }: SidebarProps) {
                   <path d="M10 2L11.5 7L17 7L12.5 10.5L14.5 16L10 12.5L5.5 16L7.5 10.5L3 7L8.5 7L10 2Z" />
                 </svg>
               </div>
-              <span className="text-lg font-bold text-white">ElevateAI</span>
+              <BrandLogo />
             </div>
           )}
           <button

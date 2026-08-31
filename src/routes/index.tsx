@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { BrandLogo } from "~/components/BrandLogo";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import {
   Button,
@@ -72,7 +73,7 @@ function Navbar() {
         <div className="mx-auto mt-3 sm:mt-4 flex max-w-5xl items-center justify-between rounded-2xl border border-edge bg-panel/80 px-4 sm:px-6 py-2.5 sm:py-3 backdrop-blur-xl">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="ElevateAI" className="h-8 w-auto" />
+            <BrandLogo markClassName="h-8 w-8" />
           </Link>
 
           {/* Desktop Nav Links */}
@@ -1478,7 +1479,7 @@ function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-12 py-8 sm:py-12">
         <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="ElevateAI" className="h-6 w-auto" />
+            <BrandLogo markClassName="h-6 w-6" wordmarkClassName="text-sm font-bold tracking-tight text-ink" />
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-ink-muted">
             <a href="#features" className="transition-colors hover:text-ink">

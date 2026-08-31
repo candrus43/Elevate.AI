@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { BrandLogo } from "~/components/BrandLogo";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { Button } from "~/components/ui";
 
@@ -77,7 +78,7 @@ function LoginPage() {
         <div className="rounded-2xl border border-edge bg-panel p-8">
           <div className="mb-8 text-center">
             <Link to="/" className="inline-flex items-center gap-2">
-              <img src="/logo.png" alt="ElevateAI" className="h-9 w-auto" />
+              <BrandLogo markClassName="h-9 w-9" wordmarkClassName="text-xl font-bold tracking-tight text-ink" />
             </Link>
             <p className="mt-2 text-sm text-ink-muted">Sign in to your account</p>
           </div>

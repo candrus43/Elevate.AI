@@ -1,4 +1,5 @@
 import { useNavigate, useRouter } from "@tanstack/react-router";
+import { BrandLogo } from "~/components/BrandLogo";
 import type { UserSession } from "~/utils/auth";
 
 interface ExecSidebarProps {
@@ -53,7 +54,7 @@ export function ExecSidebar({ user, collapsed, onToggle }: ExecSidebarProps) {
         <div className="flex h-16 items-center justify-between border-b border-edge px-4">
           {!collapsed && (
             <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="ElevateAI" className="h-7 w-auto" />
+              <BrandLogo />
             </div>
           )}
           <button
