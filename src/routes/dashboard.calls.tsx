@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 
-import { Badge, Button, Card, CardHeader, CardTitle, Input, EmptyState, Spinner } from "~/components/ui";
+import { Badge, Button, Card, CardHeader, CardTitle, Input, EmptyState, Spinner, ResponsiveTable } from "~/components/ui";
 import { getCompanyCalls } from "~/utils/db";
 import type { UserSession } from "~/components/layout/Header";
 
@@ -446,75 +446,99 @@ function CallList() {
         </Card>
       ) : (
         <Card padding="none" className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-edge text-ink-faint">
-                  <th className="px-6 py-3 font-medium">Rep</th>
-                  <th className="px-6 py-3 font-medium">Date</th>
-                  <th className="px-6 py-3 font-medium">Duration</th>
-                  <th className="px-6 py-3 font-medium">Score</th>
-                  <th className="px-6 py-3 font-medium">Sentiment</th>
-                  <th className="px-6 py-3 font-medium">Status</th>
-                  <th className="px-6 py-3 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-edge">
-                {filtered.map((call) => (
-                  <tr key={call.id} className="transition-colors hover:bg-panel-raised/60">
-                    <td className="px-6 py-4 font-medium text-ink">
+          <div className="px-5 py-4">
+            <ResponsiveTable
+              data={filtered}
+              getKey={(call: any) => call.id}
+              collapseAfter={3}
+              columns={[
+                {
+                  key: "rep",
+                  header: "Rep",
+                  primary: true,
+                  render: (call: any) => (
+                    <Link
+                      to="/dashboard/calls/$callId"
+                      params={{ callId: call.id }}
+                      className="font-medium text-ink transition-colors hover:text-accent-300"
+                    >
                       {call.rep_name || "Unknown"}
-                    </td>
-                    <td className="px-6 py-4 text-ink-muted">
-                      {formatDate(call.started_at)}
-                    </td>
-                    <td className="px-6 py-4 text-ink-muted">
-                      {formatDuration(call.duration_seconds)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`font-medium ${
-                        call.overall_score >= 85 ? "text-emerald-400" :
-                        call.overall_score >= 70 ? "text-amber-400" :
-                        call.overall_score ? "text-red-400" : "text-ink-muted"
-                      }`}>
-                        {call.overall_score ?? "-"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge tone={
-                        call.sentiment === "positive" ? "positive" :
-                        call.sentiment === "negative" ? "negative" : "neutral"
-                      }>
-                        {call.sentiment || "neutral"}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        call.status === "analyzed" ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/25" :
-                        call.status === "processing" ? "bg-sky-500/10 text-sky-300 border border-sky-500/25 animate-pulse" :
-                        "bg-red-500/10 text-red-300 border border-red-500/25"
-                      }`}>
-                        {call.status === "processing" ? (
-                          <span className="flex items-center gap-1.5">
-                            <span className="h-1.5 w-1.5 rounded-full bg-sky-300 animate-pulse" />
-                            Processing
-                          </span>
-                        ) : call.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Link
-                        to="/dashboard/calls/$callId"
-                        params={{ callId: call.id }}
-                        className="text-sm font-medium text-accent-fg hover:text-accent-400 transition-colors"
-                      >
-                        View →
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </Link>
+                  ),
+                },
+                {
+                  key: "score",
+                  header: "Score",
+                  render: (call: any) => (
+                    <span className={`font-semibold ${
+                      call.overall_score >= 85 ? "text-emerald-400" :
+                      call.overall_score >= 70 ? "text-amber-400" :
+                      call.overall_score ? "text-red-400" : "text-ink-muted"
+                    }`}>
+                      {call.overall_score ?? "-"}
+                    </span>
+                  ),
+                },
+                {
+                  key: "sentiment",
+                  header: "Sentiment",
+                  render: (call: any) => (
+                    <Badge tone={
+                      call.sentiment === "positive" ? "positive" :
+                      call.sentiment === "negative" ? "negative" : "neutral"
+                    }>
+                      {call.sentiment || "neutral"}
+                    </Badge>
+                  ),
+                },
+                {
+                  key: "status",
+                  header: "Status",
+                  render: (call: any) => (
+                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      call.status === "analyzed" ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/25" :
+                      call.status === "processing" ? "bg-sky-500/10 text-sky-300 border border-sky-500/25 animate-pulse" :
+                      "bg-red-500/10 text-red-300 border border-red-500/25"
+                    }`}>
+                      {call.status === "processing" ? (
+                        <span className="flex items-center gap-1.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-sky-300 animate-pulse" />
+                          Processing
+                        </span>
+                      ) : call.status}
+                    </span>
+                  ),
+                },
+                {
+                  key: "date",
+                  header: "Date",
+                  render: (call: any) => (
+                    <span className="text-ink-muted">{formatDate(call.started_at)}</span>
+                  ),
+                },
+                {
+                  key: "duration",
+                  header: "Duration",
+                  render: (call: any) => (
+                    <span className="text-ink-muted">{formatDuration(call.duration_seconds)}</span>
+                  ),
+                },
+                {
+                  key: "action",
+                  header: "",
+                  hideOnMobile: true,
+                  render: (call: any) => (
+                    <Link
+                      to="/dashboard/calls/$callId"
+                      params={{ callId: call.id }}
+                      className="text-sm font-medium text-accent-fg hover:text-accent-400 transition-colors"
+                    >
+                      View →
+                    </Link>
+                  ),
+                },
+              ]}
+            />
           </div>
         </Card>
       )}
