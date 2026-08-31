@@ -1,18 +1,205 @@
 /**
- * Dependency-free document sectioning.
+ * Document parsing + sectioning (dependency-free).
  *
- * Chunks plain-text / markdown content into sections for the
- * `compliance_document_sections` table. No external parsers.
+ * `extractTextFromBuffer` converts policy documents into plain text:
+ *   - DOCX (.docx/.docm): ZIP container → `word/document.xml` → paragraph text
+ *   - PDF: content streams (FlateDecode via node:zlib) → text-showing operators
+ *   - TXT/MD: decoded as UTF-8 text
  *
- * This is the clean seam for future PDF/DOCX support: those binary formats will
- * first be converted to text by a separate extraction step, then fed into
- * `chunkDocumentIntoSections` — the sectioning logic below stays format-agnostic.
+ * `chunkDocumentIntoSections` then sections any text content for the
+ * `compliance_document_sections` table. No third-party parsers — only Node's
+ * built-in `zlib` for the binary formats.
  */
+
+import { inflateRawSync } from "node:zlib";
 
 export interface DocumentSection {
   section_title: string;
   content_text: string;
   sort_order: number;
+}
+
+export interface ExtractedDocumentText {
+  text: string;
+  fileType: string;
+}
+
+/** Supported binary / text input formats for compliance document ingestion. */
+export const SUPPORTED_DOCUMENT_EXTENSIONS = ["txt", "md", "markdown", "text", "pdf", "docx", "docm"] as const;
+
+function detectFormat(fileName: string, mimeType?: string): "docx" | "pdf" | "text" {
+  const lower = (fileName || "").toLowerCase();
+  const mime = (mimeType || "").toLowerCase();
+  if (/\.(docx|docm)$/.test(lower) || mime.includes("wordprocessingml")) return "docx";
+  if (/\.pdf$/.test(lower) || mime === "application/pdf") return "pdf";
+  return "text";
+}
+
+// ─── Minimal ZIP reader (DOCX is a ZIP container) ──────────────────────────
+function u16(b: Uint8Array, o: number): number {
+  return b[o] | (b[o + 1] << 8);
+}
+function u32(b: Uint8Array, o: number): number {
+  return (b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] << 24)) >>> 0;
+}
+
+interface ZipEntry {
+  name: string;
+  method: number;
+  compressedSize: number;
+  localHeaderOffset: number;
+}
+
+function readZipEntries(data: Uint8Array): ZipEntry[] {
+  // Locate End Of Central Directory (EOCD) signature 0x06054b50.
+  let eocd = -1;
+  for (let i = data.length - 22; i >= 0; i--) {
+    if (u32(data, i) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) return [];
+  const count = u16(data, eocd + 10);
+  let off = u32(data, eocd + 16); // central directory offset
+  const entries: ZipEntry[] = [];
+  for (let i = 0; i < count; i++) {
+    if (u32(data, off) !== 0x02014b50) break;
+    const method = u16(data, off + 10);
+    const compressedSize = u32(data, off + 20);
+    const nameLen = u16(data, off + 28);
+    const extraLen = u16(data, off + 30);
+    const commentLen = u16(data, off + 32);
+    const localHeaderOffset = u32(data, off + 42);
+    const name = new TextDecoder().decode(data.slice(off + 46, off + 46 + nameLen));
+    entries.push({ name, method, compressedSize, localHeaderOffset });
+    off += 46 + nameLen + extraLen + commentLen;
+  }
+  return entries;
+}
+
+function readZipEntryData(data: Uint8Array, entry: ZipEntry): Uint8Array {
+  const off = entry.localHeaderOffset;
+  const nameLen = u16(data, off + 26);
+  const extraLen = u16(data, off + 28);
+  const start = off + 30 + nameLen + extraLen;
+  const compressed = data.slice(start, start + entry.compressedSize);
+  if (entry.method === 0) return compressed; // stored
+  if (entry.method === 8) return new Uint8Array(inflateRawSync(Buffer.from(compressed))); // deflate
+  return new Uint8Array(0);
+}
+
+function xmlUnescape(s: string): string {
+  return s
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, "&");
+}
+
+/** Extract readable text from WordprocessingML (word/document.xml). */
+function extractDocxText(documentXml: string): string {
+  const tokenRe = /<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>|<\/w:p>|<w:tab[^>]*\/?>|<w:br[^>]*\/?>/g;
+  let out = "";
+  let m: RegExpExecArray | null;
+  while ((m = tokenRe.exec(documentXml)) !== null) {
+    const tok = m[0];
+    if (tok.startsWith("<w:t")) out += xmlUnescape(m[1] ?? "");
+    else if (tok === "</w:p>") out += "\n";
+    else if (tok.includes("w:tab")) out += "\t";
+    else if (tok.includes("w:br")) out += "\n";
+  }
+  return out;
+}
+
+// ─── PDF (content streams → text-showing operators) ───────────────────────
+function decodePdfString(s: string): string {
+  return s
+    .replace(/\\\r?\n/g, "")
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\r")
+    .replace(/\\t/g, "\t")
+    .replace(/\\\(/g, "(")
+    .replace(/\\\)/g, ")")
+    .replace(/\\\\/g, "\\")
+    .replace(/\\([0-7]{1,3})/g, (_m, oct: string) => String.fromCharCode(parseInt(oct, 8)));
+}
+
+function extractPdfText(data: Uint8Array): string {
+  const src = Buffer.from(data).toString("latin1");
+  const streams: string[] = [];
+  const streamRe = /stream[\r\n]+/g;
+  let m: RegExpExecArray | null;
+  while ((m = streamRe.exec(src)) !== null) {
+    const start = m.index + m[0].length;
+    const end = src.indexOf("endstream", start);
+    if (end < 0) break;
+    const dict = src.slice(Math.max(0, m.index - 256), m.index);
+    let chunk = src.slice(start, end);
+    if (/\/FlateDecode/.test(dict)) {
+      try {
+        chunk = inflateRawSync(Buffer.from(chunk, "latin1")).toString("latin1");
+      } catch {
+        chunk = "";
+      }
+    }
+    streams.push(chunk);
+  }
+
+  const content = streams.join("\n");
+  const out: string[] = [];
+
+  // Array form: [ (text) -250 (text) ] TJ
+  const arrRe = /\[((?:[^\[\]]|\\.)*)\]\s*TJ/g;
+  let am: RegExpExecArray | null;
+  while ((am = arrRe.exec(content)) !== null) {
+    const lits = am[1].match(/\((?:\\.|[^()\\])*\)/g) ?? [];
+    out.push(lits.map((l) => decodePdfString(l.slice(1, -1))).join(""));
+    out.push("\n");
+  }
+
+  // Single-string form: (text) Tj
+  const tjRe = /\(((?:\\.|[^()\\])*)\)\s*Tj/g;
+  let tm: RegExpExecArray | null;
+  while ((tm = tjRe.exec(content)) !== null) {
+    out.push(decodePdfString(tm[1]));
+    out.push("\n");
+  }
+
+  return out.join("").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+}
+
+/**
+ * Extract plain text from a policy document buffer (dependency-free).
+ * - DOCX (.docx / .docm): ZIP + WordprocessingML
+ * - PDF: FlateDecode content streams
+ * - everything else: UTF-8 text (txt / md / markdown)
+ */
+export function extractTextFromBuffer(
+  fileName: string,
+  data: Uint8Array,
+  mimeType?: string,
+): ExtractedDocumentText {
+  const format = detectFormat(fileName, mimeType);
+
+  if (format === "docx") {
+    const entries = readZipEntries(data);
+    const docEntry = entries.find((e) => e.name === "word/document.xml");
+    if (!docEntry) {
+      return { text: "", fileType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" };
+    }
+    const xml = new TextDecoder("utf-8").decode(readZipEntryData(data, docEntry));
+    return {
+      text: extractDocxText(xml),
+      fileType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    };
+  }
+
+  if (format === "pdf") {
+    return { text: extractPdfText(data), fileType: "application/pdf" };
+  }
+
+  const text = new TextDecoder("utf-8").decode(data);
+  const fileType = /\.(md|markdown)$/i.test(fileName || "") ? "text/markdown" : "text/plain";
+  return { text, fileType };
 }
 
 interface HeadingRule {

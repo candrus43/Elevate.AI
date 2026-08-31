@@ -16,7 +16,7 @@
 import { sql, esc } from "~/utils/sql";
 import { db, jsonResponse, getAuthUser, isComplianceAdmin, isComplianceReviewer } from "./middleware";
 import { logAuditEvent } from "./admin";
-import { chunkDocumentIntoSections } from "~/utils/document-parser";
+import { chunkDocumentIntoSections, extractTextFromBuffer } from "~/utils/document-parser";
 import { getOpenAIConfig, callOpenAI, getComplianceRuleSuggestionSystemPrompt } from "./openai";
 
 // ─── Role / permission model ───────────────────────────────────────────────────
@@ -665,11 +665,10 @@ export async function handleCreateComplianceDocument(req: Request): Promise<Resp
 }
 
 // ─── POST /api/compliance/documents/ingest ─────────────────────────────────────
-// Accepts plain-text / markdown content (JSON body `content` OR multipart `.txt`/
-// `.md` file) and auto-chunks it into `compliance_document_sections`.
-//
-// This is the dependency-free seam for future PDF/DOCX: those formats get
-// converted to text first, then reuse `chunkDocumentIntoSections` here.
+// Accepts plain-text / markdown (JSON body `content` OR multipart `.txt`/`.md`)
+// and binary policy documents (multipart `.pdf` / `.docx` / `.docm`). Binary
+// input is converted to text via `extractTextFromBuffer`, then auto-chunked into
+// `compliance_document_sections`.
 export async function handleIngestComplianceDocument(req: Request): Promise<Response> {
   try {
     const user = await getAuthUser(req);
@@ -690,11 +689,20 @@ export async function handleIngestComplianceDocument(req: Request): Promise<Resp
       if (!file) return jsonResponse({ error: "No file provided" }, 400);
 
       const lower = file.name.toLowerCase();
-      if (!/\.(txt|md|markdown|text)$/.test(lower) && !file.type.startsWith("text/")) {
-        return jsonResponse({ error: "Only .txt / .md / text files are supported (PDF/DOCX deferred)" }, 400);
+      if (!/\.(txt|md|markdown|text|pdf|docx|docm)$/.test(lower)) {
+        return jsonResponse({ error: "Unsupported file type. Supported: PDF, DOCX, TXT, MD" }, 400);
       }
-      content = await file.text();
-      fileType = file.type || (/(\.md|\.markdown)$/.test(lower) ? "text/markdown" : "text/plain");
+
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      let extracted: { text: string; fileType: string };
+      try {
+        extracted = await extractTextFromBuffer(file.name, bytes, file.type);
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "unsupported or corrupt file";
+        return jsonResponse({ error: `Could not parse document: ${msg}` }, 422);
+      }
+      content = extracted.text;
+      fileType = extracted.fileType || file.type;
     } else {
       const body = await req.json();
       name = body.name;
