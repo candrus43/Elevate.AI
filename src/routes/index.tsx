@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { BrandLogo } from "~/components/BrandLogo";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { BrandLogo } from "~/components/BrandLogo";
 import {
   Button,
   Check,
@@ -303,12 +303,115 @@ function HeroSection() {
             <div className="relative">
               <div className="pointer-events-none absolute -inset-3 sm:-inset-6 rounded-3xl bg-gradient-to-r from-accent-500/25 via-accent-500/5 to-teal-500/25 blur-2xl" />
               <div className="relative overflow-hidden rounded-xl sm:rounded-2xl border border-edge bg-panel p-1 sm:p-2 shadow-2xl shadow-accent-900/40 ring-1 ring-white/10">
-                <img
-                  src="/hero-dashboard.png"
-                  alt="ElevateAI Dashboard"
+                <svg
+                  viewBox="0 0 1200 760"
                   className="w-full rounded-xl"
-                  loading="lazy"
-                />
+                  role="img"
+                  aria-label="ElevateAI dashboard preview"
+                >
+                  <defs>
+                    <linearGradient id="heroDashBg" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#151d31" />
+                      <stop offset="100%" stopColor="#0c1220" />
+                    </linearGradient>
+                    <linearGradient id="heroDashAccent" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#338fff" />
+                      <stop offset="100%" stopColor="#14b8a6" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="1200" height="760" fill="url(#heroDashBg)" />
+                  {/* Sidebar */}
+                  <rect width="232" height="760" fill="#0f1524" />
+                  <rect x="22" y="26" width="34" height="34" rx="9" fill="url(#heroDashAccent)" />
+                  <rect x="66" y="30" width="118" height="12" rx="6" fill="#e7ebf3" />
+                  <rect x="66" y="50" width="82" height="8" rx="4" fill="#3a4a68" />
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <g key={i}>
+                      <rect
+                        x="22"
+                        y={98 + i * 46}
+                        width="188"
+                        height="38"
+                        rx="9"
+                        fill={i === 0 ? "url(#heroDashAccent)" : "#1a2338"}
+                        opacity={i === 0 ? 1 : 0.75}
+                      />
+                      <rect
+                        x={38}
+                        y={98 + i * 46 + 15}
+                        width={i === 0 ? 92 : 116}
+                        height="8"
+                        rx="4"
+                        fill={i === 0 ? "#ffffff" : "#4a5a78"}
+                      />
+                    </g>
+                  ))}
+                  {/* Header */}
+                  <rect x="260" y="28" width="300" height="14" rx="7" fill="#e7ebf3" />
+                  <rect x="260" y="52" width="180" height="8" rx="4" fill="#3a4a68" />
+                  <rect x="1016" y="22" width="152" height="40" rx="20" fill="url(#heroDashAccent)" />
+                  <rect x="1046" y="36" width="92" height="12" rx="6" fill="#ffffff" />
+                  {/* Stats cards */}
+                  {[0, 1, 2, 3].map((i) => (
+                    <g key={i}>
+                      <rect
+                        x={260 + i * 222}
+                        y="90"
+                        width="200"
+                        height="96"
+                        rx="12"
+                        fill="#141c30"
+                        stroke="#22304c"
+                        strokeWidth="1"
+                      />
+                      <rect x={280 + i * 222} y="108" width="90" height="8" rx="4" fill="#4a5a78" />
+                      <rect
+                        x={280 + i * 222}
+                        y="126"
+                        width="64"
+                        height="18"
+                        rx="5"
+                        fill={i === 0 ? "#338fff" : i === 3 ? "#14b8a6" : "#2a3a5c"}
+                      />
+                      <rect
+                        x={280 + i * 222}
+                        y="158"
+                        width="74"
+                        height="6"
+                        rx="3"
+                        fill={i === 0 ? "#14b8a6" : "#2e4060"}
+                      />
+                    </g>
+                  ))}
+                  {/* Chart */}
+                  <rect x="260" y="210" width="910" height="258" rx="12" fill="#141c30" stroke="#22304c" strokeWidth="1" />
+                  <rect x="282" y="228" width="128" height="8" rx="4" fill="#4a5a78" />
+                  <rect x="282" y="244" width="84" height="7" rx="3" fill="#2e4060" />
+                  {[70, 112, 86, 150, 122, 176, 140, 96].map((h, i) => (
+                    <rect
+                      key={i}
+                      x={300 + i * 104}
+                      y={436 - h}
+                      width="58"
+                      height={h}
+                      rx="6"
+                      fill="url(#heroDashAccent)"
+                      opacity={0.55 + (i % 3) * 0.15}
+                    />
+                  ))}
+                  {/* Call list */}
+                  <rect x="260" y="490" width="910" height="230" rx="12" fill="#141c30" stroke="#22304c" strokeWidth="1" />
+                  {[0, 1, 2].map((i) => (
+                    <g key={i}>
+                      <rect x="282" y={512 + i * 64} width="866" height="52" rx="10" fill="#1a2338" />
+                      <circle cx="306" cy={538 + i * 64} r="16" fill={i === 0 ? "url(#heroDashAccent)" : "#2a3a5c"} />
+                      <rect x="334" y={526 + i * 64} width="200" height="9" rx="4" fill="#9fb0cc" />
+                      <rect x="334" y={544 + i * 64} width="140" height="7" rx="3" fill="#3a4a68" />
+                      <rect x="906" y={530 + i * 64} width="84" height="16" rx="8" fill={i === 0 ? "#14b8a6" : "#2a3a5c"} />
+                      <rect x="1004" y={526 + i * 64} width="120" height="9" rx="4" fill="#3a4a68" />
+                    </g>
+                  ))}
+                </svg>
                 <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-edge" />
                 {/* Floating live-call chip */}
                 <div className="absolute left-2 top-4 sm:-left-4 sm:top-10 flex items-center gap-2 rounded-xl border border-edge bg-panel/90 px-3 py-2 shadow-lg backdrop-blur-xl animate-float">
@@ -1479,7 +1582,10 @@ function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-8 lg:px-12 py-8 sm:py-12">
         <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
           <div className="flex items-center gap-2">
-            <BrandLogo markClassName="h-6 w-6" wordmarkClassName="text-sm font-bold tracking-tight text-ink" />
+            <BrandLogo
+              markClassName="h-6 w-6"
+              wordmarkClassName="text-sm font-bold tracking-tight text-ink"
+            />
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-ink-muted">
             <a href="#features" className="transition-colors hover:text-ink">
