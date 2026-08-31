@@ -303,115 +303,13 @@ function HeroSection() {
             <div className="relative">
               <div className="pointer-events-none absolute -inset-3 sm:-inset-6 rounded-3xl bg-gradient-to-r from-accent-500/25 via-accent-500/5 to-teal-500/25 blur-2xl" />
               <div className="relative overflow-hidden rounded-xl sm:rounded-2xl border border-edge bg-panel p-1 sm:p-2 shadow-2xl shadow-accent-900/40 ring-1 ring-white/10">
-                <svg
-                  viewBox="0 0 1200 760"
+                <img
+                  src="/dashboard-shot.png"
+                  alt="ElevateAI dashboard preview"
                   className="w-full rounded-xl"
-                  role="img"
-                  aria-label="ElevateAI dashboard preview"
-                >
-                  <defs>
-                    <linearGradient id="heroDashBg" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#151d31" />
-                      <stop offset="100%" stopColor="#0c1220" />
-                    </linearGradient>
-                    <linearGradient id="heroDashAccent" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#338fff" />
-                      <stop offset="100%" stopColor="#14b8a6" />
-                    </linearGradient>
-                  </defs>
-                  <rect width="1200" height="760" fill="url(#heroDashBg)" />
-                  {/* Sidebar */}
-                  <rect width="232" height="760" fill="#0f1524" />
-                  <rect x="22" y="26" width="34" height="34" rx="9" fill="url(#heroDashAccent)" />
-                  <rect x="66" y="30" width="118" height="12" rx="6" fill="#e7ebf3" />
-                  <rect x="66" y="50" width="82" height="8" rx="4" fill="#3a4a68" />
-                  {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <g key={i}>
-                      <rect
-                        x="22"
-                        y={98 + i * 46}
-                        width="188"
-                        height="38"
-                        rx="9"
-                        fill={i === 0 ? "url(#heroDashAccent)" : "#1a2338"}
-                        opacity={i === 0 ? 1 : 0.75}
-                      />
-                      <rect
-                        x={38}
-                        y={98 + i * 46 + 15}
-                        width={i === 0 ? 92 : 116}
-                        height="8"
-                        rx="4"
-                        fill={i === 0 ? "#ffffff" : "#4a5a78"}
-                      />
-                    </g>
-                  ))}
-                  {/* Header */}
-                  <rect x="260" y="28" width="300" height="14" rx="7" fill="#e7ebf3" />
-                  <rect x="260" y="52" width="180" height="8" rx="4" fill="#3a4a68" />
-                  <rect x="1016" y="22" width="152" height="40" rx="20" fill="url(#heroDashAccent)" />
-                  <rect x="1046" y="36" width="92" height="12" rx="6" fill="#ffffff" />
-                  {/* Stats cards */}
-                  {[0, 1, 2, 3].map((i) => (
-                    <g key={i}>
-                      <rect
-                        x={260 + i * 222}
-                        y="90"
-                        width="200"
-                        height="96"
-                        rx="12"
-                        fill="#141c30"
-                        stroke="#22304c"
-                        strokeWidth="1"
-                      />
-                      <rect x={280 + i * 222} y="108" width="90" height="8" rx="4" fill="#4a5a78" />
-                      <rect
-                        x={280 + i * 222}
-                        y="126"
-                        width="64"
-                        height="18"
-                        rx="5"
-                        fill={i === 0 ? "#338fff" : i === 3 ? "#14b8a6" : "#2a3a5c"}
-                      />
-                      <rect
-                        x={280 + i * 222}
-                        y="158"
-                        width="74"
-                        height="6"
-                        rx="3"
-                        fill={i === 0 ? "#14b8a6" : "#2e4060"}
-                      />
-                    </g>
-                  ))}
-                  {/* Chart */}
-                  <rect x="260" y="210" width="910" height="258" rx="12" fill="#141c30" stroke="#22304c" strokeWidth="1" />
-                  <rect x="282" y="228" width="128" height="8" rx="4" fill="#4a5a78" />
-                  <rect x="282" y="244" width="84" height="7" rx="3" fill="#2e4060" />
-                  {[70, 112, 86, 150, 122, 176, 140, 96].map((h, i) => (
-                    <rect
-                      key={i}
-                      x={300 + i * 104}
-                      y={436 - h}
-                      width="58"
-                      height={h}
-                      rx="6"
-                      fill="url(#heroDashAccent)"
-                      opacity={0.55 + (i % 3) * 0.15}
-                    />
-                  ))}
-                  {/* Call list */}
-                  <rect x="260" y="490" width="910" height="230" rx="12" fill="#141c30" stroke="#22304c" strokeWidth="1" />
-                  {[0, 1, 2].map((i) => (
-                    <g key={i}>
-                      <rect x="282" y={512 + i * 64} width="866" height="52" rx="10" fill="#1a2338" />
-                      <circle cx="306" cy={538 + i * 64} r="16" fill={i === 0 ? "url(#heroDashAccent)" : "#2a3a5c"} />
-                      <rect x="334" y={526 + i * 64} width="200" height="9" rx="4" fill="#9fb0cc" />
-                      <rect x="334" y={544 + i * 64} width="140" height="7" rx="3" fill="#3a4a68" />
-                      <rect x="906" y={530 + i * 64} width="84" height="16" rx="8" fill={i === 0 ? "#14b8a6" : "#2a3a5c"} />
-                      <rect x="1004" y={526 + i * 64} width="120" height="9" rx="4" fill="#3a4a68" />
-                    </g>
-                  ))}
-                </svg>
+                  loading="lazy"
+                />
+                  
                 <div className="pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-edge" />
                 {/* Floating live-call chip */}
                 <div className="absolute left-2 top-4 sm:-left-4 sm:top-10 flex items-center gap-2 rounded-xl border border-edge bg-panel/90 px-3 py-2 shadow-lg backdrop-blur-xl animate-float">
@@ -887,101 +785,15 @@ function DashboardPreviewSection() {
           description="Full visibility into team performance, coaching ROI, and individual rep growth — all in one place."
         />
 
-        {/* Mockup */}
-        <div className="mt-12 sm:mt-16 overflow-hidden rounded-2xl border border-edge bg-panel">
-          <div className="flex">
-            {/* Sidebar Mockup */}
-            <div className="hidden w-56 flex-shrink-0 border-r border-edge bg-panel-raised/40 p-4 sm:block">
-              <div className="flex items-center gap-2 pb-6">
-                <div className="h-6 w-6 rounded-md bg-gradient-to-br from-accent-500 to-accent-600" />
-                <div className="h-3 w-20 rounded bg-panel-raised" />
-              </div>
-              {[
-                "Dashboard",
-                "Calls",
-                "Scorecards",
-                "Coaching",
-                "Analytics",
-                "Team",
-              ].map((item, i) => (
-                <div
-                  key={i}
-                  className={`mb-1 flex items-center gap-2 rounded-lg px-3 py-2 ${
-                    i === 0 ? "bg-accent-500/15" : "hover:bg-panel-raised"
-                  }`}
-                >
-                  <div
-                    className={`h-2 w-2 rounded-full ${
-                      i === 0 ? "bg-accent-400" : "bg-ink-faint"
-                    }`}
-                  />
-                  <span
-                    className={`text-xs ${
-                      i === 0 ? "font-medium text-accent-300" : "text-ink-muted"
-                    }`}
-                  >
-                    {item}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Main Content Mockup */}
-            <div className="min-w-0 flex-1 p-4 sm:p-6">
-              {/* Stats Row */}
-              <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <div className="rounded-xl border border-accent-500/30 bg-accent-500/10 px-4 py-3">
-                  <div className="h-2 w-16 rounded bg-accent-500/40 mb-2" />
-                  <div className="h-6 w-12 rounded bg-accent-500/60" />
-                  <div className="mt-1 h-2 w-20 rounded bg-emerald-500/30" />
-                </div>
-                <div className="rounded-xl border border-edge bg-panel-raised px-4 py-3">
-                  <div className="h-2 w-16 rounded bg-panel-raised mb-2" />
-                  <div className="h-6 w-12 rounded bg-panel-raised" />
-                  <div className="mt-1 h-2 w-20 rounded bg-panel-raised" />
-                </div>
-                <div className="rounded-xl border border-edge bg-panel-raised px-4 py-3">
-                  <div className="h-2 w-16 rounded bg-panel-raised mb-2" />
-                  <div className="h-6 w-12 rounded bg-panel-raised" />
-                  <div className="mt-1 h-2 w-20 rounded bg-panel-raised" />
-                </div>
-                <div className="rounded-xl border border-edge bg-panel-raised px-4 py-3">
-                  <div className="h-2 w-16 rounded bg-panel-raised mb-2" />
-                  <div className="h-6 w-12 rounded bg-panel-raised" />
-                  <div className="mt-1 h-2 w-20 rounded bg-panel-raised" />
-                </div>
-              </div>
-
-              {/* Call List */}
-              <div className="mb-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <div className="h-4 w-24 rounded bg-panel-raised" />
-                  <div className="h-6 w-20 rounded-full bg-accent-500/30" />
-                </div>
-                {[1, 2, 3, 4].map((i) => (
-                  <div
-                    key={i}
-                    className="mb-2 flex items-center justify-between rounded-lg bg-panel-raised/60 px-4 py-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-gradient-to-br from-accent-500/40 to-accent-600/40" />
-                      <div>
-                        <div className="h-3 w-28 rounded bg-panel-raised" />
-                        <div className="mt-1 h-2 w-20 rounded bg-panel-raised/70" />
-                      </div>
-                    </div>
-                    <div className="hidden sm:flex items-center gap-4">
-                      <div className="h-2 w-12 rounded bg-emerald-500/40" />
-                      <div className="h-2 w-10 rounded bg-panel-raised" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                <div className="mt-12 sm:mt-16 overflow-hidden rounded-2xl border border-edge bg-panel shadow-xl shadow-accent-900/30">
+          <img
+            src="/dashboard-shot.png"
+            alt="ElevateAI manager dashboard"
+            className="w-full"
+            loading="lazy"
+          />
         </div>
-
-        {/* Annotation Labels */}
+      {/* Annotation Labels */}
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
           <div className="flex items-start gap-3 rounded-xl border border-edge bg-panel p-4">
             <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-accent-500/15 text-accent-fg">
