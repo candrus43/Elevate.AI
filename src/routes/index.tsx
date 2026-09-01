@@ -787,8 +787,8 @@ function DashboardPreviewSection() {
 
                 <div className="mt-12 sm:mt-16 overflow-hidden rounded-2xl border border-edge bg-panel shadow-xl shadow-accent-900/30">
           <img
-            src="/dashboard-shot.png"
-            alt="ElevateAI manager dashboard"
+            src="/analytics-shot.png"
+            alt="ElevateAI team analytics"
             className="w-full"
             loading="lazy"
           />
