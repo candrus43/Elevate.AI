@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { UserSession } from "~/utils/auth";
-import { getCompanyUsers } from "~/utils/db";
 import { InviteMemberModal } from "~/components/InviteMemberModal";
 
 export const Route = createFileRoute("/dashboard/team")({
@@ -33,10 +32,10 @@ function TeamPage() {
   const loadData = async (userId: string, companyId: string) => {
     try {
       const [membersData, invitesData] = await Promise.all([
-        getCompanyUsers(companyId),
+        fetch("/api/dashboard/team").then((r) => r.json()),
         fetch("/api/team/invites").then((r) => r.json()),
       ]);
-      setMembers(membersData);
+      setMembers(membersData.members || []);
       if (invitesData.invites) {
         setInvitations(invitesData.invites);
       }

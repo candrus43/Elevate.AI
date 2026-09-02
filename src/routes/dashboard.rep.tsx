@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 
-import { getUserCalls, getUserCoachingPlan, getUserMetrics, getLeaderboardRank, getUserPoints } from "~/utils/db";
 
 export const Route = createFileRoute("/dashboard/rep")({
   component: RepDashboard,
@@ -24,18 +23,13 @@ function RepDashboard() {
       if (!user) { navigate({ to: "/login" }); return; }
       setUser(user);
       try {
-        const [callsData, planData, metricsData, rankData, pointsData] = await Promise.all([
-          getUserCalls(user.id, 5),
-          getUserCoachingPlan(user.id),
-          getUserMetrics(user.id),
-          getLeaderboardRank(user.id, user.companyId),
-          getUserPoints(user.id),
-        ]);
-        setCalls(callsData);
-        setPlan(planData);
-        setMetrics(metricsData);
-        setRank(rankData);
-        setPoints(pointsData);
+        const res = await fetch("/api/dashboard/rep");
+        const data = await res.json();
+        setCalls(data.calls || []);
+        setPlan(data.plan);
+        setMetrics(data.metrics);
+        setRank(data.rank);
+        setPoints(data.points || 0);
       } catch (e) {
         console.error("Failed to load rep data", e);
       }

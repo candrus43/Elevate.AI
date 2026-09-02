@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { UserSession } from "~/utils/auth";
-import { getCompanyCalls, getCompanyUsers } from "~/utils/db";
 
 import { Avatar, Button, ChartCard, MetricCard } from "~/components/ui";
 
@@ -27,12 +26,10 @@ function AnalyticsPage() {
         }
         setUser(user);
         try {
-          const [callsData, teamData] = await Promise.all([
-            getCompanyCalls(user.companyId, 200),
-            getCompanyUsers(user.companyId),
-          ]);
-          setCalls(callsData);
-          setTeam(teamData.filter((u: any) => u.role === "rep"));
+          const res = await fetch("/api/dashboard/overview");
+          const data = await res.json();
+          setCalls(data.calls || []);
+          setTeam((data.members || []).filter((u: any) => u.role === "rep"));
         } catch (e) {
           console.error("Failed to fetch analytics data", e);
         }

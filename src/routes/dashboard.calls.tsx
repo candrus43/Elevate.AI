@@ -2,7 +2,11 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 
 import { Badge, Button, Card, CardHeader, CardTitle, Input, EmptyState, Spinner, ResponsiveTable } from "~/components/ui";
-import { getCompanyCalls } from "~/utils/db";
+async function fetchCalls(): Promise<any[]> {
+  const res = await fetch("/api/calls");
+  const data = await res.json();
+  return data.calls || [];
+}
 import type { UserSession } from "~/components/layout/Header";
 
 export const Route = createFileRoute("/dashboard/calls")({
@@ -47,7 +51,7 @@ function CallList() {
   // Load calls
   const loadCalls = useCallback(async () => {
     if (!user) return;
-    const data = await getCompanyCalls(user.companyId);
+    const data = await fetchCalls();
     setCalls(data);
   }, [user]);
 
@@ -55,7 +59,7 @@ function CallList() {
     fetch("/api/session").then(r => r.json()).then(async ({ user }) => {
       if (!user) { navigate({ to: "/login" }); return; }
       setUser(user);
-      const data = await getCompanyCalls(user.companyId);
+      const data = await fetchCalls();
       setCalls(data);
       setLoading(false);
     });
@@ -67,7 +71,7 @@ function CallList() {
     let active = true;
     const interval = setInterval(async () => {
       try {
-        const data = await getCompanyCalls(user.companyId);
+        const data = await fetchCalls();
         if (!active) return;
         setCalls(data);
         const updated = data.find((c: any) => c.id === pollingId);
@@ -118,7 +122,7 @@ function CallList() {
       setPollingId(data.call.id);
 
       // Refresh the call list immediately
-      const updated = await getCompanyCalls(user.companyId);
+      const updated = await fetchCalls();
       setCalls(updated);
 
       // Close modal

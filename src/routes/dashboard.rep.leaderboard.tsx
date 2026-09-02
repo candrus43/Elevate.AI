@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { UserSession } from "~/utils/auth";
-import { getLeaderboardRank, getUserPoints } from "~/utils/db";
 
 export const Route = createFileRoute("/dashboard/rep/leaderboard")({
   component: RepLeaderboardPage,
@@ -24,12 +23,10 @@ function RepLeaderboardPage() {
         }
         setUser(user);
         try {
-          const [rankData, pointsData] = await Promise.all([
-            getLeaderboardRank(user.id, user.companyId),
-            getUserPoints(user.id),
-          ]);
-          setRank(rankData);
-          setPoints(pointsData);
+          const res = await fetch("/api/dashboard/rep/leaderboard");
+          const data = await res.json();
+          setRank(data.rank);
+          setPoints(data.points || 0);
         } catch (e) {
           console.error("Failed to fetch leaderboard", e);
         }

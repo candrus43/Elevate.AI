@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { ExecSidebar } from "./ExecSidebar";
 import { Header } from "./Header";
+import { SampleDataBanner } from "./SampleDataBanner";
 import type { UserSession } from "~/utils/auth";
 
 interface ExecutiveShellProps {
@@ -33,7 +34,10 @@ export function ExecutiveShell({ user, children }: ExecutiveShellProps) {
         }`}
       >
         <Header user={user} />
-        <main className="p-4 sm:p-6">{children}</main>
+        <main className="p-4 sm:p-6">
+          <SampleDataBanner user={user} />
+          {children}
+        </main>
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
-import { getCallDetails } from "~/utils/db";
 import type { UserSession } from "~/components/layout/Header";
 
 export const Route = createFileRoute("/dashboard/calls/$callId")({
@@ -142,11 +141,12 @@ function CallDetail() {
         }
         setUser(user);
         try {
-          const data = await getCallDetails(callId);
-          if (!data) {
+          const res = await fetch(`/api/calls/${callId}`);
+          const data = await res.json();
+          if (!data.call) {
             setError("Call not found");
           } else {
-            setCall(data as CallData);
+            setCall(data.call as CallData);
           }
         } catch (e) {
           console.error("Failed to load call details", e);

@@ -111,7 +111,14 @@ export function Header({ user }: HeaderProps) {
           {/* Hide name/role on smaller screens */}
           <div className="hidden lg:block text-right">
             <p className="text-sm font-medium text-ink">{user.name}</p>
-            <p className="text-xs text-ink-muted capitalize">{user.role} · {user.companyName}</p>
+            <p className="text-xs text-ink-muted capitalize flex items-center gap-1.5">
+              {user.role} · {user.companyName}
+              {user.isDemo && (
+                <span className="inline-flex items-center rounded-full border border-accent-500/30 bg-accent-500/10 px-2 py-px text-[10px] font-medium text-accent-300">
+                  Sample data
+                </span>
+              )}
+            </p>
           </div>
           <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-gradient-to-br from-accent-500 to-accent-600 text-xs sm:text-sm font-bold text-ink shadow-lg shadow-accent-500/20">
             {user.name.charAt(0).toUpperCase()}

@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
+import { SampleDataBanner } from "./SampleDataBanner";
 import { FloatingAI } from "~/components/ui/FloatingAI";
 import type { UserSession } from "~/utils/auth";
 
@@ -26,7 +27,10 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
         }`}
       >
         <Header user={user} />
-        <main className="p-4 sm:p-6">{children}</main>
+        <main className="p-4 sm:p-6">
+          <SampleDataBanner user={user} />
+          {children}
+        </main>
       </div>
 
       {/* Floating AI Copilot — global, slide-up (manager/admin only) */}

@@ -95,7 +95,8 @@ export async function getAuthUser(req: Request): Promise<AuthUser | null> {
     if (!token) return null;
     const rows = await db(sql`
       SELECT u.id, u.email, u.name, u.role, u.company_id,
-             c.name as company_name, u.team_id
+             c.name as company_name, c.slug as company_slug, c.demo_mode as company_demo_mode,
+             u.team_id
       FROM sessions s
       JOIN users u ON u.id = s.user_id
       JOIN companies c ON c.id = u.company_id
@@ -110,6 +111,8 @@ export async function getAuthUser(req: Request): Promise<AuthUser | null> {
       role: u.role,
       companyId: u.company_id,
       companyName: u.company_name,
+      companySlug: u.company_slug,
+      demoMode: u.company_demo_mode === 1,
       teamId: u.team_id,
     };
   } catch {
@@ -124,6 +127,8 @@ export interface AuthUser {
   role: string;
   companyId: string;
   companyName: string;
+  companySlug?: string;
+  demoMode?: boolean;
   teamId: string | null;
 }
 

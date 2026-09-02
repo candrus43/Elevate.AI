@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import type { UserSession } from "~/utils/auth";
-import { getUserCalls, db } from "~/utils/db";
 
 export const Route = createFileRoute("/dashboard/rep/calls")({
   component: RepCallsPage,
@@ -34,8 +33,9 @@ function RepCallsPage() {
 
   const loadCalls = async (userId: string) => {
     try {
-      const data = await getUserCalls(userId, 50);
-      setCalls(data);
+      const res = await fetch("/api/dashboard/rep/calls");
+      const data = await res.json();
+      setCalls(data.calls || []);
     } catch (e) {
       console.error("Failed to fetch calls", e);
     }
@@ -98,7 +98,7 @@ function RepCallsPage() {
         const pollInterval = setInterval(async () => {
           attempts++;
           await loadCalls(user.id);
-          const updatedCall = (await getUserCalls(user.id, 50)).find((c: any) => c.id === data.call.id);
+          const updatedCall = (await fetch("/api/dashboard/rep/calls").then(r => r.json())).calls?.find((c: any) => c.id === data.call.id);
           if (updatedCall?.status === "analyzed" || attempts > 15) {
             clearInterval(pollInterval);
             setUploadProgress("");

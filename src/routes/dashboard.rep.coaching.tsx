@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { UserSession } from "~/utils/auth";
-import { getUserCoachingPlan } from "~/utils/db";
 
 export const Route = createFileRoute("/dashboard/rep/coaching")({
   component: RepCoachingPage,
@@ -23,8 +22,9 @@ function RepCoachingPage() {
         }
         setUser(user);
         try {
-          const data = await getUserCoachingPlan(user.id);
-          setPlan(data);
+          const res = await fetch("/api/dashboard/rep/coaching");
+          const data = await res.json();
+          setPlan(data.plan);
         } catch (e) {
           console.error("Failed to fetch coaching plan", e);
         }

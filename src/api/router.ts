@@ -7,6 +7,18 @@
 import { jsonResponse, UPLOADS_DIR } from "./middleware";
 import { handleLogin, handleRegister, handleLogout, handleSession } from "./auth";
 import { handleDemoLogin } from "./demo-login";
+import {
+  handleDashboardOverview,
+  handleDashboardTeam,
+  handleDashboardLeaderboard,
+  handleDashboardCoaching,
+  handleRepDashboard,
+  handleRepCalls,
+  handleRepCoaching,
+  handleRepLeaderboard,
+  handleCallDetail,
+  handleLearningCourses,
+} from "./dashboard-data";
 import { handleWizardGetStatus, handleCompleteOnboardingStep, handleSkipOnboardingStep } from "./onboarding";
 import { handleCallUpload, handleCallList, handleCallDelete } from "./calls";
 import {
@@ -341,7 +353,19 @@ export async function routeApi(req: Request): Promise<Response | null> {
     // ── Call Recording ───────────────────────────────────────────────────────────
     if (pathname === "/api/calls/upload" && req.method === "POST") return handleCallUpload(req);
     if (pathname === "/api/calls" && req.method === "GET") return handleCallList(req);
+    if (pathname.startsWith("/api/calls/") && req.method === "GET" && pathname.split("/").length === 4) return handleCallDetail(req);
     if (pathname.startsWith("/api/calls/") && req.method === "DELETE" && pathname.split("/").length === 4) return handleCallDelete(req);
+
+    // ── Dashboard data (server-side; replaces client-side DB imports) ────────────
+    if (pathname === "/api/dashboard/overview" && req.method === "GET") return handleDashboardOverview(req);
+    if (pathname === "/api/dashboard/team" && req.method === "GET") return handleDashboardTeam(req);
+    if (pathname === "/api/dashboard/leaderboard" && req.method === "GET") return handleDashboardLeaderboard(req);
+    if (pathname === "/api/dashboard/coaching" && req.method === "GET") return handleDashboardCoaching(req);
+    if (pathname === "/api/dashboard/rep" && req.method === "GET") return handleRepDashboard(req);
+    if (pathname === "/api/dashboard/rep/calls" && req.method === "GET") return handleRepCalls(req);
+    if (pathname === "/api/dashboard/rep/coaching" && req.method === "GET") return handleRepCoaching(req);
+    if (pathname === "/api/dashboard/rep/leaderboard" && req.method === "GET") return handleRepLeaderboard(req);
+    if (pathname === "/api/dashboard/learning" && req.method === "GET") return handleLearningCourses(req);
 
     // ── Scorecards ───────────────────────────────────────────────────────────────
     if (pathname === "/api/scorecards" && req.method === "GET") return handleListScorecards(req);
@@ -480,7 +504,7 @@ export async function routeApi(req: Request): Promise<Response | null> {
     if (pathname === "/api/crm/sync/full" && req.method === "POST") return handleFullSync(req);
     if (pathname === "/api/crm/sync/logs" && req.method === "GET") return handleCrmSyncLogs(req);
 
-    // ── Webhooks ────────────────────────────────────────────────────────────────
+    // ── Webhooks ───────────────────────────���────────────────────────────────────
     if (pathname === "/api/webhooks" && req.method === "GET") return handleListWebhooks(req);
     if (pathname === "/api/webhooks/register" && req.method === "POST") return handleRegisterWebhook(req);
     if (pathname === "/api/webhooks/test" && req.method === "POST") return handleTestWebhook(req);
