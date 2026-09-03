@@ -10,16 +10,14 @@
  */
 import { sql } from "~/utils/sql";
 import { db, jsonResponse, getAuthUser, type AuthUser } from "./middleware";
+import { isDemoCompany as isDemoCompanyRow } from "~/utils/demo-company";
 
-/** The single demo company slug — used to label data as "Sample data". */
-const DEMO_SLUG = "elevateai-demo";
-
+/**
+ * Whether this user's data is seeded sample data. Delegates to the shared
+ * helper so the session, login and dashboard endpoints can never disagree.
+ */
 function isDemoCompany(user: AuthUser): boolean {
-  return (
-    user.demoMode === 1 ||
-    user.companySlug === DEMO_SLUG ||
-    /demo/i.test(user.companyName || "")
-  );
+  return isDemoCompanyRow({ slug: user.companySlug, name: user.companyName });
 }
 
 async function fetchCompanyUsers(companyId: string) {

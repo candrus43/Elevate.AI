@@ -11,14 +11,10 @@
  */
 import { useState } from "react";
 import type { UserSession } from "~/utils/auth";
-
-const DEMO_SLUG = "elevateai-demo";
+import { isDemoCompany } from "~/utils/demo-company";
 
 function isSampleCompany(user: UserSession): boolean {
-  return (
-    user.companySlug === DEMO_SLUG ||
-    /demo/i.test(user.companyName || "")
-  );
+  return isDemoCompany({ slug: user.companySlug, name: user.companyName });
 }
 
 export function SampleDataBanner({ user }: { user: UserSession }) {
