@@ -14,7 +14,7 @@ import {
   Spinner,
 } from "~/components/ui";
 
-import { getCompanyCalls, getCompanyMetrics, getRecentActivity, getCompanyUsers } from "~/utils/db";
+import type { UserSession } from "~/utils/auth";
 
 export const Route = createFileRoute("/dashboard/")({
   component: ManagerDashboard,
@@ -34,16 +34,12 @@ function ManagerDashboard() {
       if (!user) { navigate({ to: "/login" }); return; }
       setUser(user);
       try {
-        const [callsData, metricsData, activityData, teamData] = await Promise.all([
-          getCompanyCalls(user.companyId),
-          getCompanyMetrics(user.companyId),
-          getRecentActivity(user.companyId, 8),
-          getCompanyUsers(user.companyId),
-        ]);
-        setCalls(callsData);
-        setMetrics(metricsData);
-        setActivity(activityData);
-        setTeam(teamData.filter((u: any) => u.role === "rep"));
+        const res = await fetch("/api/dashboard/overview");
+        const data = await res.json();
+        setCalls(data.calls || []);
+        setMetrics(data.companyMetrics);
+        setActivity(data.activity || []);
+        setTeam((data.members || []).filter((u: any) => u.role === "rep"));
       } catch (e) {
         console.error("Failed to fetch dashboard data", e);
       }

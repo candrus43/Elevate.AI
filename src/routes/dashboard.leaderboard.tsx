@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import type { UserSession } from "~/utils/auth";
-import { db } from "~/utils/db";
-import { sql } from "~/utils/sql";
 
 export const Route = createFileRoute("/dashboard/leaderboard")({
   component: LeaderboardPage,
@@ -44,25 +42,9 @@ function LeaderboardPage() {
 
   const fetchLeaderboard = async (companyId: string, userId: string) => {
     try {
-      const data = await db(sql`
-        SELECT
-          le.rank,
-          u.name as user_name,
-          u.id as user_id,
-          u.avatar_url,
-          le.score,
-          le.calls_count,
-          CASE WHEN u.id = ${userId} THEN 1 ELSE 0 END as is_current_user
-        FROM leaderboard_entries le
-        JOIN users u ON u.id = le.user_id
-        JOIN leaderboards lb ON lb.id = le.leaderboard_id
-        WHERE lb.company_id = ${companyId}
-          AND lb.period = ${period}
-          AND lb.is_active = 1
-        ORDER BY le.rank ASC
-        LIMIT 20
-      `);
-      setEntries(data);
+      const res = await fetch(`/api/dashboard/leaderboard?period=${period}`);
+      const data = await res.json();
+      setEntries(data.entries || []);
     } catch (e) {
       console.error("Failed to fetch leaderboard", e);
       setEntries([]);

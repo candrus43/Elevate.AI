@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import type { UserSession } from "~/utils/auth";
-import { getCompanyUsers, db } from "~/utils/db";
-import { sql } from "~/utils/sql";
 
 export const Route = createFileRoute("/dashboard/coaching")({
   component: CoachingPage,
@@ -41,17 +39,9 @@ function CoachingPage() {
         }
         setUser(user);
         try {
-          // Fetch coaching plans from the DB
-          const members = await getCompanyUsers(user.companyId);
-          const planPromises = members.map(async (m: any) => {
-            const plans = await fetchCoachingPlans(m.id);
-            return plans.map((p: any) => ({
-              ...p,
-              user_name: m.name,
-            }));
-          });
-          const allPlans = (await Promise.all(planPromises)).flat();
-          setPlans(allPlans);
+          const res = await fetch("/api/dashboard/coaching");
+          const data = await res.json();
+          setPlans(data.plans || []);
         } catch (e) {
           console.error("Failed to fetch coaching data", e);
         }
@@ -76,15 +66,9 @@ function CoachingPage() {
       if (data.success) {
         setGenResult(`AI plan "${data.plan.title}" generated for ${userName} with ${data.plan.items.length} items!`);
         // Reload plans
-        if (user) {
-          const members = await getCompanyUsers(user.companyId);
-          const planPromises = members.map(async (m: any) => {
-            const plans = await fetchCoachingPlans(m.id);
-            return plans.map((p: any) => ({ ...p, user_name: m.name }));
-          });
-          const allPlans = (await Promise.all(planPromises)).flat();
-          setPlans(allPlans);
-        }
+        const res = await fetch("/api/dashboard/coaching");
+        const data = await res.json();
+        setPlans(data.plans || []);
       } else {
         setGenResult(`Error: ${data.error || "Failed to generate plan"}`);
       }
@@ -241,18 +225,6 @@ function CoachingPage() {
   );
 }
 
-async function fetchCoachingPlans(userId: string): Promise<any[]> {
-  try {
-    return await db(sql`
-      SELECT cp.id, cp.user_id, cp.title, cp.description, cp.status, cp.due_date, cp.created_at,
-        (SELECT COUNT(*) FROM coaching_plan_items cpi WHERE cpi.coaching_plan_id = cp.id) as total_items,
-        (SELECT COUNT(*) FROM coaching_plan_items cpi WHERE cpi.coaching_plan_id = cp.id AND cpi.status = 'completed') as completed_items
-        FROM coaching_plans cp WHERE cp.user_id = ${userId}
-    `);
-  } catch {
-    return [];
-  }
-}
 
 function CoachingSkeleton() {
   return (

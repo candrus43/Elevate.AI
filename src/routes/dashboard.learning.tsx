@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { EmptyState } from '~/components/EmptyState';
 import type { UserSession } from "~/utils/auth";
-import { db } from "~/utils/db";
-import { sql } from "~/utils/sql";
 
 export const Route = createFileRoute("/dashboard/learning")({
   component: LearningPage,
@@ -48,18 +46,9 @@ function LearningPage() {
 
   const fetchCourses = async (userId: string) => {
     try {
-      const data = await db(sql`
-        SELECT
-          c.id, c.title, c.description, c.category, c.difficulty,
-          c.duration_minutes, c.image_url,
-          CASE WHEN ec.id IS NOT NULL THEN 1 ELSE 0 END as is_enrolled,
-          COALESCE(ec.progress, 0) as enrolled_progress
-        FROM courses c
-        LEFT JOIN enrolled_courses ec ON ec.course_id = c.id AND ec.user_id = ${userId}
-        ORDER BY c.created_at DESC
-        LIMIT 20
-      `);
-      setCourses(data);
+      const res = await fetch("/api/dashboard/learning");
+      const data = await res.json();
+      setCourses(data.courses || []);
     } catch (e) {
       console.error("Failed to fetch courses", e);
       setCourses([]);
